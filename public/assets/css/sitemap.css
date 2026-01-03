@@ -1,0 +1,95 @@
+:root {
+    --primary: #364391;
+    --secondary: #27aae0;
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #f5f7ff 0%, #e6f3fa 100%);
+    min-height: 100vh;
+}
+.sitemap-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+}
+.sitemap-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+.category-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    break-inside: avoid;
+    margin-bottom: 1.5rem;
+}
+.category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+.url-item {
+    border-left: 3px solid var(--secondary);
+    transition: all 0.3s ease;
+}
+.url-item:hover {
+    background-color: #f1f9fe;
+    border-left: 3px solid var(--primary);
+}
+.btn-download {
+    background: var(--primary);
+    transition: all 0.3s ease;
+}
+.btn-download:hover {
+    background: #2a3574;
+    transform: translateY(-2px);
+}
+
+/* Masonry-style layout for categories */
+.sitemap-masonry {
+    column-count: 1;
+    column-gap: 1.5rem;
+    column-fill: balance;
+    transition: all 0.3s ease;
+}
+
+@media (min-width: 768px) {
+    .sitemap-masonry {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 1024px) {
+    .sitemap-masonry {
+        column-count: 3;
+    }
+}
+
+/* Alternative: CSS Grid masonry approach */
+.sitemap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+    transition: all 0.3s ease;
+}
+
+/* Fallback for older browsers */
+@supports not (column-count: 1) {
+    .sitemap-masonry {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+    
+    .sitemap-masonry .category-card {
+        flex: 1 1 300px;
+        max-width: calc(50% - 0.75rem);
+    }
+}
+
+/* Loading state for smooth transitions */
+.layout-transition {
+    opacity: 0.7;
+    transform: scale(0.98);
+}

@@ -1,0 +1,240 @@
+.spin-btn {
+  color: #fff;
+  border: inherit;
+  margin-right: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+}
+
+.dataTables_length {
+  margin-bottom: 20px !important;
+  margin-top: 20px !important;
+}
+
+.dataTables_length select {
+  border: 1px solid #ffffff0f !important;
+}
+
+.dataTables_filter {
+  margin-bottom: 20px !important;
+  margin-top: 20px !important;
+}
+
+.dataTables_filter input {
+  border: 1px solid #ffffff0f !important;
+  width: 250px !important;
+  box-shadow: 0 5px 5px rgba(146, 153, 184, 0.03) !important;
+}
+
+a.paginate_button.current {
+  padding: 5px 15px !important;
+  background: #03468d !important;
+  color: #ffffff !important;
+}
+
+.paginate_button {
+  margin: 0 5px !important;
+  padding: 5px 8px !important;
+  background: #fff !important;
+  border: 1px solid #ffffff0f !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  color: #000413 !important;
+}
+
+.paginate_button:hover {
+  background: #e1e2e3 !important;
+  color: #000413 !important;
+}
+.paginate_button.previous.disabled {
+  padding: 5px 8px !important;
+  background: #313541 !important;
+  color: #03297c !important;
+}
+
+.paginate_button.next.disabled {
+  padding: 5px 8px !important;
+  background: #313541 !important;
+  color: #03297c !important;
+}
+
+.paginate_button.previous {
+  color: #fff !important;
+  background: #03297c !important;
+}
+
+.paginate_button.next {
+  padding: 5px 8px !important;
+  color: #fff !important;
+  background: #03297c !important;
+}
+
+.dataTables_paginate.paging_simple_numbers {
+  margin-bottom: 20px !important;
+}
+
+.swal2-container {
+  z-index: 999999;
+}
+
+.user-member__form {
+  min-width: 550px !important;
+}
+
+.account-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account-status__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account-status__icon span {
+  font-size: 20px;
+  color: #fe7927;
+}
+
+.system__icons {
+  font-size: 20px;
+}
+
+.account-status__details {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account-status__message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 8px;
+  border-radius: 5px;
+  color: #fe2727;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account-status__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.dotted-border {
+  border: 2px dotted #ffffff80;
+  padding: 20px;
+}
+
+.note-modal {
+  z-index: 99999999 !important;
+}
+
+table.dataTable.table-striped > tbody > tr.odd > * {
+  box-shadow: inset 0 0 0 9999px #28a9e03b !important;
+  color: #1b1b1b !important;
+}
+
+table.dataTable.table-striped > tbody > tr.even > * {
+  box-shadow: inset 0 0 0 9999px #ffffff !important;
+}
+
+.paginate_button.current {
+  padding: 10px 15px !important;
+  background: #03297c !important;
+  color: #fff !important;
+}
+
+.paginate_button {
+  margin: 0 5px !important;
+  padding: 10px 15px !important;
+  background: #fff;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+}
+
+.paginate_button:hover {
+  background: #03297c !important;
+  color: #fff !important;
+}
+.paginate_button.previous.disabled {
+  padding: 10px 30px !important;
+  background: #9bbeefd6 !important;
+  color: #03297c !important;
+}
+
+.paginate_button.next.disabled {
+  padding: 10px 30px !important;
+  background: #9bbeefd6 !important;
+  color: #03297c !important;
+}
+
+.paginate_button.previous {
+  color: #fff !important;
+  background: #03297c !important;
+}
+
+.paginate_button.next {
+  padding: 10px 30px !important;
+  color: #fff !important;
+  background: #03297c !important;
+}
+
+.dataTables_paginate.paging_simple_numbers {
+  margin-bottom: 20px !important;
+}
+
+div.dataTables_wrapper div.dataTables_filter input {
+  border-radius: 5px !important;
+  width: 300px !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0.2em 0.2em 1em rgba(0, 0, 0, 0.2);
+}
+
+.swal2-container {
+  text-align: left !important;
+}
+
+.note-editor {
+  z-index: 1050 !important; /* Change this value as needed */
+}
+
+.note-toolbar {
+  z-index: 1050 !important;
+}
+
+.note-dropdown {
+  z-index: 1051 !important;
+}
+
+.note-dialog {
+  z-index: 1060 !important; /* Modals like insert image, link, etc. */
+}

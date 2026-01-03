@@ -1,0 +1,280 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  font-family: "Roboto", sans-serif;
+  background-color: #f8f9fa;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  font-family: "Roboto", sans-serif;
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar {
+  background-color: #e4e8fd;
+  border-right: 1px solid #a6b1e9;
+  color: #ffffff;
+  height: calc(100vh - 68px);
+  /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
+}
+
+.content {
+  padding: 20px 200px;
+}
+
+.border {
+  border-bottom: 1px solid #a6b1e9;
+}
+
+.sidebar-link {
+  text-decoration: none;
+  padding: 10px 20px;
+  display: block;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: "Roboto", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-profile-icon {
+  font-size: 18px;
+  font-weight: 400;
+  font-family: "Roboto", sans-serif;
+  position: absolute;
+  right: 30px;
+  top: 70px;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+.profile-employee-number {
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+.employee-number-copy:hover {
+  cursor: pointer;
+  color: #fdce01;
+}
+
+.employee-number {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 60px;
+}
+
+.nav-item.active {
+  color: #ffffff;
+  background: #8898f3;
+  width: 100%;
+  border-radius: 5px;
+}
+
+.nav-item.active > a {
+  color: #ffffff;
+}
+
+li.nav-item:hover {
+  width: 100%;
+  cursor: pointer;
+  color: #364391;
+  background: #ffffffa8;
+  border-radius: 5px;
+}
+
+li.nav-item:hover > a {
+  color: #364391;
+}
+
+li.nav-item > a {
+  color: #08090f;
+}
+
+li,
+.sidebar-icon {
+  font-size: 22px !important;
+}
+
+.nav-item {
+  padding: 5px 10px;
+  display: block;
+  font-size: 18px;
+  font-weight: 400;
+  font-family: "Roboto", sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.edit-profile-icon:hover {
+  cursor: pointer;
+  background: #ffffffa8;
+  color: #364391;
+}
+
+.profile-user {
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  font-size: 15px;
+  font-weight: 300;
+}
+
+.profile-name {
+  font-size: 18px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+.profile-container {
+  background: #364391;
+  padding: 20px 0;
+  border-radius: 8px;
+  display: relative;
+}
+
+.image-section {
+  background: #364391;
+  height: 100vh;
+  width: 100%;
+  max-width: 50%; /* Set a maximum width for large screens */
+  position: relative;
+}
+
+.image-section img {
+  width: 100%;
+  height: auto;
+}
+
+.overlay {
+  position: absolute;
+  /* background: rgba(0, 0, 0, 0.5); */
+  z-index: 99;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.form-section {
+  background: #ffffff;
+  height: 100vh;
+  width: 100%;
+  max-width: 50%; /* Set a maximum width for large screens */
+}
+
+.form-section .form-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+.login-form {
+  border-radius: 0;
+  padding: 25px 10px;
+  outline: none;
+}
+
+.custom-form {
+  border-radius: 0;
+  padding: 25px 10px;
+  outline: none;
+}
+
+.login-button {
+  border-radius: 0;
+  padding: 10px 20px;
+  outline: none;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.outline-button {
+  border-radius: 0;
+  padding: 10px 20px;
+  outline: none;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 500;
+  background: transparent;
+  color: #364391;
+}
+
+.button-outline-red {
+  border-radius: 0;
+  padding: 10px 20px;
+  outline: none;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 500;
+  border: 1px solid #000;
+  background: transparent;
+  color: #000;
+}
+
+.image-container {
+  padding: 0 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-container-area {
+  padding: 0 200px;
+}
+
+.title-text {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.search-input {
+  border-radius: 2;
+  padding: 10px 20px;
+  outline: none;
+  width: 100%;
+  font-size: 18px;
+  font-weight: 500;
+  border: none !important;
+}
+
+input:focus {
+  outline: none;
+}
+
+.site-icon {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+input::placeholder {
+  font-size: 16px;
+  font-weight: 300;
+}

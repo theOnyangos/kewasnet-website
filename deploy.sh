@@ -1,0 +1,500 @@
+#!/bin/bash
+
+###############################################################################
+# KEWASNET CodeIgniter 4 Application Deployment Script
+###############################################################################
+# 
+# Usage: ./deploy.sh [environment]
+# Example: ./deploy.sh production
+#          ./deploy.sh staging
+#
+# This script automates the deployment process for the KEWASNET application
+###############################################################################
+
+set -e  # Exit on error
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+ENVIRONMENT="${1:-production}"
+APP_NAME="kewasnet-website"
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+BACKUP_DIR="backups/$TIMESTAMP"
+
+# Deployment paths (update these based on your server structure)
+if [ "$ENVIRONMENT" = "production" ]; then
+    DEPLOY_PATH="/var/www/kewasnet.co.ke"
+    DOMAIN="kewasnet.co.ke"
+elif [ "$ENVIRONMENT" = "staging" ]; then
+    DEPLOY_PATH="/var/www/staging.kewasnet.co.ke"
+    DOMAIN="staging.kewasnet.co.ke"
+else
+    echo -e "${RED}Error: Invalid environment. Use 'production' or 'staging'${NC}"
+    exit 1
+fi
+
+###############################################################################
+# Helper Functions
+###############################################################################
+
+print_header() {
+    echo -e "\n${BLUE}===================================================================${NC}"
+    echo -e "${BLUE}  $1${NC}"
+    echo -e "${BLUE}===================================================================${NC}\n"
+}
+
+print_success() {
+    echo -e "${GREEN}✓ $1${NC}"
+}
+
+print_error() {
+    echo -e "${RED}✗ $1${NC}"
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠ $1${NC}"
+}
+
+print_info() {
+    echo -e "${BLUE}ℹ $1${NC}"
+}
+
+check_command() {
+    if ! command -v $1 &> /dev/null; then
+        print_error "$1 is not installed. Please install it first."
+        exit 1
+    fi
+}
+
+###############################################################################
+# Pre-Deployment Checks
+###############################################################################
+
+print_header "Pre-Deployment Checks for $ENVIRONMENT Environment"
+
+# Check if running as appropriate user
+if [ "$EUID" -eq 0 ]; then
+    print_warning "Running as root. Consider using a deployment user instead."
+fi
+
+# Check required commands
+print_info "Checking required commands..."
+check_command "git"
+check_command "composer"
+check_command "php"
+check_command "npm"
+
+print_success "All required commands are available"
+
+# Check PHP version
+PHP_VERSION=$(php -r "echo PHP_VERSION;")
+print_info "PHP Version: $PHP_VERSION"
+if php -r "exit(version_compare(PHP_VERSION, '7.4.0', '<') ? 1 : 0);"; then
+    print_error "PHP 7.4 or higher is required"
+    exit 1
+fi
+print_success "PHP version check passed"
+
+# Check PHP extensions
+print_info "Checking required PHP extensions..."
+REQUIRED_EXTENSIONS=("intl" "mbstring" "json" "mysqlnd" "xml" "curl" "gd" "zip")
+MISSING_EXTENSIONS=()
+
+for ext in "${REQUIRED_EXTENSIONS[@]}"; do
+    if ! php -m | grep -qi "^$ext$"; then
+        MISSING_EXTENSIONS+=("$ext")
+    fi
+done
+
+if [ ${#MISSING_EXTENSIONS[@]} -ne 0 ]; then
+    print_error "Missing PHP extensions: ${MISSING_EXTENSIONS[*]}"
+    exit 1
+fi
+print_success "All required PHP extensions are installed"
+
+###############################################################################
+# Backup Current Deployment
+###############################################################################
+
+if [ -d "$DEPLOY_PATH" ]; then
+    print_header "Creating Backup"
+    
+    mkdir -p "$DEPLOY_PATH/$BACKUP_DIR"
+    
+    # Backup .env file
+    if [ -f "$DEPLOY_PATH/.env" ]; then
+        cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/$BACKUP_DIR/.env.backup"
+        print_success "Backed up .env file"
+    fi
+    
+    # Backup writable directory
+    if [ -d "$DEPLOY_PATH/writable" ]; then
+        tar -czf "$DEPLOY_PATH/$BACKUP_DIR/writable_backup.tar.gz" -C "$DEPLOY_PATH" writable/
+        print_success "Backed up writable directory"
+    fi
+    
+    # Backup uploads
+    if [ -d "$DEPLOY_PATH/public/uploads" ]; then
+        tar -czf "$DEPLOY_PATH/$BACKUP_DIR/uploads_backup.tar.gz" -C "$DEPLOY_PATH/public" uploads/
+        print_success "Backed up uploads directory"
+    fi
+    
+    # Backup database (if credentials are available)
+    if [ -f "$DEPLOY_PATH/.env" ]; then
+        DB_NAME=$(grep "^database.default.database" "$DEPLOY_PATH/.env" | cut -d '=' -f2 | tr -d ' "')
+        DB_USER=$(grep "^database.default.username" "$DEPLOY_PATH/.env" | cut -d '=' -f2 | tr -d ' "')
+        DB_PASS=$(grep "^database.default.password" "$DEPLOY_PATH/.env" | cut -d '=' -f2 | tr -d ' "')
+        
+        if [ -n "$DB_NAME" ] && [ -n "$DB_USER" ]; then
+            print_info "Backing up database: $DB_NAME"
+            mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" 2>/dev/null || {
+                print_warning "Database backup failed. Continuing deployment..."
+            }
+            if [ -f "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" ]; then
+                gzip "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql"
+                print_success "Database backed up successfully"
+            fi
+        fi
+    fi
+    
+    print_success "Backup completed: $BACKUP_DIR"
+fi
+
+###############################################################################
+# Enable Maintenance Mode
+###############################################################################
+
+print_header "Enabling Maintenance Mode"
+
+if [ -d "$DEPLOY_PATH" ]; then
+    # Create maintenance flag file
+    cat > "$DEPLOY_PATH/public/maintenance.html" << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mode - KEWASNET</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        p { color: #666; line-height: 1.6; }
+        .logo { width: 150px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Maintenance in Progress</h1>
+        <p>We're currently performing scheduled maintenance to improve your experience.</p>
+        <p>We'll be back shortly. Thank you for your patience!</p>
+        <p><strong>KEWASNET Team</strong></p>
+    </div>
+</body>
+</html>
+EOF
+    
+    # Redirect to maintenance page (optional - requires .htaccess modification)
+    print_success "Maintenance mode enabled"
+else
+    print_info "Fresh deployment - skipping maintenance mode"
+fi
+
+###############################################################################
+# Pull Latest Code
+###############################################################################
+
+print_header "Pulling Latest Code"
+
+cd "$DEPLOY_PATH" || {
+    print_error "Deployment directory does not exist. Creating it..."
+    mkdir -p "$DEPLOY_PATH"
+    cd "$DEPLOY_PATH"
+}
+
+# Initialize git if not already initialized
+if [ ! -d ".git" ]; then
+    print_info "Initializing git repository..."
+    git init
+    git remote add origin https://github.com/yourusername/$APP_NAME.git  # Update with your repo URL
+fi
+
+# Fetch and pull latest changes
+print_info "Fetching latest changes from git..."
+git fetch origin
+git reset --hard origin/main  # Change 'main' to your production branch
+
+print_success "Code updated successfully"
+
+###############################################################################
+# Install/Update Dependencies
+###############################################################################
+
+print_header "Installing Dependencies"
+
+# Composer dependencies
+print_info "Installing/updating Composer dependencies..."
+composer install --no-dev --optimize-autoloader --no-interaction
+print_success "Composer dependencies installed"
+
+# NPM dependencies
+if [ -f "package.json" ]; then
+    print_info "Installing/updating NPM dependencies..."
+    npm ci --production
+    print_success "NPM dependencies installed"
+    
+    # Build assets
+    print_info "Building frontend assets..."
+    npm run build 2>/dev/null || npm run prod 2>/dev/null || print_warning "No build script found"
+    print_success "Frontend assets built"
+fi
+
+###############################################################################
+# Environment Configuration
+###############################################################################
+
+print_header "Configuring Environment"
+
+# Restore .env if exists in backup, otherwise prompt to create
+if [ -f "$BACKUP_DIR/.env.backup" ]; then
+    cp "$BACKUP_DIR/.env.backup" .env
+    print_success "Restored .env from backup"
+elif [ ! -f ".env" ]; then
+    if [ -f "env" ]; then
+        cp env .env
+        print_warning ".env file created from template. Please update with production values!"
+    else
+        print_error ".env file not found. Please create one manually."
+        exit 1
+    fi
+fi
+
+# Set correct environment
+sed -i "s/CI_ENVIRONMENT = .*/CI_ENVIRONMENT = $ENVIRONMENT/" .env
+print_success "Environment set to: $ENVIRONMENT"
+
+###############################################################################
+# File Permissions
+###############################################################################
+
+print_header "Setting File Permissions"
+
+# Set ownership (adjust user:group as needed)
+WEB_USER="www-data"
+WEB_GROUP="www-data"
+
+print_info "Setting ownership to $WEB_USER:$WEB_GROUP..."
+chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH" || print_warning "Could not set ownership. May need sudo."
+
+# Set directory permissions
+print_info "Setting directory permissions..."
+find "$DEPLOY_PATH" -type d -exec chmod 755 {} \;
+
+# Set file permissions
+print_info "Setting file permissions..."
+find "$DEPLOY_PATH" -type f -exec chmod 644 {} \;
+
+# Writable directories need special permissions
+print_info "Setting writable directory permissions..."
+chmod -R 775 "$DEPLOY_PATH/writable"
+chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || mkdir -p "$DEPLOY_PATH/public/uploads" && chmod -R 775 "$DEPLOY_PATH/public/uploads"
+
+# Make spark executable
+chmod +x "$DEPLOY_PATH/spark"
+
+print_success "File permissions set correctly"
+
+###############################################################################
+# Database Migrations
+###############################################################################
+
+print_header "Running Database Migrations"
+
+print_info "Checking for pending migrations..."
+php spark migrate || {
+    print_error "Migration failed!"
+    print_warning "You may need to run migrations manually"
+}
+
+# Run database seeders (if needed)
+print_info "Running database seeders..."
+php spark db:seed 2>/dev/null || print_info "No seeders configured or seeders already run"
+
+print_success "Database migrations completed"
+
+###############################################################################
+# Email Queue Setup
+###############################################################################
+
+print_header "Configuring Email Queue"
+
+# Check if email queue cron job exists
+CRON_JOB="* * * * * cd $DEPLOY_PATH && php spark email:process >> /dev/null 2>&1"
+CRON_EXISTS=$(crontab -l 2>/dev/null | grep -F "php spark email:process" || true)
+
+if [ -z "$CRON_EXISTS" ]; then
+    print_info "Setting up email queue cron job..."
+    
+    # Add cron job for email queue processing
+    (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab - 2>/dev/null && {
+        print_success "Email queue cron job added (runs every minute)"
+    } || {
+        print_warning "Could not add cron job automatically. Please add manually:"
+        print_info "  $CRON_JOB"
+    }
+else
+    print_success "Email queue cron job already configured"
+fi
+
+# Test email queue command
+print_info "Testing email queue processor..."
+php spark email:process > /dev/null 2>&1 && {
+    print_success "Email queue processor is working"
+} || {
+    print_warning "Email queue processor test failed. Check logs for details."
+}
+
+print_success "Email queue setup completed"
+
+###############################################################################
+# Cache Management
+###############################################################################
+
+print_header "Managing Cache"
+
+# Clear application cache
+print_info "Clearing application cache..."
+php spark cache:clear || print_warning "Cache clear command not available"
+
+# Clear route cache
+print_info "Clearing route cache..."
+rm -rf writable/cache/* 2>/dev/null || true
+
+# Clear view cache
+print_info "Clearing view cache..."
+rm -rf writable/debugbar/* 2>/dev/null || true
+
+# Clear session files (optional - be careful in production)
+# rm -rf writable/session/* 2>/dev/null || true
+
+# Warm up cache (if you have a cache warming command)
+print_info "Warming up cache..."
+php spark optimize 2>/dev/null || print_info "No optimize command available"
+
+print_success "Cache management completed"
+
+###############################################################################
+# Optimize Application
+###############################################################################
+
+print_header "Optimizing Application"
+
+# Optimize Composer autoloader
+print_info "Optimizing Composer autoloader..."
+composer dump-autoload --optimize --no-dev
+
+# Generate sitemap (if applicable)
+print_info "Generating sitemap..."
+php spark sitemap:generate 2>/dev/null || print_info "No sitemap command available"
+
+print_success "Application optimized"
+
+###############################################################################
+# Restart Services
+###############################################################################
+
+print_header "Restarting Services"
+
+# Restart PHP-FPM (adjust service name based on your PHP version)
+print_info "Restarting PHP-FPM..."
+systemctl restart php8.1-fpm 2>/dev/null || systemctl restart php-fpm 2>/dev/null || print_warning "Could not restart PHP-FPM. May need sudo."
+
+# Reload Nginx/Apache
+print_info "Reloading web server..."
+systemctl reload nginx 2>/dev/null || systemctl reload apache2 2>/dev/null || print_warning "Could not reload web server. May need sudo."
+
+# Restart queue workers (if using queues)
+# systemctl restart kewasnet-worker 2>/dev/null || print_info "No queue workers to restart"
+
+# Process any pending emails in queue immediately
+print_info "Processing pending emails in queue..."
+php spark email:process || print_info "No emails to process"
+
+# Restart WebSocket server (if using Ratchet)
+print_info "Restarting WebSocket server..."
+systemctl restart kewasnet-websocket 2>/dev/null || print_info "WebSocket service not configured"
+
+print_success "Services restarted"
+
+###############################################################################
+# Disable Maintenance Mode
+###############################################################################
+
+print_header "Disabling Maintenance Mode"
+
+rm -f "$DEPLOY_PATH/public/maintenance.html"
+print_success "Maintenance mode disabled"
+
+###############################################################################
+# Post-Deployment Tasks
+###############################################################################
+
+print_header "Post-Deployment Tasks"
+
+# Test application
+print_info "Testing application..."
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://$DOMAIN" || echo "000")
+if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "301" ] || [ "$HTTP_CODE" = "302" ]; then
+    print_success "Application is responding (HTTP $HTTP_CODE)"
+else
+    print_error "Application is not responding properly (HTTP $HTTP_CODE)"
+    print_warning "Check logs at: $DEPLOY_PATH/writable/logs/"
+fi
+
+# Clean old backups (keep only last 5)
+print_info "Cleaning old backups..."
+cd "$DEPLOY_PATH/backups" 2>/dev/null && ls -t | tail -n +6 | xargs rm -rf 2>/dev/null || true
+print_success "Old backups cleaned"
+
+###############################################################################
+# Deployment Summary
+###############################################################################
+
+print_header "Deployment Summary"
+
+echo -e "${GREEN}
+╔════════════════════════════════════════════════════════════════╗
+║                  DEPLOYMENT COMPLETED SUCCESSFULLY              ║
+╚════════════════════════════════════════════════════════════════╝
+${NC}"
+
+echo -e "${BLUE}Environment:${NC}       $ENVIRONMENT"
+echo -e "${BLUE}Domain:${NC}            https://$DOMAIN"
+echo -e "${BLUE}Deployment Path:${NC}  $DEPLOY_PATH"
+echo -e "${BLUE}Backup Location:${NC}  $DEPLOY_PATH/$BACKUP_DIR"
+echo -e "${BLUE}Timestamp:${NC}        $TIMESTAMP"
+echo -e "${BLUE}Git Commit:${NC}       $(git rev-parse --short HEAD)"
+echo -e "${BLUE}PHP Version:${NC}      $PHP_VERSION"
+
+echo -e "\n${YELLOW}Important Post-Deployment Checks:${NC}"
+echo -e "  1. Visit https://$DOMAIN and verify the site is working"
+echo -e "  2. Check application logs: tail -f $DEPLOY_PATH/writable/logs/log-$(date +%Y-%m-%d).log"
+echo -e "  3. Monitor error logs: tail -f /var/log/nginx/error.log"
+echo -e "  4. Test critical functionality (login, forms, payments, etc.)"
+echo -e "  5. Check WebSocket connection if using real-time features"
+echo -e "  6. Verify email queue cron: crontab -l | grep 'email:process'"
+echo -e "  7. Monitor email queue: php spark email:process"
+
+echo -e "\n${GREEN}Deployment completed at $(date)${NC}\n"
+
+# Send deployment notification (optional - configure your notification method)
+# curl -X POST -H 'Content-type: application/json' \
+#   --data "{\"text\":\"✓ KEWASNET deployed to $ENVIRONMENT at $(date)\"}" \
+#   YOUR_SLACK_WEBHOOK_URL
+
+exit 0

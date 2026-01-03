@@ -1,0 +1,143 @@
+/* Error input styling */
+.is-invalid {
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
+.is-invalid:focus {
+    border-color: #DC2626 !important;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2) !important;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #DC2626;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    line-height: 1.25;
+}
+
+/* File preview styles */
+.file-preview {
+    position: relative;
+    display: inline-block;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+.file-preview img {
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.file-preview:hover img {
+    border-color: #9ca3af;
+}
+
+.file-preview .remove-file {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #dc2626;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.file-preview .remove-file:hover {
+    background: #b91c1c;
+    transform: scale(1.1);
+}
+
+/* Drag and drop styling */
+.border-secondary {
+    border-color: var(--secondary-color) !important;
+}
+
+.bg-secondary {
+    background-color: var(--secondary-color) !important;
+}
+
+.bg-opacity-5 {
+    background-opacity: 0.05 !important;
+}
+
+/* Excerpt textarea styles */
+#excerpt {
+    padding-left: 3rem; /* Add padding for icon */
+}
+
+#excerpt-count {
+    transition: color 0.3s ease;
+}
+
+.excerpt-warning {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Character counter positioning */
+.relative textarea + div {
+    pointer-events: none; /* Prevent interference with textarea */
+    z-index: 10; /* Ensure counter appears above textarea */
+}
+
+/* Ensure the counter container has proper positioning */
+.relative {
+    position: relative;
+}
+
+/* Progress modal styles */
+#progressModal {
+    transition: opacity 0.3s ease;
+}
+
+/* Smooth progress bar transition */
+#uploadProgress {
+    transition: width 0.3s ease;
+}
+
+/* File upload preview enhancements */
+.file-preview {
+    transition: all 0.3s ease;
+}
+
+.file-preview:hover {
+    transform: scale(1.05);
+}
+
+/* Auto-growing textarea */
+#messageInput {
+    transition: height 0.2s ease;
+}
+
+/* Mirror element styling */
+#messageInputMirror {
+    visibility: hidden;
+    position: absolute;
+    z-index: -1;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+}
+
+/* Better scrollbar (when content exceeds max height) */
+#messageInput::-webkit-scrollbar {
+    width: 8px;
+}
+#messageInput::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
