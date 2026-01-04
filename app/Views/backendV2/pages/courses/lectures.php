@@ -32,7 +32,6 @@
                             <th>Lecture Title</th>
                             <th>Duration</th>
                             <th>Preview</th>
-                            <th>Order</th>
                             <th>Created</th>
                             <th>Actions</th>
                         </tr>
@@ -72,7 +71,6 @@
                         return data == 1 ? '<i data-lucide="eye" class="w-4 h-4 text-green-600"></i>' : '-';
                     }
                 },
-                { "data": "order_index", "className": "text-center" },
                 { "data": "created_at" },
                 {
                     "data": "id",

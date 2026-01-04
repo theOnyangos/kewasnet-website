@@ -92,6 +92,13 @@ $routes->group('', ['filter' => 'auth:guest,/ksp'], static function ($routes) {
 
         // Download attachments
         $routes->get('attachments/download/(:any)', 'FrontendV2\DiscussionController::downloadAttachment/$1');
+        
+        // Public Learning Hub Routes (no authentication required)
+        $routes->group('learning-hub', static function ($routes) {
+            $routes->get('/', 'FrontendV2\LearningHubController::index');
+            $routes->get('courses', 'FrontendV2\LearningHubController::courses');
+            $routes->get('course/(:segment)', 'FrontendV2\LearningHubController::courseDetails/$1');
+        });
     });
 });
 
@@ -101,15 +108,13 @@ $routes->group('', ['filter' => 'auth:auth,/ksp/login'], static function ($route
         $routes->get('logout', 'BackendV2\AuthController::handleClientLogout');
         $routes->get('dashboard', 'FrontendV2\LearningHubController::dashboard');
         
-        // Learning Hub Routes
+        // Authenticated Learning Hub Routes
         $routes->group('learning-hub', static function ($routes) {
-            $routes->get('/', 'FrontendV2\LearningHubController::index');
-            $routes->get('courses', 'FrontendV2\LearningHubController::courses');
-            $routes->get('course/(:segment)', 'FrontendV2\LearningHubController::courseDetails/$1');
             $routes->post('enroll', 'FrontendV2\LearningHubController::enroll');
             $routes->get('my-courses', 'FrontendV2\LearningHubController::myCourses');
             $routes->get('learn/(:segment)', 'FrontendV2\LearningHubController::coursePlayer/$1');
             $routes->get('lecture/(:segment)/(:segment)', 'FrontendV2\LearningHubController::lecture/$1/$2');
+            $routes->post('lecture/(:segment)/(:segment)/complete', 'FrontendV2\LearningHubController::markLectureComplete/$1/$2');
             $routes->get('quiz/(:segment)/(:segment)', 'FrontendV2\LearningHubController::quiz/$1/$2');
             $routes->post('quiz/submit', 'FrontendV2\LearningHubController::submitQuiz');
             $routes->get('certificates', 'FrontendV2\LearningHubController::certificates');
@@ -426,6 +431,18 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->post('lectures/create', 'BackendV2\CoursesController::createLecture');
         $routes->post('lectures/update/(:segment)', 'BackendV2\CoursesController::updateLecture/$1');
         $routes->post('lectures/delete/(:segment)', 'BackendV2\CoursesController::deleteLecture/$1');
+        
+        // Quiz management
+        $routes->get('quizzes/list', 'BackendV2\CoursesController::getQuizzes');
+        $routes->get('quizzes', 'BackendV2\CoursesController::quizzes');
+        $routes->get('quizzes/create', 'BackendV2\CoursesController::createQuiz');
+        $routes->post('quizzes/create', 'BackendV2\CoursesController::handleCreateQuiz');
+        $routes->get('quizzes/edit/(:segment)', 'BackendV2\CoursesController::editQuiz/$1');
+        $routes->post('quizzes/edit/(:segment)', 'BackendV2\CoursesController::handleUpdateQuiz/$1');
+        $routes->get('quizzes/(:segment)/questions', 'BackendV2\CoursesController::getQuizQuestions/$1');
+        $routes->post('quizzes/questions/create', 'BackendV2\CoursesController::createQuizQuestion');
+        $routes->post('quizzes/questions/update/(:segment)', 'BackendV2\CoursesController::updateQuizQuestion/$1');
+        $routes->post('quizzes/questions/delete/(:segment)', 'BackendV2\CoursesController::deleteQuizQuestion/$1');
     });
 
     // Admin Pillars Routes

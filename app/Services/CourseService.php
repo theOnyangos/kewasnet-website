@@ -6,7 +6,7 @@ use App\Models\CourseModel;
 use App\Models\CourseEnrollmentModel;
 use App\Models\CourseSectionModel;
 use App\Models\CourseLectureModel;
-use App\Models\UserProgressModel;
+use App\Models\CourseLectureProgressModel;
 use App\Models\CourseCompletionModel;
 use App\Libraries\ClientAuth;
 
@@ -25,7 +25,7 @@ class CourseService
         $this->enrollmentModel = new CourseEnrollmentModel();
         $this->sectionModel = new CourseSectionModel();
         $this->lectureModel = new CourseLectureModel();
-        $this->progressModel = new UserProgressModel();
+        $this->progressModel = new CourseLectureProgressModel();
         $this->completionModel = new CourseCompletionModel();
     }
 
@@ -239,12 +239,13 @@ class CourseService
             $totalLectures += count($lectures);
 
             foreach ($lectures as $lecture) {
-                $progress = $this->progressModel->where('user_id', $userId)
+                $progress = $this->progressModel->where('student_id', $userId)
                     ->where('course_id', $courseId)
                     ->where('lecture_id', $lecture['id'])
+                    ->where('status', 'completed')
                     ->first();
 
-                if ($progress && $progress['progress_percentage'] >= 100) {
+                if ($progress) {
                     $completedLectures++;
                 }
             }

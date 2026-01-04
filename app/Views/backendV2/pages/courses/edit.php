@@ -6,21 +6,22 @@
 <?= $this->endSection(); ?>
 
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6 main-content-area">
+    <main class="flex-1 overflow-y-auto main-content-area">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Edit Course',
+            'pageDescription' => 'Update course details and manage content',
+            'breadcrumbs' => [
+                ['label' => 'Courses', 'url' => site_url('auth/courses/courses')],
+                ['label' => esc($course['title'] ?? 'Edit')]
+            ],
+            'bannerActions' => '<a href="' . site_url('auth/courses/courses') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Back to Courses
+            </a>'
+        ]) ?>
+
+        <div class="px-6 pb-6">
         <div class="bg-white rounded-b-xl shadow-sm max-w-full">
-            <!-- Header -->
-            <div class="w-full flex justify-between items-center p-6 border-b border-gray-200">
-                <div>
-                    <h3 class="text-2xl font-bold text-primary">Edit Course</h3>
-                    <p class="text-gray-600">Update course details and manage content</p>
-                </div>
-                <div class="flex gap-3">
-                    <button onclick="window.location.href='<?= site_url('auth/courses/courses') ?>'" class="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                        Back to Courses
-                    </button>
-                </div>
-            </div>
 
             <!-- Tab Navigation -->
             <div class="border-b border-gray-200">
@@ -61,6 +62,7 @@
 
             <!-- Curriculum Tab -->
             <?= $this->include('backendV2/pages/courses/partials/curriculum_tab') ?>
+        </div>
         </div>
 
         <!-- Modals -->
@@ -201,18 +203,37 @@
                     course_id: courseId,
                     title: $('#section_title').val(),
                     description: $('#section_description').val(),
-                    order_index: $('#section_order').val(),
+                    quiz_id: $('#section_quiz_id').val(),
                     '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
                 },
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        closeSectionModal();
-                        location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message || 'Section saved successfully',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            closeSectionModal();
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'Failed to save section'
+                        });
                     }
                 },
                 error: function(xhr) {
-                    console.error('Failed to save section:', xhr.responseJSON?.message);
+                    const errorMsg = xhr.responseJSON?.message || 'An error occurred while saving the section';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg
+                    });
                 }
             });
         });
@@ -242,12 +263,31 @@
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        closeLectureModal();
-                        location.reload();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message || 'Lecture saved successfully',
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            closeLectureModal();
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message || 'Failed to save lecture'
+                        });
                     }
                 },
                 error: function(xhr) {
-                    console.error('Failed to save lecture:', xhr.responseJSON?.message);
+                    const errorMsg = xhr.responseJSON?.message || 'An error occurred while saving the lecture';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg
+                    });
                 }
             });
         });
@@ -273,6 +313,7 @@
         $('#sectionSubmitText').text('Add Section');
         $('#section_id').val('');
         $('#addSectionForm')[0].reset();
+        loadQuizzes();
         $('#sectionModal').removeClass('hidden');
     };
 
@@ -281,33 +322,68 @@
         $('#addSectionForm')[0].reset();
     };
 
-    window.editSection = function(sectionId) {
-        console.log('Edit section called with ID:', sectionId);
-        $.ajax({
-            url: '<?= site_url("auth/courses/sections/get") ?>/' + sectionId,
+    window.editSection = function(element) {
+        // Find the button element (in case the icon was clicked)
+        const button = element.closest('button') || element;
+        const sectionId = button.dataset.sectionId || button.getAttribute('data-section-id');
+        
+        if (!sectionId) {
+            alert('Error: No section ID provided');
+            return;
+        }
+        
+        // Load section data and quizzes in parallel
+        Promise.all([
+            loadQuizzes(),
+            $.ajax({
+                url: '<?= site_url("auth/courses/sections/get") ?>/' + sectionId,
+                type: 'GET',
+                dataType: 'json'
+            })
+        ]).then(([quizzesResult, sectionResponse]) => {
+            if (sectionResponse.success && sectionResponse.data) {
+                $('#sectionModalTitle').text('Edit Section');
+                $('#sectionSubmitText').text('Update Section');
+                $('#section_id').val(sectionResponse.data.id);
+                $('#section_title').val(sectionResponse.data.title);
+                $('#section_description').val(sectionResponse.data.description);
+                
+                // Set quiz value and trigger Select2 update
+                const quizId = sectionResponse.data.quiz_id || '';
+                $('#section_quiz_id').val(quizId).trigger('change');
+                
+                $('#sectionModal').removeClass('hidden');
+                setTimeout(() => lucide.createIcons(), 100);
+            } else {
+                console.error('Failed to load section data');
+                alert('Failed to load section data');
+            }
+        }).catch((error) => {
+            console.error('Error loading section:', error);
+            alert('Failed to load section data. Please try again.');
+        });
+    };
+    
+    // Load available quizzes
+    function loadQuizzes() {
+        return $.ajax({
+            url: '<?= site_url("auth/courses/quizzes/list") ?>',
             type: 'GET',
             dataType: 'json',
             success: function(response) {
-                console.log('Section data received:', response);
                 if (response.success && response.data) {
-                    $('#sectionModalTitle').text('Edit Section');
-                    $('#sectionSubmitText').text('Update Section');
-                    $('#section_id').val(response.data.id);
-                    $('#section_title').val(response.data.title);
-                    $('#section_description').val(response.data.description);
-                    $('#section_order').val(response.data.order_index);
-                    $('#sectionModal').removeClass('hidden');
-                    setTimeout(() => lucide.createIcons(), 100);
-                } else {
-                    console.error('Failed to load section data - no data in response');
+                    const select = $('#section_quiz_id');
+                    select.html('<option value="">No Quiz</option>');
+                    response.data.forEach(quiz => {
+                        select.append(`<option value="${quiz.id}">${quiz.title}</option>`);
+                    });
                 }
             },
-            error: (xhr) => {
-                console.error('AJAX error loading section data:', xhr);
-                console.error('Status:', xhr.status, 'Response:', xhr.responseJSON);
+            error: function(xhr) {
+                console.error('Failed to load quizzes:', xhr);
             }
         });
-    };
+    }
 
     window.deleteSection = function(sectionId) {
         if (!confirm('Are you sure you want to delete this section? All lectures in this section will also be deleted.')) return;

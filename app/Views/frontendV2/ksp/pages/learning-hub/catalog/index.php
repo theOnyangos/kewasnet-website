@@ -241,16 +241,8 @@
                 <div class="col-span-full text-center py-12">
                     <i data-lucide="book-open" class="w-16 h-16 text-slate-400 mx-auto mb-4"></i>
                     <p class="text-slate-600 text-lg">No courses found. Try adjusting your filters.</p>
-                    <?php if (ENVIRONMENT === 'development'): ?>
-                        <p class="text-xs text-slate-400 mt-2">Debug: Courses array is empty (count: <?= count($courses ?? []) ?>)</p>
-                    <?php endif; ?>
                 </div>
             <?php else: ?>
-                <?php if (ENVIRONMENT === 'development'): ?>
-                    <div class="col-span-full bg-blue-50 p-2 rounded mb-4 text-sm text-blue-700">
-                        Debug: Found <?= count($courses) ?> course(s)
-                    </div>
-                <?php endif; ?>
                 <?php foreach ($courses as $course): ?>
                     <?php 
                     // Extract course data for the component

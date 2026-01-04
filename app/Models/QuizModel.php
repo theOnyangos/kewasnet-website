@@ -8,7 +8,7 @@ class QuizModel extends Model
 {
     protected $table            = 'quizzes';
     protected $primaryKey       = 'id';
-    protected $useAutoIncrement = true;
+    protected $useAutoIncrement = false; // Using UUIDs
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
@@ -17,6 +17,8 @@ class QuizModel extends Model
         'title',
         'description',
         'status',
+        'passing_score',
+        'max_attempts',
     ];
 
     protected $useTimestamps = true;
@@ -24,6 +26,29 @@ class QuizModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+    
+    protected $beforeInsert = ['generateUUID'];
+    
+    protected function generateUUID(array $data)
+    {
+        if (!isset($data['data']['id'])) {
+            $data['data']['id'] = sprintf(
+                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
+        }
+        
+        // Set course_section_id to empty string if not provided (will be updated when attached to section)
+        if (!isset($data['data']['course_section_id']) || $data['data']['course_section_id'] === null) {
+            $data['data']['course_section_id'] = '';
+        }
+        
+        return $data;
+    }
 
     /**
      * Get quiz with questions

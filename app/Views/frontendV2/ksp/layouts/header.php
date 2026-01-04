@@ -9,7 +9,7 @@
 ?>
 
 <!-- Header -->
-<header id="main-header" class="bg-white shadow-sm fixed top-0 left-0 right-0 w-full z-[9999] border-b border-slate-100 transition-all duration-300">
+<header id="main-header" class="bg-white shadow-sm fixed top-0 left-0 right-0 w-full z-50 border-b border-slate-100 transition-all duration-300">
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center py-4">
             <!-- Logo -->

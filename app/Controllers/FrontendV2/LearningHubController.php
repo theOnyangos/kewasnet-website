@@ -33,7 +33,7 @@ class LearningHubController extends BaseController
      */
     public function index()
     {
-        $userId = ClientAuth::getId();
+        $userId = ClientAuth::getId() ?: null; // Allow null for unauthenticated users
         $courseModel = new CourseModel();
         $enrollmentModel = new CourseEnrollmentModel();
         
@@ -147,7 +147,9 @@ class LearningHubController extends BaseController
      */
     public function courses()
     {
+        $userId = ClientAuth::getId() ?: null; // Allow null for unauthenticated users
         $courseModel = new CourseModel();
+        $enrollmentModel = new CourseEnrollmentModel();
         $db = \Config\Database::connect();
         
         // Get filter parameters
@@ -193,6 +195,19 @@ class LearningHubController extends BaseController
         $courses = $builder->orderBy('created_at', 'DESC')
                           ->limit($perPage, ($page - 1) * $perPage)
                           ->findAll();
+        
+        // Add enrollment status for each course
+        foreach ($courses as &$course) {
+            $course['is_enrolled'] = false;
+            $course['progress'] = 0;
+            
+            if ($userId) {
+                $course['is_enrolled'] = $enrollmentModel->isEnrolled($userId, $course['id']);
+                if ($course['is_enrolled']) {
+                    $course['progress'] = $this->courseService->calculateProgress($userId, $course['id']);
+                }
+            }
+        }
 
         // Calculate pagination data
         $totalPages = ceil($totalCourses / $perPage);
@@ -270,7 +285,7 @@ class LearningHubController extends BaseController
      */
     public function courseDetails($courseId)
     {
-        $userId = ClientAuth::getId();
+        $userId = ClientAuth::getId() ?: null; // Allow null for unauthenticated users
         $course = $this->courseService->getCourseOverview($courseId);
 
         if (!$course) {
@@ -279,7 +294,7 @@ class LearningHubController extends BaseController
 
         // Check enrollment status
         $enrollmentModel = new CourseEnrollmentModel();
-        $isEnrolled = $enrollmentModel->isEnrolled($userId, $courseId);
+        $isEnrolled = $userId ? $enrollmentModel->isEnrolled($userId, $courseId) : false;
 
         $data = [
             'title' => $course['title'] . ' - KEWASNET',
@@ -376,6 +391,14 @@ class LearningHubController extends BaseController
 
         $course = $this->courseService->getCourseContent($courseId, $userId);
         $progress = $this->courseService->calculateProgress($userId, $courseId);
+        
+        // Get completed lectures
+        $progressModel = new \App\Models\CourseLectureProgressModel();
+        $completedProgress = $progressModel->where('student_id', $userId)
+                                          ->where('course_id', $courseId)
+                                          ->where('status', 'completed')
+                                          ->findAll();
+        $completedLectures = array_column($completedProgress, 'lecture_id');
 
         $data = [
             'title' => $course['title'] . ' - Learning Hub',
@@ -383,6 +406,7 @@ class LearningHubController extends BaseController
             'course' => $course,
             'progress' => $progress,
             'user_id' => $userId,
+            'completed_lectures' => $completedLectures,
         ];
 
         return view('frontendV2/ksp/pages/learning-hub/learning/course-player', $data);
@@ -408,14 +432,27 @@ class LearningHubController extends BaseController
             return redirect()->to('ksp/learning-hub/learn/' . $courseId)
                 ->with('error', 'Lecture not found');
         }
+        
+        // Check if lecture is completed
+        $progressModel = new \App\Models\CourseLectureProgressModel();
+        $isCompleted = $progressModel->isLectureCompleted($userId, $lectureId);
 
         // Get Vimeo embed if available
         $embedCode = null;
-        if (!empty($lecture['vimeo_video_id'])) {
-            $vimeoResult = $this->vimeoService->getVideoEmbedCode($lecture['vimeo_video_id'], $userId, $courseId);
-            if ($vimeoResult['status'] === 'success') {
-                $embedCode = $vimeoResult['embed_code'];
+        $vimeoVideoId = $lecture['vimeo_video_id'] ?? null;
+        
+        // If vimeo_video_id is not set, try to extract from video_url
+        if (empty($vimeoVideoId) && !empty($lecture['video_url'])) {
+            if (strpos($lecture['video_url'], 'vimeo.com') !== false) {
+                if (preg_match('/vimeo\.com\/(\d+)/', $lecture['video_url'], $matches)) {
+                    $vimeoVideoId = $matches[1];
+                }
             }
+        }
+        
+        // Generate simple Vimeo embed code
+        if (!empty($vimeoVideoId)) {
+            $embedCode = '<iframe src="https://player.vimeo.com/video/' . $vimeoVideoId . '?h=&amp;badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; clipboard-write" style="width:100%;height:100%;" title="' . esc($lecture['title']) . '"></iframe>';
         }
 
         $data = [
@@ -424,9 +461,53 @@ class LearningHubController extends BaseController
             'lecture' => $lecture,
             'course_id' => $courseId,
             'embed_code' => $embedCode,
+            'is_completed' => $isCompleted,
         ];
 
         return view('frontendV2/ksp/pages/learning-hub/learning/lecture-view', $data);
+    }
+
+    /**
+     * Mark lecture as completed
+     */
+    public function markLectureComplete($courseId, $lectureId)
+    {
+        $userId = ClientAuth::getId();
+
+        if (!$userId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Please login to track progress'
+            ]);
+        }
+
+        // Check access
+        if (!$this->courseService->checkAccess($userId, $courseId)) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'You need to enroll in this course first'
+            ]);
+        }
+
+        $progressModel = new \App\Models\CourseLectureProgressModel();
+        
+        try {
+            $result = $progressModel->markAsCompleted($userId, $courseId, $lectureId);
+            
+            // Calculate new progress percentage
+            $percentage = $progressModel->getCourseCompletionPercentage($userId, $courseId);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Lecture marked as completed',
+                'progress_percentage' => $percentage
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to update progress: ' . $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -450,12 +531,27 @@ class LearningHubController extends BaseController
                 ->with('error', 'Section not found');
         }
 
+        // Get course details
+        $courseModel = new CourseModel();
+        $course = $courseModel->find($courseId);
+
+        if (!$course) {
+            return redirect()->to('ksp/learning-hub')
+                ->with('error', 'Course not found');
+        }
+
+        // Check if section has a quiz
+        if (empty($section['quiz_id'])) {
+            return redirect()->to('ksp/learning-hub/learn/' . $courseId)
+                ->with('error', 'No quiz available for this section');
+        }
+
         $quizModel = new \App\Models\QuizModel();
-        $quiz = $quizModel->getSectionQuiz($sectionId);
+        $quiz = $quizModel->find($section['quiz_id']);
 
         if (!$quiz) {
             return redirect()->to('ksp/learning-hub/learn/' . $courseId)
-                ->with('error', 'No quiz available for this section');
+                ->with('error', 'Quiz not found');
         }
 
         $quizWithQuestions = $quizModel->getQuizWithQuestions($quiz['id']);
@@ -466,14 +562,81 @@ class LearningHubController extends BaseController
             ->where('quiz_id', $quiz['id'])
             ->orderBy('completed_at', 'DESC')
             ->findAll();
+        
+        // Check if user wants to view a specific attempt (via query parameter)
+        $viewAttemptId = $this->request->getGet('view_attempt');
+        $latestAttempt = null;
+        $attemptAnswers = [];
+        
+        // Load answers for ALL previous attempts to show complete history
+        $answerModel = new \App\Models\QuizAnswerModel();
+        $allAttemptsAnswers = []; // Structure: [attemptId => [questionId => answer_data]]
+        
+        foreach ($previousAttempts as $attempt) {
+            $answers = $answerModel->where('attempt_id', $attempt['id'])->findAll();
+            $allAttemptsAnswers[$attempt['id']] = [];
+            
+            foreach ($answers as $answer) {
+                $userAnswer = $answer['option_id'] ?? $answer['answer_text'];
+                $allAttemptsAnswers[$attempt['id']][$answer['question_id']] = [
+                    'user_answer' => (string)$userAnswer,
+                    'is_correct' => (bool)$answer['is_correct'],
+                    'correct_answer' => null,
+                    'attempt_number' => count($previousAttempts) - array_search($attempt, $previousAttempts)
+                ];
+            }
+        }
+        
+        // Get correct answers for all questions
+        foreach ($quizWithQuestions['questions'] as $question) {
+            if ($question['question_type'] === 'multiple_choice' || $question['question_type'] === 'true_false') {
+                foreach ($question['options'] as $option) {
+                    if ($option['is_correct'] == 1) {
+                        $correctAnswer = (string)$option['id'];
+                        // Apply correct answer to all attempts for this question
+                        foreach ($allAttemptsAnswers as $attemptId => &$attemptData) {
+                            if (isset($attemptData[$question['id']])) {
+                                $attemptData[$question['id']]['correct_answer'] = $correctAnswer;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If viewing a specific attempt, set it as the latest
+        if ($viewAttemptId && !empty($previousAttempts)) {
+            foreach ($previousAttempts as $attempt) {
+                if ($attempt['id'] === $viewAttemptId) {
+                    $latestAttempt = $attempt;
+                    $attemptAnswers = $allAttemptsAnswers[$viewAttemptId] ?? [];
+                    break;
+                }
+            }
+        }
+
+        // Check if user can take another attempt
+        $attemptsCount = count($previousAttempts);
+        $maxAttempts = $quiz['max_attempts'] ?? null; // null means unlimited
+        $canTakeNewAttempt = $maxAttempts === null || $attemptsCount < $maxAttempts;
+        $attemptsRemaining = $maxAttempts !== null ? ($maxAttempts - $attemptsCount) : null;
 
         $data = [
             'title' => $quiz['title'] . ' - Quiz',
             'description' => 'Section quiz',
             'quiz' => $quizWithQuestions,
             'section' => $section,
+            'course' => $course,
             'course_id' => $courseId,
             'previous_attempts' => $previousAttempts,
+            'latest_attempt' => $latestAttempt,
+            'attempt_answers' => $attemptAnswers,
+            'all_attempts_answers' => $allAttemptsAnswers,
+            'can_take_new_attempt' => $canTakeNewAttempt,
+            'attempts_count' => $attemptsCount,
+            'attempts_remaining' => $attemptsRemaining,
+            'max_attempts' => $maxAttempts,
         ];
 
         return view('frontendV2/ksp/pages/learning-hub/learning/quiz-view', $data);
@@ -511,6 +674,97 @@ class LearningHubController extends BaseController
         return $this->response
             ->setContentType('application/json')
             ->setJSON($result);
+    }
+
+    /**
+     * Get quiz attempt details for toggle view
+     */
+    public function getAttemptDetails()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response
+                ->setContentType('application/json')
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Invalid request'
+                ]);
+        }
+
+        $userId = ClientAuth::getId();
+        $attemptId = $this->request->getPost('attempt_id');
+
+        if (!$userId || !$attemptId) {
+            return $this->response
+                ->setContentType('application/json')
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Missing required parameters'
+                ]);
+        }
+
+        // Get the attempt
+        $attemptModel = new \App\Models\QuizAttemptModel();
+        $attempt = $attemptModel->find($attemptId);
+
+        if (!$attempt) {
+            return $this->response
+                ->setContentType('application/json')
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Attempt not found'
+                ]);
+        }
+
+        // Verify the attempt belongs to the current user (both are now UUIDs)
+        if ($attempt['user_id'] !== $userId) {
+            return $this->response
+                ->setContentType('application/json')
+                ->setJSON([
+                    'status' => 'error',
+                    'message' => 'Access denied'
+                ]);
+        }
+
+        // Get quiz questions
+        $quizModel = new \App\Models\QuizModel();
+        $quiz = $quizModel->getQuizWithQuestions($attempt['quiz_id']);
+
+        // Get the answers
+        $answerModel = new \App\Models\QuizAnswerModel();
+        $answers = $answerModel->where('attempt_id', $attemptId)->findAll();
+
+        // Format answers for frontend
+        $attemptAnswers = [];
+        foreach ($answers as $answer) {
+            $userAnswer = $answer['option_id'] ?? $answer['answer_text'];
+            $attemptAnswers[$answer['question_id']] = [
+                'user_answer' => (string)$userAnswer,
+                'is_correct' => (bool)$answer['is_correct'],
+                'correct_answer' => null
+            ];
+        }
+
+        // Get correct answers
+        foreach ($quiz['questions'] as $question) {
+            if (isset($attemptAnswers[$question['id']])) {
+                if ($question['question_type'] === 'multiple_choice' || $question['question_type'] === 'true_false') {
+                    foreach ($question['options'] as $option) {
+                        if ($option['is_correct'] == 1) {
+                            $attemptAnswers[$question['id']]['correct_answer'] = (string)$option['id'];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->response
+            ->setContentType('application/json')
+            ->setJSON([
+                'status' => 'success',
+                'attempt' => $attempt,
+                'answers' => $attemptAnswers
+            ]);
     }
 
     /**

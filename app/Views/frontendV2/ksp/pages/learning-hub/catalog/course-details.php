@@ -64,7 +64,7 @@
                    class="gradient-btn px-6 py-3 rounded-lg text-white font-medium">
                     Continue Learning
                 </a>
-            <?php else: ?>
+            <?php elseif ($user_id): ?>
                 <?php if ($isPaid): ?>
                     <button id="enrollBtn" data-course-id="<?= $course['id'] ?>" data-is-paid="1"
                             class="gradient-btn px-6 py-3 rounded-lg text-white font-medium">
@@ -76,6 +76,17 @@
                         Enroll for Free
                     </button>
                 <?php endif; ?>
+            <?php else: ?>
+                <!-- Not logged in - show login prompt -->
+                <a href="<?= base_url('ksp/login?redirect=' . urlencode(current_url())) ?>" 
+                   class="gradient-btn px-6 py-3 rounded-lg text-white font-medium inline-flex items-center gap-2">
+                    <i data-lucide="log-in" class="w-5 h-5"></i>
+                    <?php if ($isPaid): ?>
+                        Login to Enroll - <?= number_format($price, 2) ?> KES
+                    <?php else: ?>
+                        Login to Enroll for Free
+                    <?php endif; ?>
+                </a>
             <?php endif; ?>
         </div>
     </div>

@@ -8,7 +8,7 @@ class CourseLectureModel extends Model
 {
     protected $table            = 'course_lectures';
     protected $primaryKey       = 'id';
-    protected $useAutoIncrement = true;
+    protected $useAutoIncrement = false; // Using UUIDs
     protected $returnType       = 'array';
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
@@ -17,12 +17,9 @@ class CourseLectureModel extends Model
         'title',
         'description',
         'video_url',
-        'vimeo_video_id',
         'duration',
         'is_preview',
-        'is_free_preview',
-        'star_rating',
-        // 'order_index', // Column doesn't exist in migration
+        'status',
     ];
 
     protected $useTimestamps = true;
@@ -30,6 +27,23 @@ class CourseLectureModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
+    
+    protected $beforeInsert = ['generateUUID'];
+    
+    protected function generateUUID(array $data)
+    {
+        if (!isset($data['data']['id'])) {
+            $data['data']['id'] = sprintf(
+                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
+        }
+        return $data;
+    }
 
     /**
      * Get lectures for a section ordered by created_at
@@ -63,7 +77,7 @@ class CourseLectureModel extends Model
         $linkModel = new LectureLinkModel();
         $lecture['links'] = $linkModel->where('lecture_id', $lectureId)
             ->where('deleted_at', null)
-            ->orderBy('order_index', 'ASC')
+            ->orderBy('created_at', 'ASC')
             ->findAll();
 
         // Get Vimeo video info

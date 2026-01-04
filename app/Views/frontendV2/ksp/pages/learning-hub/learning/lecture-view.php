@@ -26,7 +26,18 @@
         <!-- Main Content -->
         <div class="lg:col-span-3">
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
-                <h1 class="text-2xl font-bold text-dark mb-4"><?= esc($lecture['title']) ?></h1>
+                <div class="flex justify-between items-start mb-4">
+                    <h1 class="text-2xl font-bold text-dark"><?= esc($lecture['title']) ?></h1>
+                    <?php if ($is_completed): ?>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Completed
+                        </span>
+                    <?php else: ?>
+                        <button id="markCompleteBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
+                            <i data-lucide="check" class="w-4 h-4"></i> Mark as Complete
+                        </button>
+                    <?php endif; ?>
+                </div>
                 
                 <!-- Video Player -->
                 <?php if (!empty($embed_code)): ?>
@@ -99,8 +110,45 @@
 $(document).ready(function() {
     lucide.createIcons();
     
-    // Track video progress (if Vimeo player)
-    // This would integrate with Vimeo player API to track watch time
+    // Mark lecture as complete
+    $('#markCompleteBtn').on('click', function() {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Marking...');
+        
+        $.ajax({
+            url: '<?= base_url('ksp/learning-hub/lecture/' . $course_id . '/' . $lecture['id'] . '/complete') ?>',
+            type: 'POST',
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
+            success: function(response) {
+                if (response.success) {
+                    btn.replaceWith('<span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium"><i data-lucide="check-circle" class="w-4 h-4"></i> Completed</span>');
+                    lucide.createIcons();
+                    
+                    // Show success message
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Great job!',
+                            text: 'Lecture marked as completed. Progress: ' + response.progress_percentage + '%',
+                            showConfirmButton: false,
+                            timer: 2000
+                        });
+                    }
+                } else {
+                    alert(response.message || 'Failed to mark as complete');
+                    btn.prop('disabled', false).html('<i data-lucide="check" class="w-4 h-4"></i> Mark as Complete');
+                    lucide.createIcons();
+                }
+            },
+            error: function() {
+                alert('An error occurred. Please try again.');
+                btn.prop('disabled', false).html('<i data-lucide="check" class="w-4 h-4"></i> Mark as Complete');
+                lucide.createIcons();
+            }
+        });
+    });
 });
 </script>
 <?= $this->endSection() ?>

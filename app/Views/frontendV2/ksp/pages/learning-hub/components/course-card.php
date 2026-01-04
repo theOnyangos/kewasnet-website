@@ -20,14 +20,6 @@ if (!isset($course)) {
 
 // Final validation
 if (!isset($course) || !is_array($course) || empty($course)) {
-    if (defined('ENVIRONMENT') && ENVIRONMENT === 'development') {
-        echo '<div class="bg-red-50 p-2 rounded text-red-600 text-xs mb-2">';
-        echo 'DEBUG: Course card - $course not available. ';
-        if (isset($data)) {
-            echo 'Data type: ' . gettype($data);
-        }
-        echo '</div>';
-    }
     return;
 }
 

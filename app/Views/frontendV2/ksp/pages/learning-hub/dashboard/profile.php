@@ -2,8 +2,6 @@
     use App\Helpers\UrlHelper;
     $currentUrl = new UrlHelper();
     session()->set([ 'redirect_url' => $currentUrl::currentUrl() ]);
-
-    // dd($user);
 ?>
 
 <?= $this->extend('frontendV2/ksp/layouts/main') ?>

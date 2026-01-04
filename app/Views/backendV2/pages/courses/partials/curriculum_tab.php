@@ -9,7 +9,7 @@
             </div>
             <button type="button" onclick="showAddSectionModal()" class="gradient-btn flex items-center px-6 py-3 rounded-full text-white hover:shadow-lg transition-all duration-300 whitespace-nowrap">
                 <i data-lucide="plus" class="w-5 h-5 mr-2 z-10"></i>
-                <span class="font-medium">Add Section</span>
+                <span class="font-medium">Add a Curriculum</span>
             </button>
         </div>
 
@@ -21,7 +21,7 @@
             </div>
             <?php else: ?>
                 <?php foreach ($sections as $section): ?>
-                <div class="border border-gray-200 rounded-lg p-4 bg-white section-item" data-section-id="<?= $section['id'] ?>">
+                <div class="border border-gray-200 rounded-lg p-4 bg-white section-item" data-section-id="<?= $section['id'] ?? '' ?>">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
                             <h4 class="font-semibold text-gray-800"><?= esc($section['title']) ?></h4>
@@ -44,7 +44,7 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="editSection('<?= $section['id'] ?>')" class="text-blue-600 hover:text-blue-800">
+                            <button onclick="editSection(this)" data-section-id="<?= $section['id'] ?? '' ?>" class="text-blue-600 hover:text-blue-800" title="Section ID: <?= $section['id'] ?? 'NONE' ?>">
                                 <i data-lucide="edit" class="w-4 h-4"></i>
                             </button>
                             <button onclick="deleteSection('<?= $section['id'] ?>')" class="text-red-600 hover:text-red-800">
@@ -65,7 +65,7 @@
                             $lectureModel = new \App\Models\CourseLectureModel();
                             $lectures = $lectureModel->where('section_id', $section['id'])
                                 ->where('deleted_at', null)
-                                ->orderBy('order_index', 'ASC')
+                                ->orderBy('created_at', 'ASC')
                                 ->findAll();
 
                             if (empty($lectures)): ?>
@@ -76,8 +76,8 @@
                                     <div class="flex items-center gap-2">
                                         <i data-lucide="play-circle" class="w-4 h-4 text-gray-400"></i>
                                         <span class="text-sm"><?= esc($lecture['title']) ?></span>
-                                        <?php if ($lecture['is_free_preview']): ?>
-                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Free</span>
+                                        <?php if (isset($lecture['is_preview']) && $lecture['is_preview']): ?>
+                                            <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Preview</span>
                                         <?php endif; ?>
                                     </div>
                                     <div class="flex gap-2">

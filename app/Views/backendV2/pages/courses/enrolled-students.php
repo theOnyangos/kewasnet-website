@@ -14,72 +14,25 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
-        <!-- Header Section -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="flex items-center space-x-2 mb-2">
-                        <a href="<?= site_url('auth/courses') ?>" class="text-gray-500 hover:text-gray-700">
-                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                        </a>
-                        <h1 class="text-3xl font-bold text-slate-800"><?= $dashboardTitle ?></h1>
-                    </div>
-                    <p class="text-gray-600">Students enrolled in: <span class="font-semibold text-blue-600"><?= esc($course['title']) ?></span></p>
-                </div>
-            </div>
-        </div>
+    <main class="flex-1 overflow-y-auto">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Enrolled Students',
+            'pageDescription' => 'Students enrolled in: ' . esc($course['title']),
+            'breadcrumbs' => [
+                ['label' => 'Courses', 'url' => site_url('auth/courses/courses')],
+                ['label' => esc($course['title']), 'url' => site_url('auth/courses/edit/' . $courseId)],
+                ['label' => 'Enrolled Students']
+            ],
+            'bannerActions' => '<a href="' . site_url('auth/courses/courses') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Back to Courses
+            </a>'
+        ]) ?>
 
-        <!-- Course Info Card -->
-        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-sm p-6 mb-6 border border-blue-100">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-blue-500 rounded-lg p-3">
-                        <i data-lucide="book-open" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Course Title</p>
-                        <p class="text-lg font-semibold text-gray-900"><?= esc($course['title']) ?></p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="bg-green-500 rounded-lg p-3">
-                        <i data-lucide="signal" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Level</p>
-                        <p class="text-lg font-semibold text-gray-900 capitalize"><?= esc($course['level']) ?></p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="bg-purple-500 rounded-lg p-3">
-                        <i data-lucide="tag" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Price</p>
-                        <p class="text-lg font-semibold text-gray-900">
-                            <?php if ($course['is_paid'] == 0 || $course['price'] == 0): ?>
-                                <span class="text-green-600">Free</span>
-                            <?php else: ?>
-                                KES <?= number_format($course['price'], 2) ?>
-                            <?php endif; ?>
-                        </p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="bg-orange-500 rounded-lg p-3">
-                        <i data-lucide="clock" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-600">Duration</p>
-                        <p class="text-lg font-semibold text-gray-900"><?= esc($course['duration'] ?? 'N/A') ?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="px-6 pb-6">
 
         <!-- Enrolled Students Table -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-b-xl shadow-sm p-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-800">Enrolled Students</h2>
@@ -87,8 +40,16 @@
                 </div>
             </div>
 
+            <!-- Loading Spinner -->
+            <div id="tableLoader" class="flex flex-col items-center justify-center py-12">
+                <div class="relative">
+                    <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                </div>
+                <p class="mt-4 text-sm text-gray-600">Loading enrolled students...</p>
+            </div>
+
             <!-- Students DataTable -->
-            <div class="overflow-x-auto">
+            <div id="tableContainer" class="overflow-x-auto hidden">
                 <table id="enrolledStudentsTable" class="data-table stripe hover" style="width:100%">
                     <thead class="bg-gray-50">
                         <tr>
@@ -104,6 +65,21 @@
                 </table>
             </div>
         </div>
+        </div>
+
+        <!-- Progress Modal -->
+        <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
+            <div class="bg-white rounded-xl p-6 w-full max-w-md">
+                <div class="flex flex-col items-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Loading Students</h3>
+                    <p class="text-sm text-gray-500 mb-4">Please wait while we fetch enrolled students...</p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="loadProgress" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 <?= $this->endSection() ?>
 
@@ -114,6 +90,19 @@
 
     $(document).ready(function() {
         lucide.createIcons();
+        
+        // Show progress modal
+        $('#progressModal').show();
+        
+        // Simulate progress
+        let progress = 0;
+        const progressInterval = setInterval(function() {
+            progress += 10;
+            $('#loadProgress').css('width', progress + '%');
+            if (progress >= 90) {
+                clearInterval(progressInterval);
+            }
+        }, 100);
 
         // Initialize Enrolled Students DataTable
         enrolledStudentsTable = $('#enrolledStudentsTable').DataTable({
@@ -212,6 +201,19 @@
                 "searchPlaceholder": "Search students...",
             },
             "order": [[5, 'desc']],
+            "initComplete": function() {
+                // Complete the progress bar
+                $('#loadProgress').css('width', '100%');
+                
+                // Hide progress modal and show table
+                setTimeout(function() {
+                    $('#progressModal').fadeOut(300, function() {
+                        $('#tableLoader').fadeOut(300, function() {
+                            $('#tableContainer').removeClass('hidden').hide().fadeIn(300);
+                        });
+                    });
+                }, 300);
+            },
             "drawCallback": function() {
                 lucide.createIcons();
             }

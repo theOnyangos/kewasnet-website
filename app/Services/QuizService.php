@@ -38,15 +38,39 @@ class QuizService
             ];
         }
 
-        // Create attempt
+        // Validate that all questions are answered
+        $totalQuestions = count($quiz['questions']);
+        $answeredQuestions = count(array_filter($answers));
+        
+        if ($answeredQuestions < $totalQuestions) {
+            return [
+                'status' => 'error',
+                'message' => "Please answer all questions. You have answered {$answeredQuestions} out of {$totalQuestions} questions."
+            ];
+        }
+
+        // Create attempt with UUID
+        $attemptId = sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
+
         $attemptData = [
+            'id' => $attemptId,
             'user_id' => $userId,
             'quiz_id' => $quizId,
             'attempted_at' => date('Y-m-d H:i:s'),
         ];
 
-        $attemptId = $this->attemptModel->insert($attemptData);
-        if (!$attemptId) {
+        $result = $this->attemptModel->insert($attemptData);
+        if (!$result) {
             return [
                 'status' => 'error',
                 'message' => 'Failed to create quiz attempt'
@@ -55,6 +79,7 @@ class QuizService
 
         $totalPoints = 0;
         $earnedPoints = 0;
+        $answerResults = [];
 
         // Process each answer
         foreach ($quiz['questions'] as $question) {
@@ -63,13 +88,18 @@ class QuizService
             $userAnswer = $answers[$questionId] ?? null;
 
             if ($userAnswer === null) {
-                // No answer provided
+                // No answer provided - save as unanswered
                 $this->answerModel->insert([
                     'attempt_id' => $attemptId,
                     'question_id' => $questionId,
                     'is_correct' => 0,
                     'points_earned' => 0,
                 ]);
+                $answerResults[$questionId] = [
+                    'user_answer' => null,
+                    'is_correct' => false,
+                    'correct_answer' => $this->getCorrectAnswer($question)
+                ];
                 continue;
             }
 
@@ -92,6 +122,13 @@ class QuizService
             }
 
             $this->answerModel->insert($answerData);
+            
+            // Store answer result for frontend - use string values for consistency
+            $answerResults[$questionId] = [
+                'user_answer' => (string)$userAnswer,
+                'is_correct' => $isCorrect,
+                'correct_answer' => (string)$this->getCorrectAnswer($question)
+            ];
         }
 
         // Calculate percentage
@@ -117,8 +154,24 @@ class QuizService
             'total_points' => $totalPoints,
             'percentage' => $percentage,
             'passed' => $passed,
-            'message' => $passed ? 'Congratulations! You passed the quiz.' : 'You did not pass. Please review and try again.'
+            'message' => $passed ? 'Congratulations! You passed the quiz.' : 'You did not pass. Please review and try again.',
+            'answers' => $answerResults
         ];
+    }
+
+    /**
+     * Get the correct answer for a question
+     */
+    protected function getCorrectAnswer($question)
+    {
+        if ($question['question_type'] === 'multiple_choice' || $question['question_type'] === 'true_false') {
+            foreach ($question['options'] as $option) {
+                if ($option['is_correct'] == 1) {
+                    return $option['id'];
+                }
+            }
+        }
+        return null;
     }
 
     /**

@@ -31,7 +31,6 @@
                             <th>Course</th>
                             <th>Section Title</th>
                             <th>Lectures</th>
-                            <th>Order</th>
                             <th>Status</th>
                             <th>Created</th>
                             <th>Actions</th>
@@ -60,7 +59,6 @@
                 { "data": "course_title" },
                 { "data": "title" },
                 { "data": "lectures_count", "className": "text-center" },
-                { "data": "order_index", "className": "text-center" },
                 {
                     "data": "status",
                     "render": function(data) {

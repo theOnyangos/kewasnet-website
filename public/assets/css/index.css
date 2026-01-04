@@ -13,6 +13,15 @@ body {
   min-height: 100vh;
 }
 
+/* Increase SweetAlert z-index to ensure it appears above everything */
+.swal2-container {
+  z-index: 99999 !important;
+}
+
+.swal2-overlay {
+  z-index: 99998 !important;
+}
+
 .sticky-nav {
   position: fixed;
   top: 0;
@@ -34,7 +43,7 @@ body {
   border-bottom: 3px solid #27aae0;
 }
 
-.menu-link > a {
+.menu-link>a {
   display: block;
   padding: 10px 15px;
   text-decoration: none;
@@ -42,7 +51,7 @@ body {
   transition: all 0.3s ease;
 }
 
-.menu-link > a:hover {
+.menu-link>a:hover {
   background-color: #edf2f7e7;
   border-radius: 0;
   border-bottom: 3px solid #27aae0;
@@ -157,20 +166,24 @@ a:focus {
 } */
 
 @keyframes float1 {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }
 }
 
 @keyframes float2 {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(20px);
   }
@@ -516,7 +529,8 @@ ul .menu-item {
 .tabs {
   display: flex;
   flex-direction: column;
-  max-width: 100%; /* Adjust as needed */
+  max-width: 100%;
+  /* Adjust as needed */
   margin: auto;
 }
 
@@ -787,9 +801,7 @@ ul .menu-item {
   margin: 0;
 }
 
-.select2-container--default
-  .select2-selection--single
-  .select2-selection__arrow {
+.select2-container--default .select2-selection--single .select2-selection__arrow {
   height: 20px;
   position: absolute;
   top: 10px !important;
@@ -797,9 +809,7 @@ ul .menu-item {
   width: 20px !important;
 }
 
-.select2-container--default
-  .select2-selection--single
-  .select2-selection__rendered {
+.select2-container--default .select2-selection--single .select2-selection__rendered {
   line-height: 35px !important;
 }
 

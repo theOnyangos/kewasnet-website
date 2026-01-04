@@ -404,9 +404,8 @@ class CreateLearningHubTables extends Migration
                 'constraint' => 36,
             ],
             'user_id' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'unsigned' => true,
+                'type' => 'VARCHAR',
+                'constraint' => 36,
             ],
             'quiz_id' => [
                 'type' => 'VARCHAR',

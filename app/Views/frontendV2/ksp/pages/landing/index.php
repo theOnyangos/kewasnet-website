@@ -25,12 +25,12 @@
                     <source src="<?= base_url('assets/new/water-drops.mp4') ?>" type="video/mp4">
                 </video>
                 <div class="container mx-auto px-4 h-full flex items-center relative z-10">
-                    <div class="max-w-2xl text-white">
-                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">Transforming Kenya's WASH Sector</h1>
-                        <p class="text-xl md:text-2xl mb-8 text-white/90">Access the largest collection of water, sanitation and hygiene knowledge in East Africa</p>
+                    <div class="max-w-3xl text-white">
+                        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">Transforming Kenya's WASH Sector</h1>
+                        <p class="text-lg md:text-xl mb-6 text-white/90">Access the largest collection of water, sanitation and hygiene knowledge in East Africa</p>
 
                         <!-- Description -->
-                        <p class="text-lg md:text-md mb-8 text-secondary">Discover a wealth of resources, including research papers, case studies, and best practices to enhance your WASH initiatives.</p>
+                        <p class="text-base md:text-lg mb-6 text-slate-200">Discover a wealth of resources, including research papers, case studies, and best practices to enhance your WASH initiatives.</p>
 
                         <!-- <button class="gradient-btn px-8 py-3 rounded-[50px] text-white font-medium text-lg flex items-center">
                             <span>Explore Resources</span>
@@ -46,12 +46,12 @@
                     <source src="<?= base_url('assets/new/moving-water.mp4') ?>" type="video/mp4">
                 </video>
                 <div class="container mx-auto px-4 h-full flex items-center relative z-10">
-                    <div class="max-w-2xl text-white">
-                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">Building Climate Resilient Communities</h1>
-                        <p class="text-xl md:text-2xl mb-8 text-white/90">Learn from innovative solutions addressing water challenges in changing climates</p>
+                    <div class="max-w-3xl text-white">
+                        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">Building Climate Resilient Communities</h1>
+                        <p class="text-lg md:text-xl mb-6 text-white/90">Learn from innovative solutions addressing water challenges in changing climates</p>
 
                         <!-- Description -->
-                        <p class="text-lg md:text-md mb-8 text-secondary">Explore case studies and best practices for building resilience in water and sanitation systems.</p>
+                        <p class="text-base md:text-lg mb-6 text-slate-200">Explore case studies and best practices for building resilience in water and sanitation systems.</p>
 
                         <!-- <button class="gradient-btn px-8 py-3 rounded-[50px] text-white font-medium text-lg flex items-center">
                             <span>Discover Solutions</span>
@@ -67,12 +67,12 @@
                     <source src="<?= base_url('assets/new/climate.mp4') ?>" type="video/mp4">
                 </video>
                 <div class="container mx-auto px-4 h-full flex items-center relative z-10">
-                    <div class="max-w-2xl text-white">
-                        <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">Connecting WASH Professionals</h1>
-                        <p class="text-xl md:text-2xl mb-8 text-white/90">Join Kenya's largest network of water and sanitation experts</p>
+                    <div class="max-w-3xl text-white">
+                        <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 leading-tight">Connecting WASH Professionals</h1>
+                        <p class="text-lg md:text-xl mb-6 text-white/90">Join Kenya's largest network of water and sanitation experts</p>
 
                         <!-- Description -->
-                        <p class="text-lg md:text-md mb-8 text-secondary">Share knowledge, collaborate on projects, and drive innovation in the WASH sector.</p>
+                        <p class="text-base md:text-lg mb-6 text-slate-200">Share knowledge, collaborate on projects, and drive innovation in the WASH sector.</p>
 
                         <!-- <button class="gradient-btn px-8 py-3 rounded-[50px] text-white font-medium text-lg flex items-center">
                             <span>Join Network</span>

@@ -110,7 +110,7 @@ class CoursesController extends BaseController
      */
     public function getSections()
     {
-        $columns = ['id', 'course_title', 'title', 'lectures_count', 'status', 'order_index', 'created_at'];
+        $columns = ['id', 'course_title', 'title', 'lectures_count', 'status', 'created_at'];
 
         return $this->dataTableService->handle(
             $this->sectionModel,
@@ -125,7 +125,7 @@ class CoursesController extends BaseController
      */
     public function getLectures()
     {
-        $columns = ['id', 'section_title', 'title', 'duration', 'is_preview', 'order_index', 'created_at'];
+        $columns = ['id', 'section_title', 'title', 'duration', 'is_preview', 'created_at'];
 
         return $this->dataTableService->handle(
             $this->lectureModel,
@@ -282,6 +282,8 @@ class CoursesController extends BaseController
             ->orderBy('created_at', 'ASC')
             ->findAll();
 
+        log_message('debug', 'Sections loaded: ' . json_encode($sections));
+
         return view('backendV2/pages/courses/edit', [
             'title' => self::EDIT_COURSE_PAGE_TITLE,
             'dashboardTitle' => self::EDIT_COURSE_DASH_TITLE,
@@ -420,34 +422,36 @@ class CoursesController extends BaseController
         if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
 
         try {
-            $data = $this->request->getPost();
-
             $sectionData = [
-                'course_id' => $data['course_id'],
-                'title' => $data['title'],
-                'description' => $data['description'] ?? '',
-                'status' => 1,
-                'order_index' => $data['order_index'] ?? ($this->sectionModel->where('course_id', $data['course_id'])->countAllResults() + 1)
+                'course_id' => $this->request->getPost('course_id'),
+                'title' => $this->request->getPost('title'),
+                'description' => $this->request->getPost('description') ?? '',
+                'quiz_id' => $this->request->getPost('quiz_id') ?: null,
+                'status' => 1
             ];
 
-            $sectionId = $this->sectionModel->insert($sectionData);
+            $result = $this->sectionModel->insert($sectionData, false);
 
-            if (!$sectionId) {
-                throw new \Exception('Failed to create section');
+            if ($result === false) {
+                $errors = $this->sectionModel->errors();
+                throw new \Exception($errors ? implode(', ', $errors) : 'Failed to insert section');
             }
+
+            // Get the inserted ID
+            $sectionId = $this->sectionModel->getInsertID();
 
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Section created successfully',
                 'data' => ['section_id' => $sectionId]
-            ])->setStatusCode(ResponseInterface::HTTP_CREATED);
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
 
         } catch (\Exception $e) {
             log_message('error', 'Section creation error: ' . $e->getMessage());
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Failed to create section: ' . $e->getMessage()
-            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
         }
     }
 
@@ -470,12 +474,9 @@ class CoursesController extends BaseController
             $data = $this->request->getPost();
             $updateData = [
                 'title' => $data['title'],
-                'description' => $data['description'] ?? ''
+                'description' => $data['description'] ?? '',
+                'quiz_id' => $data['quiz_id'] ?: null
             ];
-
-            if (isset($data['order_index'])) {
-                $updateData['order_index'] = $data['order_index'];
-            }
 
             $updated = $this->sectionModel->update($sectionId, $updateData);
 
@@ -571,21 +572,23 @@ class CoursesController extends BaseController
             $data = $this->request->getPost();
 
             $lectureData = [
-                'section_id' => $data['section_id'],
-                'title' => $data['title'],
-                'description' => $data['description'] ?? '',
-                'video_url' => $data['video_url'] ?? '',
-                'duration' => $data['duration'] ?? 0,
-                'is_preview' => isset($data['is_preview']) && $data['is_preview'] ? 1 : 0,
-                'is_free_preview' => isset($data['is_free_preview']) && $data['is_free_preview'] ? 1 : 0,
-                'order_index' => $data['order_index'] ?? ($this->lectureModel->where('section_id', $data['section_id'])->countAllResults() + 1)
+                'section_id' => $this->request->getPost('section_id'),
+                'title' => $this->request->getPost('title'),
+                'description' => $this->request->getPost('description') ?? '',
+                'video_url' => $this->request->getPost('video_url') ?? '',
+                'duration' => $this->request->getPost('duration') ?? 0,
+                'is_preview' => $this->request->getPost('is_preview') ? 1 : 0,
+                'status' => 'active'
             ];
 
-            $lectureId = $this->lectureModel->insert($lectureData);
+            $result = $this->lectureModel->insert($lectureData, false);
 
-            if (!$lectureId) {
-                throw new \Exception('Failed to create lecture');
+            if ($result === false) {
+                $errors = $this->lectureModel->errors();
+                throw new \Exception($errors ? implode(', ', $errors) : 'Failed to insert lecture');
             }
+
+            $lectureId = $this->lectureModel->getInsertID();
 
             return $this->response->setJSON([
                 'success' => true,
@@ -602,8 +605,40 @@ class CoursesController extends BaseController
         }
     }
 
-    /**
-     * Update lecture
+    /**     * Get available quizzes
+     */
+    public function getQuizzes()
+    {
+        try {
+            $quizModel = new \App\Models\QuizModel();
+            $questionModel = new \App\Models\QuizQuestionModel();
+            
+            $quizzes = $quizModel->select('id, title, description, status, created_at')
+                                ->where('deleted_at', null)
+                                ->orderBy('created_at', 'DESC')
+                                ->findAll();
+
+            // Add question count for each quiz
+            foreach ($quizzes as &$quiz) {
+                $questionCount = $questionModel->where('quiz_id', $quiz['id'])
+                                              ->countAllResults();
+                $quiz['question_count'] = $questionCount;
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $quizzes
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error retrieving quizzes: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**     * Update lecture
      */
     public function updateLecture($lectureId)
     {
@@ -619,18 +654,14 @@ class CoursesController extends BaseController
             }
 
             $data = $this->request->getPost();
+            
             $updateData = [
                 'title' => $data['title'],
                 'description' => $data['description'] ?? '',
                 'video_url' => $data['video_url'] ?? '',
                 'duration' => $data['duration'] ?? 0,
-                'is_preview' => isset($data['is_preview']) && $data['is_preview'] ? 1 : 0,
-                'is_free_preview' => isset($data['is_free_preview']) && $data['is_free_preview'] ? 1 : 0
+                'is_preview' => isset($data['is_preview']) && $data['is_preview'] ? 1 : 0
             ];
-
-            if (isset($data['order_index'])) {
-                $updateData['order_index'] = $data['order_index'];
-            }
 
             $updated = $this->lectureModel->update($lectureId, $updateData);
 
@@ -859,6 +890,310 @@ class CoursesController extends BaseController
                 'status' => 'error',
                 'message' => $e->getMessage()
             ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Quiz Management
+     */
+    public function quizzes()
+    {
+        $data = [
+            'title' => 'Manage Quizzes',
+            'description' => 'Create and manage course quizzes'
+        ];
+
+        return view('backendV2/pages/courses/quizzes/index', $data);
+    }
+
+    public function createQuiz()
+    {
+        $data = [
+            'title' => 'Create Quiz',
+            'description' => 'Create a new quiz for your course'
+        ];
+
+        return view('backendV2/pages/courses/quizzes/create', $data);
+    }
+
+    public function handleCreateQuiz()
+    {
+        if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
+        try {
+            $quizModel = new \App\Models\QuizModel();
+            
+            // Generate UUID first
+            $quizId = sprintf(
+                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
+            
+            $quizData = [
+                'id' => $quizId,
+                'title' => $this->request->getPost('title'),
+                'description' => $this->request->getPost('description') ?? '',
+                'status' => 'active',
+                'passing_score' => $this->request->getPost('passing_score') ?? 70,
+                'max_attempts' => $this->request->getPost('max_attempts') ?: null
+            ];
+
+            $result = $quizModel->insert($quizData, false);
+
+            if ($result === false) {
+                $errors = $quizModel->errors();
+                throw new \Exception($errors ? implode(', ', $errors) : 'Failed to create quiz');
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Quiz created successfully',
+                'data' => ['quiz_id' => $quizId]
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Quiz creation error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to create quiz: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+        }
+    }
+
+    public function editQuiz($quizId)
+    {
+        $quizModel = new \App\Models\QuizModel();
+        $quiz = $quizModel->find($quizId);
+
+        if (!$quiz) {
+            return redirect()->to('auth/courses/quizzes')->with('error', 'Quiz not found');
+        }
+
+        $data = [
+            'title' => 'Edit Quiz - ' . $quiz['title'],
+            'description' => 'Manage quiz questions and settings',
+            'quiz' => $quiz
+        ];
+
+        return view('backendV2/pages/courses/quizzes/edit', $data);
+    }
+
+    public function handleUpdateQuiz($quizId)
+    {
+        try {
+            $quizModel = new \App\Models\QuizModel();
+            $quiz = $quizModel->find($quizId);
+
+            if (!$quiz) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Quiz not found'
+                ])->setStatusCode(ResponseInterface::HTTP_NOT_FOUND);
+            }
+
+            $updateData = [
+                'title' => $this->request->getPost('title'),
+                'description' => $this->request->getPost('description') ?? '',
+                'status' => $this->request->getPost('status') ?? 'active',
+                'passing_score' => $this->request->getPost('passing_score') ?? 70,
+                'max_attempts' => $this->request->getPost('max_attempts') ?: null
+            ];
+
+            $quizModel->update($quizId, $updateData);
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Quiz updated successfully'
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Quiz update error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to update quiz: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+        }
+    }
+
+    public function getQuizQuestions($quizId)
+    {
+        try {
+            $questionModel = new \App\Models\QuizQuestionModel();
+            $questions = $questionModel->where('quiz_id', $quizId)
+                                      ->orderBy('created_at', 'ASC')
+                                      ->findAll();
+
+            // Get options for each question
+            $optionModel = new \App\Models\QuizQuestionOptionModel();
+            foreach ($questions as &$question) {
+                $question['options'] = $optionModel->where('question_id', $question['id'])
+                                                   ->orderBy('created_at', 'ASC')
+                                                   ->findAll();
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $questions
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error retrieving questions: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public function createQuizQuestion()
+    {
+        try {
+            $questionModel = new \App\Models\QuizQuestionModel();
+            $optionModel = new \App\Models\QuizQuestionOptionModel();
+            
+            // Get form data
+            $quizId = $this->request->getPost('quiz_id');
+            $questionText = $this->request->getPost('question_text');
+            $questionType = $this->request->getPost('question_type') ?? 'multiple_choice';
+            $points = $this->request->getPost('points') ?? 1;
+            $options = $this->request->getPost('options');
+            $correctOption = $this->request->getPost('correct_option');
+            
+            // Generate UUID for question
+            $questionId = sprintf(
+                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                mt_rand(0, 0xffff),
+                mt_rand(0, 0x0fff) | 0x4000,
+                mt_rand(0, 0x3fff) | 0x8000,
+                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            );
+            
+            // Create question
+            $questionData = [
+                'id' => $questionId,
+                'quiz_id' => $quizId,
+                'question_text' => $questionText,
+                'question_type' => $questionType,
+                'points' => $points
+            ];
+
+            $result = $questionModel->insert($questionData, false);
+
+            if ($result === false) {
+                $errors = $questionModel->errors();
+                throw new \Exception($errors ? implode(', ', $errors) : 'Failed to create question');
+            }
+
+            // Add options
+            if ($options && is_array($options)) {
+                foreach ($options as $index => $optionText) {
+                    $optionResult = $optionModel->insert([
+                        'question_id' => $questionId,
+                        'option_text' => $optionText,
+                        'is_correct' => ($index == $correctOption) ? 1 : 0
+                    ], false);
+                    
+                    if ($optionResult === false) {
+                        log_message('error', 'Failed to insert option: ' . json_encode($optionModel->errors()));
+                    }
+                }
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Question added successfully',
+                'data' => ['question_id' => $questionId]
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Question creation error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to create question: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+        }
+    }
+
+    public function updateQuizQuestion($questionId)
+    {
+        try {
+            $questionModel = new \App\Models\QuizQuestionModel();
+            $optionModel = new \App\Models\QuizQuestionOptionModel();
+            
+            // Get form data
+            $questionText = $this->request->getPost('question_text');
+            $questionType = $this->request->getPost('question_type') ?? 'multiple_choice';
+            $points = $this->request->getPost('points') ?? 1;
+            $options = $this->request->getPost('options');
+            $correctOption = $this->request->getPost('correct_option');
+            
+            // Update question
+            $questionData = [
+                'question_text' => $questionText,
+                'question_type' => $questionType,
+                'points' => $points
+            ];
+
+            $result = $questionModel->update($questionId, $questionData);
+
+            if ($result === false) {
+                $errors = $questionModel->errors();
+                throw new \Exception($errors ? implode(', ', $errors) : 'Failed to update question');
+            }
+
+            // Delete existing options
+            $db = \Config\Database::connect();
+            $db->table('quiz_question_options')->where('question_id', $questionId)->delete();
+
+            // Add new options
+            if ($options && is_array($options)) {
+                foreach ($options as $index => $optionText) {
+                    $optionResult = $optionModel->insert([
+                        'question_id' => $questionId,
+                        'option_text' => $optionText,
+                        'is_correct' => ($index == $correctOption) ? 1 : 0
+                    ], false);
+                    
+                    if ($optionResult === false) {
+                        log_message('error', 'Failed to insert option: ' . json_encode($optionModel->errors()));
+                    }
+                }
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Question updated successfully'
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Question update error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to update question: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+        }
+    }
+
+    public function deleteQuizQuestion($questionId)
+    {
+        try {
+            $questionModel = new \App\Models\QuizQuestionModel();
+            $questionModel->delete($questionId);
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Question deleted successfully'
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to delete question: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_OK);
         }
     }
 
