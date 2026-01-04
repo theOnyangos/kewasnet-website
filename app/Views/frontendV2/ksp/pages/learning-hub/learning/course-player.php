@@ -11,15 +11,15 @@
 <?= $this->endSection(); ?>
 
 <?= $this->section('content') ?>
-<div class="container mx-auto px-4 py-8">
+<div class="container mx-auto px-4 py-8 pt-10">
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Sidebar - Course Content -->
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 sticky top-4">
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 sticky top-[120px]">
                 <h3 class="text-lg font-bold text-dark mb-4">Course Content</h3>
                 
                 <!-- Progress Bar -->
-                <div class="mb-6">
+                <div class="mb-4 border-b border-slate-200 pb-6">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-slate-600">Progress</span>
                         <span class="text-sm font-bold text-primary"><?= number_format($progress, 0) ?>%</span>
@@ -28,12 +28,40 @@
                         <div class="bg-primary h-2 rounded-full" style="width: <?= $progress ?>%"></div>
                     </div>
                 </div>
+
+                <!-- Generate Certificate Button -->
+                <div class="mb-6">
+                    <?php if ($progress == 100): ?>
+                        <a href="<?= base_url('ksp/learning-hub/certificate/' . $course['id']) ?>" id="generateCertificateBtn"
+                            class="w-full px-4 py-3 rounded-lg font-semibold transition-colors text-white text-center flex items-center justify-center gap-2 bg-[#27aae0] hover:bg-cyan-700">
+                            <i data-lucide="award" class="w-5 h-5"></i>
+                            Generate Certificate
+                        </a>
+                    <?php else: ?>
+                        <button id="generateCertificateBtn"
+                            class="w-full px-4 py-3 rounded-lg font-semibold transition-colors text-white text-center flex items-center justify-center gap-2 bg-slate-300 cursor-not-allowed" disabled>
+                            <i data-lucide="award" class="w-5 h-5"></i>
+                            Generate Certificate
+                        </button>
+                    <?php endif; ?>
+
+                    <?php if ($progress < 100): ?>
+                        <p class="text-xs text-slate-400 mt-2 text-center">Complete the course to unlock your certificate.</p>
+                    <?php endif; ?>
+                </div>
                 
                 <!-- Sections List -->
                 <div class="space-y-2 max-h-96 overflow-y-auto">
-                    <?php foreach ($course['sections'] ?? [] as $section): ?>
-                        <div class="border-b border-slate-200 pb-2">
-                            <h4 class="font-semibold text-dark mb-2"><?= esc($section['title']) ?></h4>
+                    <?php 
+                    $sections = $course['sections'] ?? [];
+                    $totalSections = count($sections);
+                    foreach ($sections as $sectionIndex => $section): 
+                        $isLastSection = ($sectionIndex === $totalSections - 1);
+                    ?>
+                        <div class="<?= $isLastSection ? '' : 'border-b border-slate-200' ?> pb-2">
+                            <h4 class="font-semibold text-dark mb-2">
+                                Section <?= $sectionIndex + 1 ?>: <?= esc($section['title']) ?>
+                            </h4>
                             <ul class="space-y-1 ml-4">
                                 <?php foreach ($section['lectures'] ?? [] as $lecture): ?>
                                     <li>
@@ -80,6 +108,8 @@
                         </div>
                     <?php endforeach; ?>
                 </div>
+
+                <!-- Generate Certificate Button -->
             </div>
         </div>
         
@@ -137,7 +167,7 @@
                                 <div class="space-y-2">
                                     <?php foreach ($section['lectures'] ?? [] as $lecture): ?>
                                         <a href="<?= base_url('ksp/learning-hub/lecture/' . $course['id'] . '/' . $lecture['id']) ?>" 
-                                           class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded">
+                                           class="flex items-center gap-3 p-2 hover:bg-slate-50 rounded border border-primary/10 transition-colors">
                                             <?php if (in_array($lecture['id'], $completed_lectures)): ?>
                                                 <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
                                             <?php else: ?>

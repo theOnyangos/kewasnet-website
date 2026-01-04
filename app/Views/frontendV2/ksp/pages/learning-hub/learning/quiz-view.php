@@ -225,7 +225,7 @@
 
             <!-- Right Column - Performance & Info (1/3 width) -->
             <div class="lg:col-span-1">
-                <div class="sticky top-6 space-y-6">
+                <div class="sticky top-[130px] space-y-6">
                     <?php if (!empty($latest_attempt) && !empty($attempt_answers)): ?>
                         <!-- Attempt Summary Card -->
                         <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">

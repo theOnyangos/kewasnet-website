@@ -63,17 +63,18 @@ class CreateLearningHubTables extends Migration
                 'constraint' => 36,
             ],
             'user_id' => [
-                'type' => 'INT',
-                'constraint' => 5,
-                'unsigned' => true,
+                'type' => 'VARCHAR',
+                'constraint' => 36,
+                'null' => true,
             ],
             'category_id' => [
-                'type' => 'INT',
-                'constraint' => 5,
+                'type' => 'VARCHAR',
+                'constraint' => 36,
+                'null' => true,
             ],
             'sub_category_id' => [
-                'type' => 'INT',
-                'constraint' => 5,
+                'type' => 'VARCHAR',
+                'constraint' => 36,
                 'null' => true,
             ],
             'title' => [
@@ -189,6 +190,12 @@ class CreateLearningHubTables extends Migration
                 'type' => 'TEXT',
                 'null' => true,
             ],
+            'order_index' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'default' => 1,
+                'comment' => 'Order of section within course',
+            ],
             'status' => [
                 'type' => 'ENUM',
                 'constraint' => ['active', 'inactive'],
@@ -238,6 +245,11 @@ class CreateLearningHubTables extends Migration
                 'constraint' => 500,
                 'null' => true,
             ],
+            'resource_urls' => [
+                'type' => 'TEXT',
+                'null' => true,
+                'comment' => 'JSON array of resource URLs',
+            ],
             'video_type' => [
                 'type' => 'ENUM',
                 'constraint' => ['youtube', 'vimeo', 'upload', 'external'],
@@ -249,10 +261,22 @@ class CreateLearningHubTables extends Migration
                 'null' => true,
                 'comment' => 'Duration in seconds',
             ],
+            'order_index' => [
+                'type' => 'INT',
+                'constraint' => 11,
+                'default' => 1,
+                'comment' => 'Order of lecture within section',
+            ],
             'is_preview' => [
                 'type' => 'TINYINT',
                 'constraint' => 1,
                 'default' => 0,
+            ],
+            'is_free_preview' => [
+                'type' => 'TINYINT',
+                'constraint' => 1,
+                'default' => 0,
+                'comment' => 'Allow non-enrolled users to view',
             ],
             'status' => [
                 'type' => 'ENUM',

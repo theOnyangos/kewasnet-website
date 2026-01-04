@@ -15,199 +15,29 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class LearningHubController extends BaseController
 {
-    protected $courseService;
-    protected $quizService;
-    protected $certificateService;
-    protected $vimeoService;
+    protected CourseService $courseService;
+    protected QuizService $quizService;
+    protected CertificateService $certificateService;
 
     public function __construct()
     {
         $this->courseService = new CourseService();
         $this->quizService = new QuizService();
         $this->certificateService = new CertificateService();
-        $this->vimeoService = new VimeoService();
     }
 
     /**
-     * Course catalog/browse
+     * AJAX: Get paginated course reviews
      */
-    public function index()
+    public function getCourseReviews()
     {
-        $userId = ClientAuth::getId() ?: null; // Allow null for unauthenticated users
-        $courseModel = new CourseModel();
-        $enrollmentModel = new CourseEnrollmentModel();
-        
-        // Get filter parameters
-        $filter = $this->request->getGet('filter') ?? 'all'; // all, free, paid
-        $category = $this->request->getGet('category') ?? null;
-        $level = $this->request->getGet('level') ?? null;
-        $search = $this->request->getGet('search') ?? null;
-        $page = (int)($this->request->getGet('page') ?? 1);
-        $perPage = 12; // Courses per page
-
-        $builder = $courseModel->where('status', 1);
-
-        // Apply filters
-        if ($filter === 'free') {
-            $builder->where('price', 0)->where('is_paid', 0);
-        } elseif ($filter === 'paid') {
-            $builder->groupStart()
-                ->where('price >', 0)
-                ->orWhere('is_paid', 1)
-                ->groupEnd();
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Invalid request'
+            ]);
         }
-
-        if ($category) {
-            $builder->where('category_id', $category);
-        }
-
-        if ($level) {
-            $builder->where('level', $level);
-        }
-
-        if ($search) {
-            $builder->groupStart()
-                ->like('title', $search)
-                ->orLike('description', $search)
-                ->orLike('summary', $search)
-                ->groupEnd();
-        }
-
-        // Get total count for pagination
-        $totalCourses = $builder->countAllResults(false);
-        
-        // Apply pagination
-        $courses = $builder->orderBy('created_at', 'DESC')
-                          ->limit($perPage, ($page - 1) * $perPage)
-                          ->findAll();
-        
-        // Add enrollment status and progress for each course
-        foreach ($courses as &$course) {
-            $course['is_enrolled'] = false;
-            $course['progress'] = 0;
-            
-            if ($userId) {
-                $course['is_enrolled'] = $enrollmentModel->isEnrolled($userId, $course['id']);
-                if ($course['is_enrolled']) {
-                    $course['progress'] = $this->courseService->calculateProgress($userId, $course['id']);
-                }
-            }
-        }
-
-        // Calculate pagination data
-        $totalPages = ceil($totalCourses / $perPage);
-        $pager = \Config\Services::pager();
-        
-        // Build pagination links with current filters
-        $pagerLinks = [];
-        $baseUrl = base_url('ksp/learning-hub');
-        $queryParams = http_build_query(array_filter([
-            'filter' => $filter !== 'all' ? $filter : null,
-            'category' => $category,
-            'level' => $level,
-            'search' => $search,
-        ]));
-        $urlPrefix = $baseUrl . ($queryParams ? '?' . $queryParams . '&' : '?');
-
-        // Generate pagination links
-        for ($i = 1; $i <= $totalPages; $i++) {
-            $pagerLinks[] = [
-                'uri' => $urlPrefix . 'page=' . $i,
-                'title' => $i,
-                'active' => $i === $page,
-            ];
-        }
-
-        $data = [
-            'title' => 'Learning Hub - KEWASNET',
-            'description' => 'Browse our comprehensive course catalog',
-            'courses' => $courses,
-            'filter' => $filter,
-            'category' => $category,
-            'level' => $level,
-            'search' => $search,
-            'pagination' => [
-                'current_page' => $page,
-                'total_pages' => $totalPages,
-                'total_courses' => $totalCourses,
-                'per_page' => $perPage,
-                'links' => $pagerLinks,
-                'has_previous' => $page > 1,
-                'has_next' => $page < $totalPages,
-                'previous_url' => $page > 1 ? $urlPrefix . 'page=' . ($page - 1) : null,
-                'next_url' => $page < $totalPages ? $urlPrefix . 'page=' . ($page + 1) : null,
-            ],
-        ];
-
-        return view('frontendV2/ksp/pages/learning-hub/catalog/index', $data);
-    }
-
-    /**
-     * Dedicated courses page with sidebar filters
-     */
-    public function courses()
-    {
-        $userId = ClientAuth::getId() ?: null; // Allow null for unauthenticated users
-        $courseModel = new CourseModel();
-        $enrollmentModel = new CourseEnrollmentModel();
-        $db = \Config\Database::connect();
-        
-        // Get filter parameters
-        $filter = $this->request->getGet('filter') ?? 'all'; // all, free, paid
-        $category = $this->request->getGet('category') ?? null;
-        $level = $this->request->getGet('level') ?? null;
-        $search = $this->request->getGet('search') ?? null;
-        $page = (int)($this->request->getGet('page') ?? 1);
-        $perPage = 12; // Courses per page
-
-        $builder = $courseModel->where('status', 1);
-
-        // Apply filters
-        if ($filter === 'free') {
-            $builder->where('price', 0)->where('is_paid', 0);
-        } elseif ($filter === 'paid') {
-            $builder->groupStart()
-                ->where('price >', 0)
-                ->orWhere('is_paid', 1)
-                ->groupEnd();
-        }
-
-        if ($category) {
-            $builder->where('category_id', $category);
-        }
-
-        if ($level) {
-            $builder->where('level', $level);
-        }
-
-        if ($search) {
-            $builder->groupStart()
-                ->like('title', $search)
-                ->orLike('description', $search)
-                ->orLike('summary', $search)
-                ->groupEnd();
-        }
-
-        // Get total count for pagination
-        $totalCourses = $builder->countAllResults(false);
-        
-        // Apply pagination
-        $courses = $builder->orderBy('created_at', 'DESC')
-                          ->limit($perPage, ($page - 1) * $perPage)
-                          ->findAll();
-        
-        // Add enrollment status for each course
-        foreach ($courses as &$course) {
-            $course['is_enrolled'] = false;
-            $course['progress'] = 0;
-            
-            if ($userId) {
-                $course['is_enrolled'] = $enrollmentModel->isEnrolled($userId, $course['id']);
-                if ($course['is_enrolled']) {
-                    $course['progress'] = $this->courseService->calculateProgress($userId, $course['id']);
-                }
-            }
-        }
+        $courseId = $this->request->getGet('course_id');
 
         // Calculate pagination data
         $totalPages = ceil($totalCourses / $perPage);
@@ -433,8 +263,33 @@ class LearningHubController extends BaseController
                 ->with('error', 'Lecture not found');
         }
         
-        // Check if lecture is completed
+        // Get section and course data
+        $sectionModel = new \App\Models\CourseSectionModel();
+        $section = $sectionModel->find($lecture['section_id']);
+        
+        // Get all sections with lectures for sidebar
+        $courseModel = new \App\Models\CourseModel();
+        $course = $courseModel->find($courseId);
+        $sections = $sectionModel->where('course_id', $courseId)
+            ->where('deleted_at', null)
+            ->orderBy('order_index', 'ASC')
+            ->findAll();
+        
+        // Get lectures for each section
+        foreach ($sections as &$sec) {
+            $sec['lectures'] = $lectureModel->where('section_id', $sec['id'])
+                ->where('deleted_at', null)
+                ->orderBy('order_index', 'ASC')
+                ->findAll();
+        }
+        
+        // Get completed lectures
         $progressModel = new \App\Models\CourseLectureProgressModel();
+        $completedLectures = $progressModel->where('student_id', $userId)
+            ->where('status', 'completed')
+            ->findColumn('lecture_id') ?? [];
+        
+        // Check if current lecture is completed
         $isCompleted = $progressModel->isLectureCompleted($userId, $lectureId);
 
         // Get Vimeo embed if available
@@ -459,9 +314,13 @@ class LearningHubController extends BaseController
             'title' => $lecture['title'] . ' - Learning Hub',
             'description' => 'Lecture content',
             'lecture' => $lecture,
+            'section' => $section,
+            'course' => $course,
+            'sections' => $sections,
             'course_id' => $courseId,
             'embed_code' => $embedCode,
             'is_completed' => $isCompleted,
+            'completed_lectures' => $completedLectures,
         ];
 
         return view('frontendV2/ksp/pages/learning-hub/learning/lecture-view', $data);
@@ -1130,5 +989,65 @@ class LearningHubController extends BaseController
         }
         
         return $this->response->download($filePath, null);
+    }
+
+    /**
+     * Handle AJAX course review submission
+     */
+    public function submitCourseReview()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Invalid request.'
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+
+        $userId = \App\Libraries\ClientAuth::getId();
+        if (!$userId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'You must be logged in to submit a review.'
+            ])->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED);
+        }
+
+        $courseId = $this->request->getPost('course_id');
+        $rating = (int)$this->request->getPost('rating');
+        $review = trim($this->request->getPost('review'));
+
+        if (!$courseId || $rating < 1 || $rating > 5) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Please provide a valid rating and course.'
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+
+        $reviewModel = new \App\Models\CourseReviewModel();
+        $existing = $reviewModel->getUserReview($userId, $courseId);
+        if ($existing) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'You have already submitted a review for this course.'
+            ])->setStatusCode(ResponseInterface::HTTP_CONFLICT);
+        }
+
+        $result = $reviewModel->insert([
+            'course_id' => $courseId,
+            'user_id' => $userId,
+            'rating' => $rating,
+            'review' => $review,
+        ]);
+
+        if ($result) {
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Thank you for your review!'
+            ]);
+        } else {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to submit review.'
+            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -38,6 +38,11 @@
                 <i data-lucide="play-circle" class="w-4 h-4 mr-2 inline"></i>
                 Lectures
             </a>
+            <a href="<?= base_url('auth/courses/quizzes') ?>"
+                class="py-4 px-1 <?= $activeTab === 'quizzes' ? $activeClass : $inactiveClass ?>">
+                <i data-lucide="clipboard-list" class="w-4 h-4 mr-2 inline"></i>
+                Quizzes
+            </a>
             <a href="<?= base_url('auth/courses/enrollments') ?>"
                 class="py-4 px-1 <?= $activeTab === 'enrollments' ? $activeClass : $inactiveClass ?>">
                 <i data-lucide="users" class="w-4 h-4 mr-2 inline"></i>

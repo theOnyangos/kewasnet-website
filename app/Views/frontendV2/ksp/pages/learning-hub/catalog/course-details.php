@@ -54,7 +54,8 @@
         </div>
         
         <?php 
-        $isPaid = ($course['price'] > 0 || ($course['is_paid'] ?? 0) == 1);
+        // A course is considered paid only if it has a price > 0 AND is_paid flag is set
+        $isPaid = ($course['price'] > 0 && ($course['is_paid'] ?? 0) == 1);
         $price = $course['discount_price'] > 0 ? $course['discount_price'] : $course['price'];
         ?>
         

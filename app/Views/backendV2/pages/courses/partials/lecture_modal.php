@@ -5,17 +5,20 @@
         <form id="addLectureForm">
             <input type="hidden" id="lecture_section_id" name="section_id">
             <input type="hidden" id="lecture_id" name="lecture_id">
+
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-dark mb-2">Lecture Title <span class="text-red-500">*</span></label>
                     <input type="text" id="lecture_title" name="lecture_title" placeholder="e.g., Understanding HTML Tags and Attributes" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary" required>
                     <p class="text-xs text-gray-500 mt-1">Enter a clear, descriptive title for this lecture</p>
                 </div>
+
                 <div>
                     <label class="block text-sm font-medium text-dark mb-2">Description</label>
                     <textarea id="lecture_description" name="lecture_description" rows="3" placeholder="What students will learn in this lecture..." class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"></textarea>
                     <p class="text-xs text-gray-500 mt-1">Provide a brief overview of the lecture content</p>
                 </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-dark mb-2">Video URL (YouTube/Vimeo)</label>
@@ -28,6 +31,7 @@
                         <p class="text-xs text-gray-500 mt-1">Lecture length in minutes</p>
                     </div>
                 </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label class="block text-sm font-medium text-dark mb-2">Order Index</label>
@@ -46,8 +50,9 @@
                         <p class="text-xs text-gray-500">Allow non-enrolled users to watch this lecture</p>
                     </div>
                 </div>
+                
                 <div class="flex justify-end gap-3 pt-4">
-                    <button type="button" onclick="closeLectureModal()" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                    <button type="button" onclick="closeLectureModal()" class="px-6 py-3 border border-gray-300 rounded-full text-gray-700 hover:bg-gray-50 font-medium transition-colors">
                         Cancel
                     </button>
                     <button type="submit" class="gradient-btn px-8 py-3 rounded-[50px] text-white font-medium hover:shadow-lg transition-all">

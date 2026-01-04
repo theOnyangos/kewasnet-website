@@ -4,17 +4,20 @@
         <h3 class="text-2xl font-bold text-primary mb-6" id="sectionModalTitle">Add a Curriculum</h3>
         <form id="addSectionForm">
             <input type="hidden" id="section_id" name="section_id">
+
             <div class="space-y-6">
                 <div>
                     <label class="block text-sm font-medium text-dark mb-2">Section Title <span class="text-red-500">*</span></label>
                     <input type="text" id="section_title" name="section_title" placeholder="e.g., Introduction to Web Development" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary" required>
                     <p class="text-xs text-gray-500 mt-1">Give this section a clear, descriptive title</p>
                 </div>
+                
                 <div>
                     <label class="block text-sm font-medium text-dark mb-2">Description</label>
-                    <textarea id="section_description" name="section_description" rows="3" placeholder="Brief overview of what students will learn in this section..." class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"></textarea>
+                    <textarea id="section_description" name="section_description" rows="5" placeholder="Brief overview of what students will learn in this section..." class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary resize-none"></textarea>
                     <p class="text-xs text-gray-500 mt-1">Provide a brief summary of what this section covers</p>
                 </div>
+
                 <div>
                     <label class="block text-sm font-medium text-dark mb-2">Section Quiz (Optional)</label>
                     <select id="section_quiz_id" name="quiz_id" class="select2 w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary">
@@ -22,8 +25,9 @@
                         <!-- Quizzes will be loaded dynamically -->
                     </select>
                     <p class="text-xs text-gray-500 mt-1">Select a quiz for students to take after completing this section</p>
-                    <a href="<?= base_url('auth/courses/quizzes/create') ?>" target="_blank" class="text-xs text-primary hover:underline mt-1 inline-block">+ Create New Quiz</a>
+                    <a href="<?= base_url('auth/courses/quizzes/create') ?>" target="_blank" class="bg-[#27aae0] py-2 px-4 rounded-md text-xs text-white inline-block mt-3">+ Create New Quiz</a>
                 </div>
+
                 <div class="flex justify-end gap-3 pt-4">
                     <button type="button" onclick="closeSectionModal()" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
                         Cancel

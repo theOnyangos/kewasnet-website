@@ -21,53 +21,53 @@
         ]) ?>
 
         <div class="px-6 pb-6">
-        <div class="bg-white rounded-b-xl shadow-sm max-w-full">
+            <div class="bg-white rounded-b-xl shadow-sm max-w-full">
 
-            <!-- Tab Navigation -->
-            <div class="border-b border-gray-200">
-                <nav class="flex px-6" aria-label="Tabs">
-                    <button onclick="switchTab('details')" id="tab-details" class="tab-button active py-4 px-6 text-sm font-medium border-b-2 border-cyan-500 text-cyan-600">
-                        <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
-                        Course Details
-                    </button>
-                    <button onclick="switchTab('curriculum')" id="tab-curriculum" class="tab-button py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
-                        <i data-lucide="layers" class="w-4 h-4 inline mr-2"></i>
-                        Curriculum
-                    </button>
-                </nav>
-            </div>
-
-            <!-- Course Details Tab -->
-            <div id="content-details" class="course-tab-panel">
-                <form class="p-6 space-y-6" id="editCourseForm" method="POST" enctype="multipart/form-data">
-                    <?= $this->include('backendV2/pages/courses/partials/basic_info') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/course_details') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/pricing') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/media') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/description') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/learning_goals') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/options') ?>
-                    <?= $this->include('backendV2/pages/courses/partials/publishing') ?>
-
-                    <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
-
-                    <div class="flex justify-end space-x-4">
-                        <button type="submit" class="gradient-btn rounded-[50px] px-8 py-3 text-white flex justify-center items-center gap-2 hover:shadow-lg transition-all duration-300">
-                            <i data-lucide="save" class="w-5 h-5 z-10"></i>
-                            <span class="font-medium">Update Course</span>
+                <!-- Tab Navigation -->
+                <div class="border-b border-gray-200">
+                    <nav class="flex px-6" aria-label="Tabs">
+                        <button onclick="switchTab('details')" id="tab-details" class="tab-button active py-4 px-6 text-sm font-medium border-b-2 border-cyan-500 text-cyan-600">
+                            <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
+                            Course Details
                         </button>
-                    </div>
-                </form>
-            </div>
+                        
+                        <button onclick="switchTab('curriculum')" id="tab-curriculum" class="tab-button py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            <i data-lucide="layers" class="w-4 h-4 inline mr-2"></i>
+                            Curriculum
+                        </button>
+                    </nav>
+                </div>
 
-            <!-- Curriculum Tab -->
-            <?= $this->include('backendV2/pages/courses/partials/curriculum_tab') ?>
-        </div>
+                <!-- Course Details Tab -->
+                <div id="content-details" class="course-tab-panel">
+                    <form class="p-6 space-y-6" id="editCourseForm" method="POST" enctype="multipart/form-data">
+                        <?= $this->include('backendV2/pages/courses/partials/basic_info') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/course_details') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/pricing') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/media') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/description') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/learning_goals') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/options') ?>
+                        <?= $this->include('backendV2/pages/courses/partials/publishing') ?>
+
+                        <input type="hidden" name="<?= csrf_token() ?>" value="<?= csrf_hash() ?>">
+
+                        <div class="flex justify-end space-x-4">
+                            <button type="submit" class="gradient-btn rounded-[50px] px-8 py-3 text-white flex justify-center items-center gap-2 hover:shadow-lg transition-all duration-300">
+                                <i data-lucide="save" class="w-5 h-5 z-10"></i>
+                                <span class="font-medium">Update Course</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Curriculum Tab -->
+                <?= $this->include('backendV2/pages/courses/partials/curriculum_tab') ?>
+            </div>
         </div>
 
         <!-- Modals -->
         <?= $this->include('backendV2/pages/courses/partials/section_modal') ?>
-        <?= $this->include('backendV2/pages/courses/partials/lecture_modal') ?>
 
         <!-- Progress Modal -->
         <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -237,60 +237,6 @@
                 }
             });
         });
-
-        // Lecture form
-        $('#addLectureForm').on('submit', function(e) {
-            e.preventDefault();
-            const lectureId = $('#lecture_id').val();
-            const url = lectureId
-                ? '<?= site_url("auth/courses/lectures/update") ?>/' + lectureId
-                : '<?= site_url("auth/courses/lectures/create") ?>';
-
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: {
-                    section_id: $('#lecture_section_id').val(),
-                    title: $('#lecture_title').val(),
-                    description: $('#lecture_description').val(),
-                    video_url: $('#lecture_video_url').val(),
-                    duration: $('#lecture_duration').val(),
-                    order_index: $('#lecture_order').val(),
-                    is_preview: $('#lecture_is_preview').is(':checked') ? 1 : 0,
-                    is_free_preview: $('#lecture_is_free').is(':checked') ? 1 : 0,
-                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: response.message || 'Lecture saved successfully',
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            closeLectureModal();
-                            location.reload();
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: response.message || 'Failed to save lecture'
-                        });
-                    }
-                },
-                error: function(xhr) {
-                    const errorMsg = xhr.responseJSON?.message || 'An error occurred while saving the lecture';
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: errorMsg
-                    });
-                }
-            });
-        });
     }
 
     // Utility functions
@@ -309,8 +255,8 @@
 
     // Section modal functions
     window.showAddSectionModal = function() {
-        $('#sectionModalTitle').text('Add Section');
-        $('#sectionSubmitText').text('Add Section');
+        $('#sectionModalTitle').text('Add Curriculum (Section)');
+        $('#sectionSubmitText').text('Add Curriculum (Section)');
         $('#section_id').val('');
         $('#addSectionForm')[0].reset();
         loadQuizzes();
@@ -342,8 +288,8 @@
             })
         ]).then(([quizzesResult, sectionResponse]) => {
             if (sectionResponse.success && sectionResponse.data) {
-                $('#sectionModalTitle').text('Edit Section');
-                $('#sectionSubmitText').text('Update Section');
+                $('#sectionModalTitle').text('Edit Curriculum (Section)');
+                $('#sectionSubmitText').text('Update Curriculum (Section)');
                 $('#section_id').val(sectionResponse.data.id);
                 $('#section_title').val(sectionResponse.data.title);
                 $('#section_description').val(sectionResponse.data.description);
@@ -407,63 +353,51 @@
         lucide.createIcons();
     };
 
-    // Lecture modal functions
-    window.showAddLectureModal = function(sectionId) {
-        $('#lectureModalTitle').text('Add Lecture');
-        $('#lectureSubmitText').text('Add Lecture');
-        $('#lecture_id').val('');
-        $('#lecture_section_id').val(sectionId);
-        $('#addLectureForm')[0].reset();
-        $('#lecture_section_id').val(sectionId);
-        $('#lectureModal').removeClass('hidden');
-    };
-
-    window.closeLectureModal = function() {
-        $('#lectureModal').addClass('hidden');
-        $('#addLectureForm')[0].reset();
-    };
-
-    window.editLecture = function(lectureId) {
-        $.ajax({
-            url: '<?= site_url("auth/courses/lectures/get") ?>/' + lectureId,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.success && response.data) {
-                    $('#lectureModalTitle').text('Edit Lecture');
-                    $('#lectureSubmitText').text('Update Lecture');
-                    $('#lecture_id').val(response.data.id);
-                    $('#lecture_section_id').val(response.data.section_id);
-                    $('#lecture_title').val(response.data.title);
-                    $('#lecture_description').val(response.data.description);
-                    $('#lecture_video_url').val(response.data.video_url);
-                    $('#lecture_duration').val(response.data.duration);
-                    $('#lecture_order').val(response.data.order_index);
-                    $('#lecture_is_preview').prop('checked', response.data.is_preview == 1);
-                    $('#lecture_is_free').prop('checked', response.data.is_free_preview == 1);
-                    $('#lectureModal').removeClass('hidden');
-                } else {
-                    console.error('Failed to load lecture data');
-                }
-            },
-            error: () => console.error('Failed to load lecture data')
-        });
-    };
-
     window.deleteLecture = function(lectureId) {
-        if (!confirm('Are you sure you want to delete this lecture?')) return;
-
-        $.ajax({
-            url: '<?= site_url("auth/courses/lectures/delete") ?>/' + lectureId,
-            type: 'POST',
-            data: { '<?= csrf_token() ?>': '<?= csrf_hash() ?>' },
-            dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    location.reload();
-                }
-            },
-            error: (xhr) => console.error('Failed to delete lecture:', xhr.responseJSON?.message)
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '<?= site_url("auth/courses/lectures/delete") ?>/' + lectureId,
+                    type: 'POST',
+                    data: { '<?= csrf_token() ?>': '<?= csrf_hash() ?>' },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: 'Lecture has been deleted.',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Failed to delete lecture'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        const errorMsg = xhr.responseJSON?.message || 'An error occurred while deleting the lecture';
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMsg
+                        });
+                    }
+                });
+            }
         });
     };
 </script>

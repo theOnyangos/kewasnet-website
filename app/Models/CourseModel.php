@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use Ramsey\Uuid\Uuid;
 
 class CourseModel extends Model
 {
@@ -49,6 +50,19 @@ class CourseModel extends Model
         'level' => 'in_list[beginner,intermediate,advanced]',
     ];
 
+    protected $beforeInsert = ['generateUuid'];
+
+    /**
+     * Generate UUID for new courses
+     */
+    protected function generateUuid(array $data)
+    {
+        if (!isset($data['data']['id'])) {
+            $data['data']['id'] = Uuid::uuid4()->toString();
+        }
+        return $data;
+    }
+
     /**
      * Get course with enrollment status for user
      */
@@ -67,7 +81,8 @@ class CourseModel extends Model
 
         $course['enrollment'] = $enrollment;
         $course['is_enrolled'] = !empty($enrollment);
-        $course['is_paid'] = ($course['price'] > 0 || ($course['is_paid'] ?? 0) == 1);
+        // A course is considered paid only if it has a price > 0 AND is_paid flag is set
+        $course['is_paid'] = ($course['price'] > 0 && ($course['is_paid'] ?? 0) == 1);
 
         return $course;
     }

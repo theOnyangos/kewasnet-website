@@ -47,14 +47,20 @@ class CourseService
             $courseData['slug'] = url_title($courseData['title'], '-', true);
         }
 
+        // Map 'category' field to 'category_id' if present
+        if (isset($courseData['category'])) {
+            $courseData['category_id'] = $courseData['category'];
+            unset($courseData['category']);
+        }
+
         // Set defaults
-        $courseData['user_id'] = session()->get('id') ?? 1;
+        $courseData['user_id'] = session()->get('id') ?? null;
         $courseData['is_paid'] = isset($courseData['is_paid']) ? 1 : 0;
         $courseData['certificate'] = isset($courseData['certificate']) ? 1 : 0;
         $courseData['price'] = $courseData['price'] ?? 0;
         $courseData['discount_price'] = $courseData['discount_price'] ?? null;
 
-        // Insert course
+        // Insert course (UUID will be generated automatically by model)
         $courseId = $this->courseModel->insert($courseData);
 
         if (!$courseId) {
@@ -88,6 +94,12 @@ class CourseService
             $newName = $image->getRandomName();
             $image->move(WRITEPATH . '../public/uploads/courses', $newName);
             $courseData['image_url'] = 'uploads/courses/' . $newName;
+        }
+
+        // Map 'category' field to 'category_id' if present
+        if (isset($courseData['category'])) {
+            $courseData['category_id'] = $courseData['category'];
+            unset($courseData['category']);
         }
 
         // Update boolean fields
@@ -158,18 +170,29 @@ class CourseService
      */
     public function checkAccess($userId, $courseId)
     {
+        // Debug logging
+        log_message('debug', "checkAccess called - userId: {$userId}, courseId: {$courseId}");
+        
         $course = $this->courseModel->find($courseId);
         if (!$course) {
+            log_message('debug', "checkAccess failed: Course not found");
             return false;
         }
 
         // Check if enrolled
-        if (!$this->enrollmentModel->isEnrolled($userId, $courseId)) {
+        $isEnrolled = $this->enrollmentModel->isEnrolled($userId, $courseId);
+        log_message('debug', "checkAccess - isEnrolled: " . ($isEnrolled ? 'true' : 'false'));
+        
+        if (!$isEnrolled) {
+            log_message('debug', "checkAccess failed: User not enrolled");
             return false;
         }
 
         // For paid courses, check payment status
-        $isPaid = ($course['price'] > 0 || ($course['is_paid'] ?? 0) == 1);
+        // A course is considered paid only if it has a price > 0 AND is_paid flag is set
+        $isPaid = ($course['price'] > 0 && ($course['is_paid'] ?? 0) == 1);
+        log_message('debug', "checkAccess - isPaid: " . ($isPaid ? 'true' : 'false') . ", price: {$course['price']}, is_paid flag: " . ($course['is_paid'] ?? 'null'));
+        
         if ($isPaid) {
             // Check if payment is completed
             $orderModel = new \App\Models\OrderModel();
@@ -178,9 +201,11 @@ class CourseService
                 ->where('status', 'completed')
                 ->first();
             
+            log_message('debug', "checkAccess - order found: " . ($order ? 'true' : 'false'));
             return !empty($order);
         }
 
+        log_message('debug', "checkAccess - returning true (free course or enrolled)");
         return true;
     }
 

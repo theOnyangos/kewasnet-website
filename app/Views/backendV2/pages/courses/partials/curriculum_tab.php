@@ -56,10 +56,10 @@
                         </div>
                     </div>
 
-                    <div id="lectures-<?= $section['id'] ?>" class="mt-4 pl-4 border-l-2 border-gray-200 hidden">
-                        <button onclick="showAddLectureModal('<?= $section['id'] ?>')" class="text-sm text-blue-600 hover:text-blue-800 mb-2 flex items-center gap-1">
+                    <div id="lectures-<?= $section['id'] ?>" class="mt-4 pl-4 border-l-2 border-[#27aae0] hidden">
+                        <a href="<?= site_url('auth/courses/lectures/create?section_id=' . $section['id']) ?>" class="bg-[#27aae0] py-2 px-4 rounded-md text-sm text-white hover:text-white mb-2 flex items-center gap-1 w-fit">
                             <i data-lucide="plus" class="w-3 h-3"></i> Add Lecture
-                        </button>
+                        </a>
                         <div class="space-y-2" id="lecture-list-<?= $section['id'] ?>">
                             <?php
                             $lectureModel = new \App\Models\CourseLectureModel();
@@ -72,18 +72,18 @@
                                 <p class="text-sm text-gray-500">No lectures yet</p>
                             <?php else: ?>
                                 <?php foreach ($lectures as $lecture): ?>
-                                <div class="flex items-center justify-between p-2 bg-gray-50 rounded hover:bg-gray-100">
+                                <div class="flex items-center justify-between p-2 bg-secondary/10 rounded hover:bg-gray-100 border border-secondary/50">
                                     <div class="flex items-center gap-2">
-                                        <i data-lucide="play-circle" class="w-4 h-4 text-gray-400"></i>
+                                        <i data-lucide="play-circle" class="w-4 h-4 text-secondary"></i>
                                         <span class="text-sm"><?= esc($lecture['title']) ?></span>
                                         <?php if (isset($lecture['is_preview']) && $lecture['is_preview']): ?>
                                             <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Preview</span>
                                         <?php endif; ?>
                                     </div>
                                     <div class="flex gap-2">
-                                        <button onclick="editLecture('<?= $lecture['id'] ?>')" class="text-blue-600 hover:text-blue-800">
+                                        <a href="<?= site_url('auth/courses/lectures/edit/' . $lecture['id']) ?>" class="text-blue-600 hover:text-blue-800">
                                             <i data-lucide="edit" class="w-3 h-3"></i>
-                                        </button>
+                                        </a>
                                         <button onclick="deleteLecture('<?= $lecture['id'] ?>')" class="text-red-600 hover:text-red-800">
                                             <i data-lucide="trash-2" class="w-3 h-3"></i>
                                         </button>

@@ -562,6 +562,62 @@ class CoursesController extends BaseController
     }
 
     /**
+     * Show create lecture page
+     */
+    public function showCreateLecture()
+    {
+        $sectionId = $this->request->getGet('section_id');
+        
+        if (!$sectionId) {
+            return redirect()->to('auth/courses')->with('error', 'Section ID required');
+        }
+
+        $section = $this->sectionModel->find($sectionId);
+        if (!$section) {
+            return redirect()->to('auth/courses')->with('error', 'Section not found');
+        }
+
+        $course = $this->courseModel->find($section['course_id']);
+        if (!$course) {
+            return redirect()->to('auth/courses')->with('error', 'Course not found');
+        }
+
+        return view('backendV2/pages/courses/lectures/create', [
+            'title' => 'Add Lecture - ' . $course['title'],
+            'course' => $course,
+            'section' => $section
+        ]);
+    }
+
+    /**
+     * Show edit lecture page
+     */
+    public function showEditLecture($lectureId)
+    {
+        $lecture = $this->lectureModel->find($lectureId);
+        if (!$lecture) {
+            return redirect()->to('auth/courses')->with('error', 'Lecture not found');
+        }
+
+        $section = $this->sectionModel->find($lecture['section_id']);
+        if (!$section) {
+            return redirect()->to('auth/courses')->with('error', 'Section not found');
+        }
+
+        $course = $this->courseModel->find($section['course_id']);
+        if (!$course) {
+            return redirect()->to('auth/courses')->with('error', 'Course not found');
+        }
+
+        return view('backendV2/pages/courses/lectures/edit', [
+            'title' => 'Edit Lecture - ' . $course['title'],
+            'course' => $course,
+            'section' => $section,
+            'lecture' => $lecture
+        ]);
+    }
+
+    /**
      * Create new lecture
      */
     public function createLecture()
@@ -571,13 +627,22 @@ class CoursesController extends BaseController
         try {
             $data = $this->request->getPost();
 
+            // Get and filter resource URLs
+            $resourceUrls = $this->request->getPost('resource_urls') ?? [];
+            $resourceUrls = array_filter($resourceUrls, function($url) {
+                return !empty(trim($url));
+            });
+
             $lectureData = [
                 'section_id' => $this->request->getPost('section_id'),
                 'title' => $this->request->getPost('title'),
                 'description' => $this->request->getPost('description') ?? '',
                 'video_url' => $this->request->getPost('video_url') ?? '',
+                'resource_urls' => !empty($resourceUrls) ? json_encode(array_values($resourceUrls)) : null,
                 'duration' => $this->request->getPost('duration') ?? 0,
+                'order_index' => $this->request->getPost('order_index') ?? 1,
                 'is_preview' => $this->request->getPost('is_preview') ? 1 : 0,
+                'is_free_preview' => $this->request->getPost('is_free_preview') ? 1 : 0,
                 'status' => 'active'
             ];
 
@@ -655,12 +720,21 @@ class CoursesController extends BaseController
 
             $data = $this->request->getPost();
             
+            // Get and filter resource URLs
+            $resourceUrls = $this->request->getPost('resource_urls') ?? [];
+            $resourceUrls = array_filter($resourceUrls, function($url) {
+                return !empty(trim($url));
+            });
+
             $updateData = [
                 'title' => $data['title'],
                 'description' => $data['description'] ?? '',
                 'video_url' => $data['video_url'] ?? '',
+                'resource_urls' => !empty($resourceUrls) ? json_encode(array_values($resourceUrls)) : null,
                 'duration' => $data['duration'] ?? 0,
-                'is_preview' => isset($data['is_preview']) && $data['is_preview'] ? 1 : 0
+                'order_index' => $data['order_index'] ?? 1,
+                'is_preview' => isset($data['is_preview']) && $data['is_preview'] ? 1 : 0,
+                'is_free_preview' => isset($data['is_free_preview']) && $data['is_free_preview'] ? 1 : 0
             ];
 
             $updated = $this->lectureModel->update($lectureId, $updateData);

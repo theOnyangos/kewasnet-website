@@ -95,6 +95,7 @@ $routes->group('', ['filter' => 'auth:guest,/ksp'], static function ($routes) {
         
         // Public Learning Hub Routes (no authentication required)
         $routes->group('learning-hub', static function ($routes) {
+                        $routes->get('course/reviews', 'FrontendV2\LearningHubController::getCourseReviews');
             $routes->get('/', 'FrontendV2\LearningHubController::index');
             $routes->get('courses', 'FrontendV2\LearningHubController::courses');
             $routes->get('course/(:segment)', 'FrontendV2\LearningHubController::courseDetails/$1');
@@ -118,11 +119,13 @@ $routes->group('', ['filter' => 'auth:auth,/ksp/login'], static function ($route
             $routes->get('quiz/(:segment)/(:segment)', 'FrontendV2\LearningHubController::quiz/$1/$2');
             $routes->post('quiz/submit', 'FrontendV2\LearningHubController::submitQuiz');
             $routes->get('certificates', 'FrontendV2\LearningHubController::certificates');
+            $routes->get('certificate/(:segment)', 'FrontendV2\LearningHubController::viewCertificate/$1');
             $routes->get('certificate/(:segment)/download', 'FrontendV2\LearningHubController::downloadCertificate/$1');
             $routes->get('attachment/(:segment)', 'FrontendV2\LearningHubController::downloadAttachment/$1');
             $routes->get('profile', 'FrontendV2\LearningHubController::profile');
             $routes->post('profile/update', 'FrontendV2\LearningHubController::updateProfile');
             $routes->post('profile/change-password', 'FrontendV2\LearningHubController::changePassword');
+            $routes->post('course/review', 'FrontendV2\LearningHubController::submitCourseReview');
         });
         
         // Debug Routes (development only)
@@ -427,6 +430,8 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->post('sections/delete/(:segment)', 'BackendV2\CoursesController::deleteSection/$1');
 
         // Lecture management
+        $routes->get('lectures/create', 'BackendV2\CoursesController::showCreateLecture');
+        $routes->get('lectures/edit/(:segment)', 'BackendV2\CoursesController::showEditLecture/$1');
         $routes->get('lectures/get/(:segment)', 'BackendV2\CoursesController::getLecture/$1');
         $routes->post('lectures/create', 'BackendV2\CoursesController::createLecture');
         $routes->post('lectures/update/(:segment)', 'BackendV2\CoursesController::updateLecture/$1');

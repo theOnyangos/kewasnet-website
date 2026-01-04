@@ -17,8 +17,11 @@ class CourseLectureModel extends Model
         'title',
         'description',
         'video_url',
+        'resource_urls',
         'duration',
+        'order_index',
         'is_preview',
+        'is_free_preview',
         'status',
     ];
 
