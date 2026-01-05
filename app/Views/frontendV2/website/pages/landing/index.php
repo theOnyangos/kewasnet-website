@@ -345,6 +345,96 @@
         </section>
     <?php endif; ?>
 
+    <!-- Events Section -->
+    <?php if(!empty($events)): ?>
+        <style>
+            .events-pattern-bg {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 0;
+                pointer-events: none;
+                background-image: 
+                    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px),
+                    repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px);
+                background-size: 40px 40px;
+            }
+        </style>
+        <section class="py-20 relative text-gray-900" style="background-color: #fafafa; min-height: auto; position: relative;">
+            <!-- Diagonal Grid Pattern -->
+            <div class="events-pattern-bg"></div>
+
+            <div class="container mx-auto px-4 relative z-10">
+                <div class="text-center mb-16">
+                    <h2 class="text-4xl md:text-5xl font-bold text-slate-800 mb-6">
+                        Upcoming Events
+                    </h2>
+                    <p class="text-xl text-slate-600 max-w-3xl mx-auto">
+                        Join us for our upcoming events, workshops, and conferences in Kenya's WASH sector.
+                    </p>
+                </div>
+
+                <div class="blog-grid">
+                    <!-- Event Item -->
+                     <?php foreach ($events as $event): ?>
+                        <div class="blog-card">
+                            <div class="blog-image-container">
+                                <?php 
+                                $imageUrl = !empty($event['image_url']) ? $event['image_url'] : base_url('assets/images/default-blog.jpg');
+                                ?>
+                                <div class="blog-image" style="background-image: url('<?= $imageUrl ?>'); background-size: cover; background-position: center;"></div>
+                                <div class="blog-image-overlay"></div>
+                                <span class="blog-category"><?= esc($event['event_type'] === 'paid' ? 'Paid Event' : 'Free Event') ?></span>
+                            </div>
+                            <div class="blog-content">
+                                <div class="blog-meta">
+                                    <i data-lucide="calendar"></i>
+                                    <?= date('F j, Y', strtotime($event['start_date'])) ?>
+                                    <?php if (!empty($event['start_time'])): ?>
+                                        <span class="mx-2">•</span>
+                                        <i data-lucide="clock"></i>
+                                        <?= date('g:i A', strtotime($event['start_time'])) ?>
+                                    <?php endif; ?>
+                                </div>
+                                <h3 class="blog-title"><?= esc($event['title']) ?></h3>
+                                <p class="blog-excerpt">
+                                    <?php
+                                    // Strip HTML tags and limit to 150 characters
+                                    $plainText = strip_tags($event['description'] ?? '');
+                                    if (strlen($plainText) > 150) {
+                                        $plainText = substr($plainText, 0, 150);
+                                        // Find last space to avoid cutting words
+                                        $lastSpace = strrpos($plainText, ' ');
+                                        if ($lastSpace !== false) {
+                                            $plainText = substr($plainText, 0, $lastSpace);
+                                        }
+                                        $plainText .= '...';
+                                    }
+                                    echo esc($plainText ?: 'Join us for this exciting event.');
+                                    ?>
+                                </p>
+                                <button type="button" onclick="window.open('<?= base_url('events/' . $event['slug']) ?>', '_self')" class="blog-button">
+                                    View Details
+                                    <i data-lucide="arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <div class="w-full flex justify-center">
+                    <!-- View All Events Button -->
+                    <button type="button" onClick="location.href='<?= base_url('events') ?>'" class="gradient-btn flex items-center text-white px-8 py-4 rounded-[50px] transition-all duration-300">
+                        <span>View All Events</span>
+                        <i data-lucide="arrow-right" class="ml-2 icon-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+    <?php endif; ?>
+
     <!-- YouTube Video Section -->
     <section class="py-20 bg-white">
         <div class="container mx-auto px-4">

@@ -8,6 +8,7 @@ use App\Controllers\BaseController;
 use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\PartnerModel as Partner;
 use App\Models\DocumentResource;
+use App\Models\EventModel;
 
 class Home extends BaseController
 {
@@ -15,6 +16,7 @@ class Home extends BaseController
     protected $blogPostModel;
     protected $homeService;
     protected $documentResourceModel;
+    protected $eventModel;
 
     public function __construct()
     {
@@ -22,6 +24,7 @@ class Home extends BaseController
         $this->blogPostModel = new BlogPost();
         $this->homeService   = new HomeService();
         $this->documentResourceModel = new DocumentResource();
+        $this->eventModel = new EventModel();
     }
 
     // Index method to load the landing page
@@ -30,6 +33,15 @@ class Home extends BaseController
         $partners   = $this->partnerModel->getAllPartners();
         $blogPosts  = $this->blogPostModel->getFeaturedBlogPosts(3);
         $stats      = $this->homeService->getKnowledgeHubStats();
+        
+        // Get recent published events (upcoming events, limit 3)
+        $recentEvents = $this->eventModel
+            ->where('status', 'published')
+            ->where('deleted_at', null)
+            ->where('start_date >=', date('Y-m-d'))
+            ->orderBy('start_date', 'ASC')
+            ->limit(3)
+            ->findAll();
 
         // Format blog post image URLs
         foreach ($blogPosts as $post) {
@@ -57,6 +69,26 @@ class Home extends BaseController
                 $post->featured_image = base_url('assets/images/default-blog.jpg');
             }
         }
+        
+        // Format event image URLs
+        foreach ($recentEvents as $event) {
+            if (!empty($event['image_url'])) {
+                $imagePath = $event['image_url'];
+                $imagePath = trim($imagePath);
+                
+                if (strpos($imagePath, 'http') === 0) {
+                    $parsedUrl = parse_url($imagePath);
+                    if (isset($parsedUrl['path'])) {
+                        $imagePath = ltrim($parsedUrl['path'], '/');
+                    }
+                }
+                
+                $imagePath = ltrim($imagePath, '/');
+                $event['image_url'] = base_url($imagePath);
+            } else {
+                $event['image_url'] = base_url('assets/images/default-blog.jpg');
+            }
+        }
 
         $data = [
             'title'                 => 'KEWASNET - Kenya Water and Sanitation Network',
@@ -65,6 +97,7 @@ class Home extends BaseController
             'newsletterDescription' => 'Subscribe to our newsletter and never miss important updates from the WASH sector',
             'partners'              => $partners,
             'blogs'                 => $blogPosts,
+            'events'                => $recentEvents,
             'stats'                 => $stats,
         ];
 

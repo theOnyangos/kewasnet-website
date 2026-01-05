@@ -32,6 +32,16 @@ $routes->group('', static function ($routes) {
     $routes->get('opportunities/explore', 'FrontendV2\OpportunitiesController::explore');
     $routes->get('opportunities/(:segment)', 'FrontendV2\OpportunitiesController::view/$1');
     $routes->post('opportunities/apply/(:segment)', 'FrontendV2\OpportunitiesController::apply/$1');
+    // Events Routes (more specific routes first)
+    $routes->get('events', 'FrontendV2\EventsController::index');
+    $routes->post('events/process-booking', 'FrontendV2\EventsController::processBooking');
+    $routes->post('events/verify-payment', 'FrontendV2\EventsController::verifyPayment');
+    $routes->get('events/booking/(:segment)/tickets', 'FrontendV2\EventsController::tickets/$1');
+    $routes->get('events/booking/(:segment)/success', 'FrontendV2\EventsController::bookingSuccess/$1');
+    $routes->post('events/booking/(:segment)/resend-tickets', 'FrontendV2\EventsController::resendTickets/$1');
+    $routes->get('events/ticket/(:segment)/download', 'FrontendV2\EventsController::downloadTicket/$1');
+    $routes->get('events/(:segment)/book', 'FrontendV2\EventsController::book/$1');
+    $routes->get('events/(:segment)', 'FrontendV2\EventsController::details/$1');
     $routes->get('google-privacy', 'FrontendV2\Home::googlePrivacy');
     $routes->get('terms-of-service', 'FrontendV2\Home::termsOfService');
     $routes->get('privacy-and-policies', 'FrontendV2\Home::privacyAndPolicies');
@@ -92,14 +102,29 @@ $routes->group('', ['filter' => 'auth:guest,/ksp'], static function ($routes) {
 
         // Download attachments
         $routes->get('attachments/download/(:any)', 'FrontendV2\DiscussionController::downloadAttachment/$1');
-        
-        // Public Learning Hub Routes (no authentication required)
-        $routes->group('learning-hub', static function ($routes) {
-                        $routes->get('course/reviews', 'FrontendV2\LearningHubController::getCourseReviews');
-            $routes->get('/', 'FrontendV2\LearningHubController::index');
-            $routes->get('courses', 'FrontendV2\LearningHubController::courses');
-            $routes->get('course/(:segment)', 'FrontendV2\LearningHubController::courseDetails/$1');
-        });
+    });
+});
+
+// Public Learning Hub Routes (accessible to everyone, no authentication required)
+$routes->group('ksp', static function ($routes) {
+    // Events Routes (Public)
+    $routes->group('events', static function ($routes) {
+        $routes->get('', 'FrontendV2\EventsController::index');
+        $routes->get('(:segment)', 'FrontendV2\EventsController::details/$1');
+        $routes->get('(:segment)/book', 'FrontendV2\EventsController::book/$1');
+        $routes->post('process-booking', 'FrontendV2\EventsController::processBooking');
+        $routes->post('verify-payment', 'FrontendV2\EventsController::verifyPayment');
+        $routes->get('booking/(:segment)/tickets', 'FrontendV2\EventsController::tickets/$1');
+        $routes->get('booking/(:segment)/success', 'FrontendV2\EventsController::bookingSuccess/$1');
+        $routes->get('ticket/(:segment)/download', 'FrontendV2\EventsController::downloadTicket/$1');
+        $routes->post('booking/(:segment)/resend-tickets', 'FrontendV2\EventsController::resendTickets/$1');
+    });
+
+    $routes->group('learning-hub', static function ($routes) {
+        $routes->get('course/reviews', 'FrontendV2\LearningHubController::getCourseReviews');
+        $routes->get('/', 'FrontendV2\LearningHubController::index');
+        $routes->get('courses', 'FrontendV2\LearningHubController::courses');
+        $routes->get('course/(:segment)', 'FrontendV2\LearningHubController::courseDetails/$1');
     });
 });
 
@@ -408,10 +433,13 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->get('lectures', 'BackendV2\CoursesController::lectures');
         $routes->get('enrollments', 'BackendV2\CoursesController::enrollments');
         $routes->get('enrolled-students/(:segment)', 'BackendV2\CoursesController::enrolledStudents/$1');
+        $routes->get('enrolled-students/(:segment)/student/(:segment)', 'BackendV2\CoursesController::studentStatistics/$1/$2');
 
         // DataTable endpoints
         $routes->post('get-courses', 'BackendV2\CoursesController::getCourses');
         $routes->post('get-enrolled-students/(:segment)', 'BackendV2\CoursesController::getEnrolledStudents/$1');
+        $routes->post('get-student-statistics/(:segment)', 'BackendV2\CoursesController::getStudentStatistics/$1');
+        $routes->post('get-student-quiz-attempts/(:segment)/(:segment)', 'BackendV2\CoursesController::getStudentQuizAttempts/$1/$2');
         $routes->post('get-sections', 'BackendV2\CoursesController::getSections');
         $routes->post('get-lectures', 'BackendV2\CoursesController::getLectures');
         $routes->post('get-enrollments', 'BackendV2\CoursesController::getEnrollments');        $routes->get('get-recent-courses', 'BackendV2\\CoursesController::getRecentCourses');
@@ -535,6 +563,39 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         
         $routes->post('get-categories', 'BackendV2\ResourcesController::getResourceCategories');
         $routes->post('create-category', 'BackendV2\ResourcesController::createResourceCategory');
+    });
+
+    // Events Routes
+    $routes->group('events', static function ($routes) {
+        $routes->get('', 'BackendV2\EventsController::index');
+        $routes->get('create', 'BackendV2\EventsController::create');
+        $routes->post('store', 'BackendV2\EventsController::store');
+        $routes->get('edit/(:segment)', 'BackendV2\EventsController::edit/$1');
+        $routes->post('update/(:segment)', 'BackendV2\EventsController::update/$1');
+        $routes->post('delete/(:segment)', 'BackendV2\EventsController::delete/$1');
+        $routes->get('(:segment)/bookings', 'BackendV2\EventsController::bookings/$1');
+        $routes->get('check-in', 'BackendV2\EventsController::checkIn');
+        $routes->post('verify-ticket', 'BackendV2\EventsController::verifyTicket');
+        $routes->post('get-events', 'BackendV2\EventsController::getEvents');
+        
+            // Ticket Types Management
+            $routes->get('ticket-types', 'BackendV2\EventsController::ticketTypes');
+            $routes->get('ticket-types/create', 'BackendV2\EventsController::createTicketType');
+            $routes->get('ticket-types/edit/(:segment)', 'BackendV2\EventsController::editTicketType/$1');
+            $routes->post('get-ticket-types', 'BackendV2\EventsController::getTicketTypes');
+            $routes->get('get-ticket-type/(:segment)', 'BackendV2\EventsController::getTicketType/$1');
+            $routes->post('store-ticket-type', 'BackendV2\EventsController::storeTicketType');
+            $routes->post('update-ticket-type/(:segment)', 'BackendV2\EventsController::updateTicketType/$1');
+            $routes->post('delete-ticket-type/(:segment)', 'BackendV2\EventsController::deleteTicketType/$1');
+        
+        // Bookings Management
+        $routes->get('bookings', 'BackendV2\EventsController::allBookings');
+        $routes->get('booking/(:segment)', 'BackendV2\EventsController::viewBooking/$1');
+        $routes->post('get-bookings', 'BackendV2\EventsController::getBookings');
+        $routes->post('booking/(:segment)/cancel', 'BackendV2\EventsController::cancelBooking/$1');
+        $routes->delete('booking/(:segment)', 'BackendV2\EventsController::deleteBooking/$1');
+        $routes->post('ticket/(:segment)/invalidate', 'BackendV2\EventsController::invalidateTicket/$1');
+        $routes->delete('ticket/(:segment)', 'BackendV2\EventsController::deleteTicket/$1');
     });
 
     // Opportunities Routes

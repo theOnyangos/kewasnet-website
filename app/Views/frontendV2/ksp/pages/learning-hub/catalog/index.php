@@ -430,6 +430,7 @@
     </section>
     
     <!-- Testimonials -->
+    <?php if (!empty($testimonials)): ?>
     <section class="mb-16">
         <div class="text-center mb-12">
             <h2 class="text-3xl font-bold text-dark mb-4">What Our Learners Say</h2>
@@ -439,67 +440,53 @@
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <?php foreach ($testimonials as $testimonial): 
+                $userName = $testimonial['user_name'] ?? 'Anonymous';
+                $userPicture = !empty($testimonial['user_picture']) ? base_url($testimonial['user_picture']) : null;
+                $review = $testimonial['review'] ?? '';
+                $rating = (int)($testimonial['rating'] ?? 5);
+                $courseTitle = $testimonial['course_title'] ?? '';
+                
+                // Generate initials from name
+                $initials = 'AN';
+                if ($userName && $userName !== 'Anonymous') {
+                    $nameParts = explode(' ', trim($userName));
+                    if (count($nameParts) >= 2) {
+                        $initials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
+                    } elseif (count($nameParts) == 1) {
+                        $initials = strtoupper(substr($nameParts[0], 0, 2));
+                    }
+                }
+            ?>
             <div class="bg-white p-6 rounded-lg border borderColor">
                 <div class="flex items-center mb-4">
-                    <img src="https://randomuser.me/api/portraits/women/45.jpg" alt="Learner" class="w-12 h-12 rounded-full mr-4">
+                    <?php if ($userPicture): ?>
+                        <img src="<?= esc($userPicture) ?>" alt="<?= esc($userName) ?>" class="w-12 h-12 rounded-full mr-4 object-cover">
+                    <?php else: ?>
+                        <div class="w-12 h-12 rounded-full mr-4 bg-primary/10 flex items-center justify-center text-primary font-bold">
+                            <?= esc($initials) ?>
+                        </div>
+                    <?php endif; ?>
                     <div>
-                        <h4 class="font-bold">Sarah Johnson</h4>
-                        <p class="text-sm text-slate-600">WASH Coordinator</p>
+                        <h4 class="font-bold"><?= esc($userName) ?></h4>
+                        <?php if ($courseTitle): ?>
+                            <p class="text-sm text-slate-600"><?= esc($courseTitle) ?></p>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <p class="text-slate-600 mb-4">
-                    "The Community-Led Total Sanitation course transformed our approach to hygiene promotion. We've seen a 40% reduction in open defecation in our target communities."
+                    "<?= esc($review) ?>"
                 </p>
                 <div class="flex text-yellow-400">
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
+                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                        <i data-lucide="star" class="w-4 h-4 <?= $i <= $rating ? 'fill-current' : '' ?>"></i>
+                    <?php endfor; ?>
                 </div>
             </div>
-            
-            <div class="bg-white p-6 rounded-lg border borderColor">
-                <div class="flex items-center mb-4">
-                    <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Learner" class="w-12 h-12 rounded-full mr-4">
-                    <div>
-                        <h4 class="font-bold">David Ochieng</h4>
-                        <p class="text-sm text-slate-600">Water Engineer</p>
-                    </div>
-                </div>
-                <p class="text-slate-600 mb-4">
-                    "The IWRM courses provided practical tools I've applied in developing our county's water master plan. The certification helped me secure a promotion."
-                </p>
-                <div class="flex text-yellow-400">
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                </div>
-            </div>
-            
-            <div class="bg-white p-6 rounded-lg border borderColor">
-                <div class="flex items-center mb-4">
-                    <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Learner" class="w-12 h-12 rounded-full mr-4">
-                    <div>
-                        <h4 class="font-bold">Grace Mwende</h4>
-                        <p class="text-sm text-slate-600">Climate Officer</p>
-                    </div>
-                </div>
-                <p class="text-slate-600 mb-4">
-                    "The climate change modules helped our team develop more resilient water projects. The self-paced format allowed me to balance learning with work commitments."
-                </p>
-                <div class="flex text-yellow-400">
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                    <i data-lucide="star" class="w-4 h-4 fill-current"></i>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </section>
+    <?php endif; ?>
 </main>
 
 <!-- Call to Action -->

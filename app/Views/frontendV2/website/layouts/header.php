@@ -55,6 +55,7 @@
                 <a href="<?= base_url("programs") ?>" class="water-nav-link <?= ($uri->getSegment(1) === "programs") ? "active" : ""; ?> text-slate-700 font-medium">Programs</a>
                 <a href="<?= base_url("resources") ?>" class="water-nav-link <?= ($uri->getSegment(1) === "resources") ? "active" : ""; ?> text-slate-700 font-medium">Resources</a>
                 <a href="<?= base_url("opportunities") ?>" class="water-nav-link <?= ($uri->getSegment(1) === "opportunities") ? "active" : ""; ?> text-slate-700 font-medium">Opportunities</a>
+                <a href="<?= base_url("events") ?>" class="water-nav-link <?= ($uri->getSegment(1) === "events") ? "active" : ""; ?> text-slate-700 font-medium">Events</a>
                 <a href="<?= base_url("news") ?>" class="water-nav-link <?= ($uri->getSegment(1) === "news") ? "active" : ""; ?> text-slate-700 font-medium">News</a>
                 <a href="<?= base_url("contact-us") ?>" class="water-nav-link <?= ($uri->getSegment(1) === "contact-us") ? "active" : ""; ?> text-slate-700 font-medium">Contact</a>
 
@@ -90,6 +91,7 @@
             <a href="<?= base_url("programs") ?>" class="block py-3 px-4 hover:bg-slate-50 rounded-md <?= ($uri->getSegment(1) === "programs") ? "bg-slate-100 font-medium text-primary" : ""; ?>">Programs</a>
             <a href="<?= base_url("resources") ?>" class="block py-3 px-4 hover:bg-slate-50 rounded-md <?= ($uri->getSegment(1) === "resources") ? "bg-slate-100 font-medium text-primary" : ""; ?>">Resources</a>
             <a href="<?= base_url("opportunities") ?>" class="block py-3 px-4 hover:bg-slate-50 rounded-md <?= ($uri->getSegment(1) === "opportunities") ? "bg-slate-100 font-medium text-primary" : ""; ?>">Opportunities</a>
+            <a href="<?= base_url("events") ?>" class="block py-3 px-4 hover:bg-slate-50 rounded-md <?= ($uri->getSegment(1) === "events") ? "bg-slate-100 font-medium text-primary" : ""; ?>">Events</a>
             <a href="<?= base_url("news") ?>" class="block py-3 px-4 hover:bg-slate-50 rounded-md <?= ($uri->getSegment(1) === "news") ? "bg-slate-100 font-medium text-primary" : ""; ?>">News</a>
             <a href="<?= base_url("contact-us") ?>" class="block py-3 px-4 hover:bg-slate-50 rounded-md <?= ($uri->getSegment(1) === "contact-us") ? "bg-slate-100 font-medium text-primary" : ""; ?>">Contact</a>
             <button class="w-full bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-md flex items-center justify-center mt-6">

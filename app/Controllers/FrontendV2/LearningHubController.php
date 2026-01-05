@@ -15,29 +15,228 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class LearningHubController extends BaseController
 {
-    protected CourseService $courseService;
-    protected QuizService $quizService;
-    protected CertificateService $certificateService;
+    protected $courseService;
+    protected $quizService;
+    protected $certificateService;
+    protected $vimeoService;
 
     public function __construct()
     {
         $this->courseService = new CourseService();
         $this->quizService = new QuizService();
         $this->certificateService = new CertificateService();
+        $this->vimeoService = new VimeoService();
     }
 
     /**
-     * AJAX: Get paginated course reviews
+     * Learning Hub index/catalog page
      */
-    public function getCourseReviews()
+    public function index()
     {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'Invalid request'
-            ]);
+        $userId = ClientAuth::getId();
+        $courseModel = new CourseModel();
+        $enrollmentModel = new CourseEnrollmentModel();
+        
+        // Get filter parameters
+        $filter = $this->request->getGet('filter') ?? 'all'; // all, free, paid
+        $category = $this->request->getGet('category') ?? null;
+        $level = $this->request->getGet('level') ?? null;
+        $search = $this->request->getGet('search') ?? null;
+        $page = (int)($this->request->getGet('page') ?? 1);
+        $perPage = 12; // Courses per page
+
+        $builder = $courseModel->where('status', 1);
+
+        // Apply filters
+        if ($filter === 'free') {
+            $builder->where('price', 0)->where('is_paid', 0);
+        } elseif ($filter === 'paid') {
+            $builder->groupStart()
+                ->where('price >', 0)
+                ->orWhere('is_paid', 1)
+                ->groupEnd();
         }
-        $courseId = $this->request->getGet('course_id');
+
+        if ($category) {
+            $builder->where('category_id', $category);
+        }
+
+        if ($level) {
+            $builder->where('level', $level);
+        }
+
+        if ($search) {
+            $builder->groupStart()
+                ->like('title', $search)
+                ->orLike('description', $search)
+                ->orLike('summary', $search)
+                ->groupEnd();
+        }
+
+        // Get total count for pagination
+        $totalCourses = $builder->countAllResults(false);
+        
+        // Apply pagination
+        $courses = $builder->orderBy('created_at', 'DESC')
+                          ->limit($perPage, ($page - 1) * $perPage)
+                          ->findAll();
+        
+        // Add enrollment status and progress for each course
+        foreach ($courses as &$course) {
+            $course['is_enrolled'] = false;
+            $course['progress'] = 0;
+            
+            if ($userId) {
+                $course['is_enrolled'] = $enrollmentModel->isEnrolled($userId, $course['id']);
+                if ($course['is_enrolled']) {
+                    $course['progress'] = $this->courseService->calculateProgress($userId, $course['id']);
+                }
+            }
+        }
+
+        // Calculate pagination data
+        $totalPages = ceil($totalCourses / $perPage);
+        $pager = \Config\Services::pager();
+        
+        // Build pagination links with current filters
+        $pagerLinks = [];
+        $baseUrl = base_url('ksp/learning-hub');
+        $queryParams = http_build_query(array_filter([
+            'filter' => $filter !== 'all' ? $filter : null,
+            'category' => $category,
+            'level' => $level,
+            'search' => $search,
+        ]));
+        $urlPrefix = $baseUrl . ($queryParams ? '?' . $queryParams . '&' : '?');
+
+        // Generate pagination links
+        for ($i = 1; $i <= $totalPages; $i++) {
+            $pagerLinks[] = [
+                'uri' => $urlPrefix . 'page=' . $i,
+                'title' => $i,
+                'active' => $i === $page,
+            ];
+        }
+
+        // Get recent course reviews for testimonials section
+        $db = \Config\Database::connect();
+        $testimonials = [];
+        if ($db->tableExists('course_reviews')) {
+            $testimonials = $db->table('course_reviews cr')
+                ->select('cr.id, cr.rating, cr.review, cr.created_at, cr.course_id,
+                         CONCAT(COALESCE(u.first_name, ""), " ", COALESCE(u.last_name, "")) as user_name,
+                         u.picture as user_picture,
+                         c.title as course_title')
+                ->join('system_users u', 'u.id = cr.user_id', 'left')
+                ->join('courses c', 'c.id = cr.course_id', 'left')
+                ->where('cr.deleted_at', null)
+                ->where('cr.review IS NOT NULL')
+                ->where('cr.review !=', '')
+                ->orderBy('cr.created_at', 'DESC')
+                ->limit(3)
+                ->get()
+                ->getResultArray();
+            
+            // Format user_name to trim extra spaces
+            foreach ($testimonials as &$testimonial) {
+                $testimonial['user_name'] = trim($testimonial['user_name']);
+                if (empty($testimonial['user_name'])) {
+                    $testimonial['user_name'] = 'Anonymous';
+                }
+            }
+        }
+
+        $data = [
+            'title' => 'Learning Hub - KEWASNET',
+            'description' => 'Browse our comprehensive course catalog',
+            'courses' => $courses,
+            'filter' => $filter,
+            'category' => $category,
+            'level' => $level,
+            'search' => $search,
+            'testimonials' => $testimonials,
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_courses' => $totalCourses,
+                'per_page' => $perPage,
+                'links' => $pagerLinks,
+                'has_previous' => $page > 1,
+                'has_next' => $page < $totalPages,
+                'previous_url' => $page > 1 ? $urlPrefix . 'page=' . ($page - 1) : null,
+                'next_url' => $page < $totalPages ? $urlPrefix . 'page=' . ($page + 1) : null,
+            ],
+        ];
+
+        return view('frontendV2/ksp/pages/learning-hub/catalog/index', $data);
+    }
+
+    /**
+     * All courses page with sidebar filters
+     */
+    public function courses()
+    {
+        $userId = ClientAuth::getId();
+        $courseModel = new CourseModel();
+        $enrollmentModel = new CourseEnrollmentModel();
+        $db = \Config\Database::connect();
+        
+        // Get filter parameters
+        $filter = $this->request->getGet('filter') ?? 'all'; // all, free, paid
+        $category = $this->request->getGet('category') ?? null;
+        $level = $this->request->getGet('level') ?? null;
+        $search = $this->request->getGet('search') ?? null;
+        $page = (int)($this->request->getGet('page') ?? 1);
+        $perPage = 12; // Courses per page
+
+        $builder = $courseModel->where('status', 1);
+
+        // Apply filters
+        if ($filter === 'free') {
+            $builder->where('price', 0)->where('is_paid', 0);
+        } elseif ($filter === 'paid') {
+            $builder->groupStart()
+                ->where('price >', 0)
+                ->orWhere('is_paid', 1)
+                ->groupEnd();
+        }
+
+        if ($category) {
+            $builder->where('category_id', $category);
+        }
+
+        if ($level) {
+            $builder->where('level', $level);
+        }
+
+        if ($search) {
+            $builder->groupStart()
+                ->like('title', $search)
+                ->orLike('description', $search)
+                ->orLike('summary', $search)
+                ->groupEnd();
+        }
+
+        // Get total count for pagination
+        $totalCourses = $builder->countAllResults(false);
+        
+        // Apply pagination
+        $courses = $builder->orderBy('created_at', 'DESC')
+                          ->limit($perPage, ($page - 1) * $perPage)
+                          ->findAll();
+        
+        // Add enrollment status and progress for each course
+        foreach ($courses as &$course) {
+            $course['is_enrolled'] = false;
+            $course['progress'] = 0;
+            
+            if ($userId) {
+                $course['is_enrolled'] = $enrollmentModel->isEnrolled($userId, $course['id']);
+                if ($course['is_enrolled']) {
+                    $course['progress'] = $this->courseService->calculateProgress($userId, $course['id']);
+                }
+            }
+        }
 
         // Calculate pagination data
         $totalPages = ceil($totalCourses / $perPage);
@@ -108,6 +307,58 @@ class LearningHubController extends BaseController
         ];
 
         return view('frontendV2/ksp/pages/learning-hub/courses/index', $data);
+    }
+
+    /**
+     * AJAX: Get paginated course reviews
+     */
+    public function getCourseReviews()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Invalid request'
+            ]);
+        }
+        
+        $courseId = $this->request->getGet('course_id');
+        $limit = (int)($this->request->getGet('limit') ?? 5);
+        $offset = (int)($this->request->getGet('offset') ?? 0);
+
+        if (!$courseId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Course ID is required'
+            ]);
+        }
+
+        $db = \Config\Database::connect();
+        
+        // Get reviews with user information
+        $reviews = $db->table('course_reviews cr')
+            ->select('cr.id, cr.rating, cr.review, cr.created_at,
+                     CONCAT(COALESCE(u.first_name, ""), " ", COALESCE(u.last_name, "")) as user_name,
+                     u.picture as user_picture')
+            ->join('system_users u', 'u.id = cr.user_id', 'left')
+            ->where('cr.course_id', $courseId)
+            ->where('cr.deleted_at', null)
+            ->orderBy('cr.created_at', 'DESC')
+            ->limit($limit, $offset)
+            ->get()
+            ->getResultArray();
+
+        // Format user_name to trim extra spaces
+        foreach ($reviews as &$review) {
+            $review['user_name'] = trim($review['user_name']);
+            if (empty($review['user_name'])) {
+                $review['user_name'] = 'Anonymous';
+            }
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'reviews' => $reviews
+        ]);
     }
 
     /**
@@ -652,28 +903,160 @@ class LearningHubController extends BaseController
     }
 
     /**
-     * Download certificate
+     * View/Generate certificate for a course
      */
-    public function downloadCertificate($certificateId)
+    public function viewCertificate($courseId)
     {
         $userId = ClientAuth::getId();
+        
+        if (!$userId) {
+            return redirect()->to('ksp/login?redirect=' . urlencode(current_url()))
+                ->with('error', 'Please login to view your certificate');
+        }
+
+        $courseModel = new CourseModel();
+        $userModel = new \App\Models\UserModel();
         $certificateModel = new CertificateModel();
 
-        $certificate = $certificateModel->find($certificateId);
-
-        if (!$certificate || $certificate['user_id'] != $userId) {
-            return redirect()->to('ksp/learning-hub/certificates')
-                ->with('error', 'Certificate not found');
+        // Get course
+        $course = $courseModel->find($courseId);
+        if (!$course) {
+            return redirect()->to('ksp/learning-hub')
+                ->with('error', 'Course not found');
         }
 
-        $filePath = $this->certificateService->downloadCertificate($certificateId);
-
-        if (!$filePath || !file_exists($filePath)) {
-            return redirect()->to('ksp/learning-hub/certificates')
-                ->with('error', 'Certificate file not found');
+        // Check if user is enrolled
+        $enrollmentModel = new CourseEnrollmentModel();
+        if (!$enrollmentModel->isEnrolled($userId, $courseId)) {
+            return redirect()->to('ksp/learning-hub/course/' . $courseId)
+                ->with('error', 'You must be enrolled in this course to receive a certificate');
         }
 
-        return $this->response->download($filePath, null);
+        // Check if course is completed
+        if (!$this->courseService->isCourseCompleted($userId, $courseId)) {
+            return redirect()->to('ksp/learning-hub/learn/' . $courseId)
+                ->with('error', 'You must complete the course before you can generate a certificate');
+        }
+
+        // Get or generate certificate
+        $certificate = $certificateModel->where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->where('deleted_at', null)
+            ->first();
+
+        if (!$certificate) {
+            // Generate certificate
+            $result = $this->certificateService->generateCertificate($userId, $courseId);
+            
+            if ($result['status'] !== 'success') {
+                return redirect()->to('ksp/learning-hub/learn/' . $courseId)
+                    ->with('error', $result['message'] ?? 'Failed to generate certificate');
+            }
+
+            // Get the newly created certificate
+            $certificate = $certificateModel->find($result['certificate_id']);
+        }
+
+        // Get user data
+        $user = $userModel->find($userId);
+        if (!$user) {
+            return redirect()->to('ksp/learning-hub')
+                ->with('error', 'User not found');
+        }
+
+        $data = [
+            'title' => 'Certificate of Completion - ' . $course['title'],
+            'description' => 'Your course completion certificate',
+            'user' => $user,
+            'course' => $course,
+            'certificateId' => $certificate['certificate_number'] ?? $certificate['id'],
+            'issuedAt' => $certificate['issued_at'] ?? date('Y-m-d H:i:s'),
+            'certificate' => $certificate,
+        ];
+
+        return view('frontendV2/ksp/pages/learning-hub/learning/certificate', $data);
+    }
+
+    /**
+     * Download certificate as PDF
+     */
+    public function downloadCertificate($courseId)
+    {
+        $userId = ClientAuth::getId();
+        
+        if (!$userId) {
+            return redirect()->to('ksp/login?redirect=' . urlencode(current_url()))
+                ->with('error', 'Please login to download your certificate');
+        }
+
+        $courseModel = new CourseModel();
+        $userModel = new \App\Models\UserModel();
+        $certificateModel = new CertificateModel();
+
+        // Get course
+        $course = $courseModel->find($courseId);
+        if (!$course) {
+            return redirect()->to('ksp/learning-hub')
+                ->with('error', 'Course not found');
+        }
+
+        // Check if user is enrolled
+        $enrollmentModel = new CourseEnrollmentModel();
+        if (!$enrollmentModel->isEnrolled($userId, $courseId)) {
+            return redirect()->to('ksp/learning-hub/course/' . $courseId)
+                ->with('error', 'You must be enrolled in this course to download a certificate');
+        }
+
+        // Check if course is completed
+        if (!$this->courseService->isCourseCompleted($userId, $courseId)) {
+            return redirect()->to('ksp/learning-hub/learn/' . $courseId)
+                ->with('error', 'You must complete the course before you can download a certificate');
+        }
+
+        // Get or generate certificate
+        $certificate = $certificateModel->where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->where('deleted_at', null)
+            ->first();
+
+        if (!$certificate) {
+            // Generate certificate
+            $result = $this->certificateService->generateCertificate($userId, $courseId);
+            
+            if ($result['status'] !== 'success') {
+                return redirect()->to('ksp/learning-hub/learn/' . $courseId)
+                    ->with('error', $result['message'] ?? 'Failed to generate certificate');
+            }
+
+            // Get the newly created certificate
+            $certificate = $certificateModel->find($result['certificate_id']);
+        }
+
+        // Get user data
+        $user = $userModel->find($userId);
+        if (!$user) {
+            return redirect()->to('ksp/learning-hub')
+                ->with('error', 'User not found');
+        }
+
+        // Generate PDF using CertificateGenerator
+        $certificateGenerator = new \App\Libraries\CertificateGenerator();
+        $pdfOutput = $certificateGenerator->generatePDFForDownload(
+            $user,
+            $course,
+            $certificate['certificate_number'] ?? $certificate['id'],
+            $certificate['verification_code'] ?? '',
+            $certificate['issued_at'] ?? date('Y-m-d H:i:s')
+        );
+
+        // Set response headers for PDF download
+        $filename = 'Certificate_' . str_replace(' ', '_', $course['title']) . '_' . date('Y-m-d') . '.pdf';
+        
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setHeader('Content-Length', strlen($pdfOutput))
+            ->setBody($pdfOutput);
     }
 
     /**

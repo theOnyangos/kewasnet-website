@@ -824,21 +824,23 @@ class CoursesController extends BaseController
 
         // Get enrolled students with user details
         $db = \Config\Database::connect();
+        
+        // Get distinct users enrolled in the course
+        // First get all users who have progress records for this course
         $builder = $db->table('user_progress')
-            ->select('user_progress.id, 
-                     user_progress.user_id,
-                     user_progress.progress_percentage,
-                     user_progress.last_accessed_at,
-                     user_progress.completed_at,
-                     user_progress.created_at,
+            ->select('user_progress.user_id,
                      system_users.first_name,
                      system_users.last_name,
                      system_users.email,
                      system_users.phone,
-                     CONCAT(system_users.first_name, " ", system_users.last_name) as student_name')
+                     CONCAT(system_users.first_name, " ", system_users.last_name) as student_name,
+                     MAX(user_progress.last_accessed_at) as last_accessed_at,
+                     MAX(user_progress.completed_at) as completed_at,
+                     MIN(user_progress.id) as id,
+                     MIN(user_progress.created_at) as created_at')
             ->join('system_users', 'system_users.id = user_progress.user_id', 'left')
             ->where('user_progress.course_id', $courseId)
-            ->groupBy('user_progress.user_id'); // Group by user to avoid duplicates
+            ->groupBy('user_progress.user_id, system_users.first_name, system_users.last_name, system_users.email, system_users.phone');
 
         // Count total records
         $totalRecords = $builder->countAllResults(false);
@@ -856,14 +858,29 @@ class CoursesController extends BaseController
         // Count filtered records
         $filteredRecords = $builder->countAllResults(false);
 
-        // Apply ordering
-        $builder->orderBy($orderColumn, $orderDir);
+        // Apply ordering - handle progress_percentage specially since it's a calculated field
+        if ($orderColumn === 'progress_percentage') {
+            $builder->orderBy('progress_percentage', $orderDir);
+        } else {
+            $builder->orderBy($orderColumn, $orderDir);
+        }
 
         // Apply pagination
         $builder->limit($length, $start);
 
         // Get data
-        $data = $builder->get()->getResult();
+        $students = $builder->get()->getResultArray();
+        
+        // Calculate progress for each student using the same method as CourseService::calculateProgress
+        foreach ($students as &$student) {
+            $userId = $student['user_id'];
+            $student['progress_percentage'] = $this->courseService->calculateProgress($userId, $courseId);
+        }
+        
+        // Convert back to objects for DataTables
+        $data = array_map(function($item) {
+            return (object)$item;
+        }, $students);
 
         return $this->response->setJSON([
             'draw' => intval($draw),
@@ -871,6 +888,330 @@ class CoursesController extends BaseController
             'recordsFiltered' => $filteredRecords,
             'data' => $data
         ]);
+    }
+
+    /**
+     * Show student statistics page
+     */
+    public function studentStatistics($courseId, $userId)
+    {
+        $course = $this->courseModel->find($courseId);
+        
+        if (!$course) {
+            return redirect()->to('auth/courses')->with('error', 'Course not found');
+        }
+
+        // Get user details
+        $db = \Config\Database::connect();
+        $user = $db->table('system_users')
+            ->select('id, first_name, last_name, email, phone, CONCAT(first_name, " ", last_name) as student_name')
+            ->where('id', $userId)
+            ->get()
+            ->getRowArray();
+        
+        if (!$user) {
+            return redirect()->to('auth/courses/enrolled-students/' . $courseId)->with('error', 'Student not found');
+        }
+
+        // Calculate progress using the same method as CourseService
+        $progressPercentage = $this->courseService->calculateProgress($userId, $courseId);
+        
+        // Get lectures completed count
+        $progressModel = new \App\Models\CourseLectureProgressModel();
+        $lecturesCompleted = $progressModel->where('student_id', $userId)
+            ->where('course_id', $courseId)
+            ->where('status', 'completed')
+            ->countAllResults();
+        
+        // Get all quiz attempts for this course using QuizAttemptModel
+        $attemptModel = new \App\Models\QuizAttemptModel();
+        $quizAttempts = $attemptModel->getUserCourseAttemptsBuilder($courseId, $userId)
+            ->orderBy('quiz_attempts.completed_at', 'DESC')
+            ->get()
+            ->getResultArray();
+        
+        // Group quiz attempts by section
+        $quizScoresBySection = [];
+        $sectionIds = [];
+        
+        foreach ($quizAttempts as $attempt) {
+            $sectionId = $attempt['section_id'];
+            if (!$sectionId) continue;
+            
+            if (!isset($sectionIds[$sectionId])) {
+                $sectionIds[$sectionId] = [
+                    'section_id' => $sectionId,
+                    'section_title' => $attempt['section_title'],
+                    'attempts' => [],
+                    'best_score' => 0,
+                    'passed' => false
+                ];
+            }
+            
+            $sectionIds[$sectionId]['attempts'][] = $attempt;
+            
+            // Update best score
+            $percentage = floatval($attempt['percentage'] ?? 0);
+            if ($percentage > $sectionIds[$sectionId]['best_score']) {
+                $sectionIds[$sectionId]['best_score'] = $percentage;
+            }
+            
+            // Check if passed
+            if ($attempt['passed'] == 1) {
+                $sectionIds[$sectionId]['passed'] = true;
+            }
+        }
+        
+        // Convert to array format
+        foreach ($sectionIds as $sectionId => $sectionData) {
+            $quizScoresBySection[] = [
+                'section_id' => $sectionId,
+                'section_title' => $sectionData['section_title'],
+                'best_score' => $sectionData['best_score'],
+                'attempts' => count($sectionData['attempts']),
+                'passed' => $sectionData['passed']
+            ];
+        }
+
+        return view('backendV2/pages/courses/student-statistics', [
+            'title' => 'Student Statistics - ' . $user['student_name'],
+            'dashboardTitle' => 'Student Statistics',
+            'course' => $course,
+            'student' => $user,
+            'progress_percentage' => $progressPercentage,
+            'lectures_completed' => $lecturesCompleted,
+            'total_quiz_attempts' => count($quizAttempts),
+            'quiz_scores_by_section' => $quizScoresBySection,
+            'all_quiz_attempts' => $quizAttempts,
+            'courseId' => $courseId,
+            'userId' => $userId
+        ]);
+    }
+
+    /**
+     * Get student statistics and quiz scores for a course (API endpoint)
+     */
+    public function getStudentStatistics($courseId)
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Invalid request'
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+
+        $userId = $this->request->getPost('user_id');
+        
+        if (!$userId) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'User ID is required'
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $db = \Config\Database::connect();
+            
+            // Get course progress
+            $progress = $db->table('user_progress')
+                ->select('progress_percentage')
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->get()
+                ->getRowArray();
+            
+            $progressPercentage = $progress['progress_percentage'] ?? 0;
+            
+            // Get lectures completed count (count distinct lectures with 100% progress)
+            $lecturesCompleted = $db->table('user_progress')
+                ->select('COUNT(DISTINCT lecture_id) as count')
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->where('progress_percentage', 100)
+                ->where('lecture_id IS NOT NULL')
+                ->get()
+                ->getRowArray();
+            
+            // Get all quiz attempts for this course
+            // Join: quiz_attempts -> quizzes -> course_sections (via quizzes.course_section_id)
+            $quizAttempts = $db->table('quiz_attempts')
+                ->select('quiz_attempts.*, 
+                         quizzes.title as quiz_title,
+                         course_sections.title as section_title,
+                         course_sections.id as section_id')
+                ->join('quizzes', 'quizzes.id = quiz_attempts.quiz_id', 'left')
+                ->join('course_sections', 'course_sections.id = quizzes.course_section_id', 'left')
+                ->where('quiz_attempts.user_id', $userId)
+                ->where('course_sections.course_id', $courseId)
+                ->orderBy('quiz_attempts.completed_at', 'DESC')
+                ->get()
+                ->getResultArray();
+            
+            // Group quiz attempts by section
+            $quizScoresBySection = [];
+            $sectionIds = [];
+            
+            foreach ($quizAttempts as $attempt) {
+                $sectionId = $attempt['section_id'];
+                if (!$sectionId) continue;
+                
+                if (!isset($sectionIds[$sectionId])) {
+                    $sectionIds[$sectionId] = [
+                        'section_id' => $sectionId,
+                        'section_title' => $attempt['section_title'],
+                        'attempts' => [],
+                        'best_score' => 0,
+                        'passed' => false
+                    ];
+                }
+                
+                $sectionIds[$sectionId]['attempts'][] = $attempt;
+                
+                // Update best score
+                $percentage = floatval($attempt['percentage'] ?? 0);
+                if ($percentage > $sectionIds[$sectionId]['best_score']) {
+                    $sectionIds[$sectionId]['best_score'] = $percentage;
+                }
+                
+                // Check if passed
+                if ($attempt['passed'] == 1) {
+                    $sectionIds[$sectionId]['passed'] = true;
+                }
+            }
+            
+            // Convert to array format
+            foreach ($sectionIds as $sectionId => $sectionData) {
+                $quizScoresBySection[] = [
+                    'section_id' => $sectionId,
+                    'section_title' => $sectionData['section_title'],
+                    'best_score' => $sectionData['best_score'],
+                    'attempts' => count($sectionData['attempts']),
+                    'passed' => $sectionData['passed']
+                ];
+            }
+            
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => [
+                    'progress_percentage' => $progressPercentage,
+                    'lectures_completed' => $lecturesCompleted['count'] ?? 0,
+                    'total_quiz_attempts' => count($quizAttempts),
+                    'quiz_scores_by_section' => $quizScoresBySection,
+                    'all_quiz_attempts' => $quizAttempts
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Get student statistics error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Failed to load statistics: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get student quiz attempts for DataTable (AJAX endpoint)
+     */
+    public function getStudentQuizAttempts($courseId, $userId)
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Invalid request'
+            ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            // DataTable parameters
+            $request            = service('request');
+            $draw               = $request->getPost('draw') ?? 1;
+            $start              = $request->getPost('start') ?? 0;
+            $length             = $request->getPost('length') ?? 10;
+            $searchValue        = $request->getPost('search')['value'] ?? null;
+            $orderData          = $request->getPost('order');
+            $orderColumnIndex   = !empty($orderData[0]['column']) ? (int)$orderData[0]['column'] : 5; // Default to Date column
+            $orderDir           = !empty($orderData[0]['dir']) ? $orderData[0]['dir'] : 'DESC';
+            
+            // Column mapping
+            $columns = ['section_title', 'quiz_title', 'score', 'percentage', 'passed', 'completed_at'];
+            $orderColumn = $columns[$orderColumnIndex] ?? 'completed_at';
+            
+            // Use QuizAttemptModel to get query builder with joins
+            $attemptModel = new \App\Models\QuizAttemptModel();
+            $builder = $attemptModel->getUserCourseAttemptsBuilder($courseId, $userId);
+            
+            // Count total records
+            $totalRecords = $builder->countAllResults(false);
+            
+            // Apply search
+            if ($searchValue) {
+                $builder->groupStart()
+                    ->like('quizzes.title', $searchValue)
+                    ->orLike('course_sections.title', $searchValue)
+                    ->groupEnd();
+            }
+            
+            // Count filtered records
+            $filteredRecords = $builder->countAllResults(false);
+            
+            // Apply ordering
+            if ($orderColumn === 'completed_at') {
+                $builder->orderBy('quiz_attempts.completed_at', $orderDir);
+            } elseif ($orderColumn === 'section_title') {
+                $builder->orderBy('course_sections.title', $orderDir);
+            } elseif ($orderColumn === 'quiz_title') {
+                $builder->orderBy('quizzes.title', $orderDir);
+            } elseif ($orderColumn === 'score') {
+                $builder->orderBy('quiz_attempts.score', $orderDir);
+            } elseif ($orderColumn === 'percentage') {
+                $builder->orderBy('quiz_attempts.percentage', $orderDir);
+            } elseif ($orderColumn === 'passed') {
+                $builder->orderBy('quiz_attempts.passed', $orderDir);
+            }
+            
+            // Apply pagination
+            $builder->limit($length, $start);
+            
+            // Get data
+            $quizAttempts = $builder->get()->getResultArray();
+            
+            // Debug logging
+            log_message('debug', 'getStudentQuizAttempts - User: ' . $userId . ', Course: ' . $courseId);
+            log_message('debug', 'getStudentQuizAttempts - Query: ' . $builder->getCompiledSelect(false));
+            log_message('debug', 'getStudentQuizAttempts - Results count: ' . count($quizAttempts));
+            
+            // Format data for DataTables
+            $data = [];
+            foreach ($quizAttempts as $attempt) {
+                $data[] = [
+                    'section_title'     => $attempt['section_title'] ?? 'N/A',
+                    'quiz_title'        => $attempt['quiz_title'] ?? 'N/A',
+                    'score'             => floatval($attempt['score'] ?? 0),
+                    'total_points'      => floatval($attempt['total_points'] ?? 0),
+                    'score_display'     => number_format($attempt['score'] ?? 0, 2) . ' / ' . number_format($attempt['total_points'] ?? 0, 2),
+                    'percentage'        => floatval($attempt['percentage'] ?? 0),
+                    'percentage_display' => number_format($attempt['percentage'] ?? 0, 1),
+                    'passed'            => $attempt['passed'] == 1,
+                    'completed_at'      => $attempt['completed_at'] ? date('M d, Y H:i', strtotime($attempt['completed_at'])) : 'N/A',
+                    'completed_at_raw'  => $attempt['completed_at'] ?? null
+                ];
+            }
+
+            return $this->response->setJSON([
+                'draw' => intval($draw),
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Get student quiz attempts error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Failed to load quiz attempts: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**     * Get course statistics

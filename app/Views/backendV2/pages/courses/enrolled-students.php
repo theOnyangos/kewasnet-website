@@ -59,6 +59,7 @@
                             <th scope="col">Progress</th>
                             <th scope="col">Last Accessed</th>
                             <th scope="col">Completed</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -191,6 +192,19 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mb-1">Completed</span>
                                 <div class="text-xs text-gray-500">${new Date(data).toLocaleDateString()}</div>
                             </div>
+                        `;
+                    }
+                },
+                {
+                    "data": "user_id",
+                    "orderable": false,
+                    "render": function(data, type, row) {
+                        return `
+                            <a href="<?= base_url('auth/courses/enrolled-students/' . $courseId) ?>/student/${data}" 
+                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i data-lucide="bar-chart-2" class="w-4 h-4 mr-1.5"></i>
+                                View Statistics
+                            </a>
                         `;
                     }
                 }

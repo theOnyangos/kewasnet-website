@@ -8,6 +8,7 @@ use App\Models\Resource;
 use App\Models\Pillar;
 use App\Models\Program;
 use App\Models\JobOpportunityModel;
+use App\Models\EventModel;
 use App\Models\FileAttachment;
 
 class SitemapService
@@ -18,6 +19,7 @@ class SitemapService
     protected $pillarModel;
     protected $programModel;
     protected $jobModel;
+    protected $eventModel;
     protected $fileAttachmentModel;
 
     public function __construct()
@@ -28,6 +30,7 @@ class SitemapService
         $this->pillarModel         = new Pillar();
         $this->programModel        = new Program();
         $this->jobModel            = new JobOpportunityModel();
+        $this->eventModel          = new EventModel();
         $this->fileAttachmentModel = new FileAttachment();
     }
 
@@ -39,7 +42,7 @@ class SitemapService
         try {
             // Default content types if none provided
             if ($contentTypes === null) {
-                $contentTypes = ['static', 'blog', 'resources', 'pillars', 'programs', 'jobs'];
+                $contentTypes = ['static', 'blog', 'resources', 'pillars', 'programs', 'jobs', 'events'];
             }
 
             $urlsData = [];
@@ -203,6 +206,24 @@ class SitemapService
                 }
             }
 
+            // Events
+            if (in_array('events', $contentTypes)) {
+                $events = $this->getEvents();
+                foreach ($events as $event) {
+                    $event = is_array($event) ? (object) $event : $event;
+                    $urlsData[] = [
+                        'url'           => 'events/' . $event->slug,
+                        'title'         => $event->title,
+                        'description'   => substr(strip_tags($event->description ?? ''), 0, 155),
+                        'category'      => 'Events & Conferences',
+                        'changefreq'    => 'weekly',
+                        'priority'      => '0.7',
+                        'last_modified' => $event->updated_at ?: $event->created_at,
+                        'is_active'     => 1
+                    ];
+                }
+            }
+
             // Store in database
             $result = $this->sitemapModel->bulkUpdateOrCreate($urlsData);
 
@@ -304,6 +325,14 @@ class SitemapService
                 'url' => 'news',
                 'title' => 'News & Updates',
                 'description' => 'Stay updated with the latest news and developments in WASH sector.',
+                'category' => 'Resources',
+                'changefreq' => 'daily',
+                'priority' => '0.7'
+            ],
+            [
+                'url' => 'events',
+                'title' => 'Events & Conferences',
+                'description' => 'Discover upcoming events, workshops, and conferences in Kenya\'s WASH sector.',
                 'category' => 'Resources',
                 'changefreq' => 'daily',
                 'priority' => '0.7'
@@ -427,6 +456,23 @@ class SitemapService
                                 ->findAll();
         } catch (\Exception $e) {
             log_message('error', 'Failed to fetch jobs for sitemap: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get events for sitemap
+     */
+    private function getEvents()
+    {
+        try {
+            return $this->eventModel->where('status', 'published')
+                                   ->where('deleted_at', null)
+                                   ->orderBy('start_date', 'ASC')
+                                   ->orderBy('updated_at', 'DESC')
+                                   ->findAll();
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to fetch events for sitemap: ' . $e->getMessage());
             return [];
         }
     }
@@ -560,7 +606,7 @@ class SitemapService
                 'priority_default'      => $settingsModel->getSetting('sitemap_priority_default', 0.5),
                 'changefreq_default'    => $settingsModel->getSetting('sitemap_changefreq_default', 'monthly'),
                 'exclude_patterns'      => $settingsModel->getSetting('sitemap_exclude_patterns', ''),
-                'content_types'         => $settingsModel->getSetting('sitemap_content_types', ['static', 'blog', 'resources', 'pillars', 'programs', 'jobs'])
+                'content_types'         => $settingsModel->getSetting('sitemap_content_types', ['static', 'blog', 'resources', 'pillars', 'programs', 'jobs', 'events'])
             ];
             
             return [

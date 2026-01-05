@@ -13,6 +13,46 @@
 <?= $this->section('content') ?>
 
 <div class="container mx-auto px-4 py-8">
+    <!-- Breadcrumb -->
+    <div class="bg-white pb-3 border-b border-slate-200">
+        <div class="container mx-auto px-4 py-3">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="/" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
+                            <i data-lucide="home" class="w-4 h-4 mr-2"></i>
+                            Home
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                            <a href="<?= base_url('ksp/learning-hub') ?>" class="ml-1 text-sm font-medium text-slate-600 hover:text-primary md:ml-2">Learning Hub</a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                            <a href="<?= base_url('ksp/learning-hub/course/' . $course_id) ?>" class="ml-1 text-sm font-medium text-slate-600 hover:text-primary md:ml-2"><?= esc($course['title'] ?? 'Course') ?></a>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                            <a href="<?= base_url('ksp/learning-hub/learn/' . $course_id) ?>" class="ml-1 text-sm font-medium text-slate-600 hover:text-primary md:ml-2">Learning</a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+                            <span class="ml-1 text-sm font-medium text-primary md:ml-2"><?= esc($quiz['title']) ?></span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="my-6">

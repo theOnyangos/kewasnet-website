@@ -161,9 +161,9 @@
                   <table align="center">
                     <tr>
                       <td style="padding: 0 auto">
-                        <a href="https://dev.kewasnet.co.ke">
+                        <a href="https://kewasnet.co.ke">
                           <img
-                            src="https://dev.kewasnet.co.ke/kewasnet_logo.png"
+                            src="https://kewasnet.co.ke/kewasnet_logo.png"
                             alt="KEWASNET Logo"
                             width="300"
                             height="auto"

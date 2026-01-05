@@ -34,17 +34,40 @@ class EmailQueue extends Model
      */
     public function queueEmail($to, $subject, $message, $bcc = null, $fromEmail = null, $fromName = null)
     {
-        $data = [
-            'to'         => $to,
-            'bcc'        => is_array($bcc) ? json_encode($bcc) : $bcc,
-            'subject'    => $subject,
-            'message'    => $message,
-            'from_email' => $fromEmail ?? env('EMAIL_FROM_ADDRESS'),
-            'from_name'  => $fromName ?? env('EMAIL_FROM_NAME'),
-            'status'     => 'pending',
-        ];
+        try {
+            $data = [
+                'to'         => $to,
+                'bcc'        => is_array($bcc) ? json_encode($bcc) : $bcc,
+                'subject'    => $subject,
+                'message'    => $message,
+                'from_email' => $fromEmail ?? env('EMAIL_FROM_ADDRESS'),
+                'from_name'  => $fromName ?? env('EMAIL_FROM_NAME'),
+                'status'     => 'pending',
+            ];
 
-        return $this->insert($data);
+            $result = $this->insert($data);
+            
+            if (!$result) {
+                $errors = $this->errors();
+                $dbError = $this->db->error();
+                log_message('error', 'EmailQueue::queueEmail - Insert failed.');
+                if ($errors) {
+                    log_message('error', 'EmailQueue::queueEmail - Validation errors: ' . json_encode($errors));
+                }
+                if ($dbError) {
+                    log_message('error', 'EmailQueue::queueEmail - DB error: ' . json_encode($dbError));
+                }
+                log_message('error', 'EmailQueue::queueEmail - Data attempted: ' . json_encode($data));
+                return false;
+            }
+            
+            log_message('info', 'EmailQueue::queueEmail - Email queued successfully. ID: ' . $result . ' To: ' . $to);
+            return $result;
+        } catch (\Exception $e) {
+            log_message('error', 'EmailQueue::queueEmail - Exception: ' . $e->getMessage());
+            log_message('error', 'EmailQueue::queueEmail - Stack trace: ' . $e->getTraceAsString());
+            return false;
+        }
     }
 
     /**
@@ -53,8 +76,10 @@ class EmailQueue extends Model
     public function getPendingEmails($limit = 10)
     {
         return $this->where('status', 'pending')
-                    ->orWhere('status', 'failed')
-                    ->where('attempts <', 3)
+                    ->orGroupStart()
+                        ->where('status', 'failed')
+                        ->where('attempts <', 3)
+                    ->groupEnd()
                     ->orderBy('created_at', 'ASC')
                     ->limit($limit)
                     ->findAll();
