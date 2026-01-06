@@ -279,9 +279,22 @@
                                                 <?= number_format($resource->view_count ?? 0) ?>
                                             </div>
                                             <div class="flex">
-                                                <a href="#" class="text-primary hover:text-secondary" onclick="bookmarkResource('<?= $resource->id ?>')">
-                                                    <i data-lucide="bookmark" class="w-5 h-5"></i>
-                                                </a>
+                                                <?php 
+                                                $resourceId = is_array($resource) ? $resource['id'] : $resource->id;
+                                                $isBookmarked = isset($bookmarkedResources[$resourceId]) && $bookmarkedResources[$resourceId];
+                                                ?>
+                                                <?php if (isset($isLoggedIn) && $isLoggedIn): ?>
+                                                    <button id="bookmark-btn-<?= $resourceId ?>" 
+                                                            onclick="bookmarkResource('<?= $resourceId ?>')" 
+                                                            class="text-primary hover:text-secondary <?= $isBookmarked ? 'text-secondary' : '' ?>">
+                                                        <i id="bookmark-icon-<?= $resourceId ?>" data-lucide="bookmark" class="w-5 h-5 <?= $isBookmarked ? 'fill-secondary' : '' ?>"></i>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <a href="<?= base_url('ksp/login') ?>" 
+                                                       class="text-primary hover:text-secondary">
+                                                        <i data-lucide="bookmark" class="w-5 h-5"></i>
+                                                    </a>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
 
@@ -529,9 +542,90 @@
         }
 
         function bookmarkResource(resourceId) {
-            // Placeholder for bookmark functionality
-            console.log('Bookmarking resource:', resourceId);
-            // You can implement this with AJAX to save/remove bookmarks
+            console.log('Toggle bookmark called for resource:', resourceId);
+            
+            $.ajax({
+                url: '<?= base_url('ksp/api/resource/toggle-bookmark') ?>',
+                type: 'POST',
+                data: {
+                    resource_id: resourceId,
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                beforeSend: function() {
+                    $('#bookmark-btn-' + resourceId).prop('disabled', true).addClass('opacity-50');
+                },
+                success: function(response) {
+                    console.log('Bookmark response:', response);
+                    if (response.success) {
+                        // Update bookmark state
+                        const bookmarkIcon = $('#bookmark-icon-' + resourceId);
+                        const bookmarkBtn = $('#bookmark-btn-' + resourceId);
+                        
+                        if (response.bookmarked) {
+                            bookmarkIcon.addClass('fill-secondary');
+                            bookmarkBtn.addClass('text-secondary');
+                        } else {
+                            bookmarkIcon.removeClass('fill-secondary');
+                            bookmarkBtn.removeClass('text-secondary');
+                        }
+                        
+                        // Re-initialize Lucide icons
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                        
+                        // Show success message
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: response.message,
+                                showConfirmButton: false,
+                                timer: 2000,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+                    } else {
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.message || 'An error occurred. Please try again.',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Bookmark error:', xhr);
+                    console.error('Response:', xhr.responseJSON);
+                    const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
+                    if (xhr.status === 401 && xhr.responseJSON?.redirect) {
+                        window.location.href = xhr.responseJSON.redirect;
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: errorMsg + (xhr.responseJSON?.errors ? '\n' + JSON.stringify(xhr.responseJSON.errors) : ''),
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Error: ' + errorMsg);
+                        }
+                    }
+                },
+                complete: function() {
+                    $('#bookmark-btn-' + resourceId).prop('disabled', false).removeClass('opacity-50');
+                }
+            });
         }
 
         // Sort functionality

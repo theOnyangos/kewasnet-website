@@ -119,17 +119,26 @@
                                 <label class="flex items-center space-x-3 cursor-pointer">
                                     <input type="radio" name="category_filter" value="all" <?= empty($filters['category']) || $filters['category'] === 'all' ? 'checked' : '' ?> 
                                            class="text-primary focus:ring-primary" onchange="filterByCategory('all')">
-                                    <span>All Categories (<?= number_format($totalResources) ?>)</span>
+                                    <span>All Categories (<?= number_format($totalResources ?? 0) ?>)</span>
                                 </label>
-                                <?php if (!empty($categories)): ?>
+                                <?php if (!empty($categories) && is_array($categories)): ?>
                                     <?php foreach ($categories as $category): ?>
-                                        <label class="flex items-center space-x-3 cursor-pointer">
-                                            <input type="radio" name="category_filter" value="<?= is_array($category) ? $category['id'] : $category->id ?>" 
-                                                   <?= ($filters['category'] ?? '') == (is_array($category) ? $category['id'] : $category->id) ? 'checked' : '' ?>
-                                                   class="text-primary focus:ring-primary" onchange="filterByCategory('<?= is_array($category) ? $category['id'] : $category->id ?>')">
-                                            <span><?= esc(is_array($category) ? $category['name'] : $category->name) ?> (<?= $category['resource_count'] ?? 0 ?>)</span>
-                                        </label>
+                                        <?php 
+                                            $categoryId = is_array($category) ? ($category['id'] ?? '') : ($category->id ?? '');
+                                            $categoryName = is_array($category) ? ($category['name'] ?? 'Unnamed') : ($category->name ?? 'Unnamed');
+                                            $resourceCount = is_array($category) ? ($category['resource_count'] ?? 0) : ($category->resource_count ?? 0);
+                                        ?>
+                                        <?php if (!empty($categoryId)): ?>
+                                            <label class="flex items-center space-x-3 cursor-pointer">
+                                                <input type="radio" name="category_filter" value="<?= esc($categoryId) ?>" 
+                                                       <?= ($filters['category'] ?? '') == $categoryId ? 'checked' : '' ?>
+                                                       class="text-primary focus:ring-primary" onchange="filterByCategory('<?= esc($categoryId) ?>')">
+                                                <span><?= esc($categoryName) ?> (<?= number_format($resourceCount) ?>)</span>
+                                            </label>
+                                        <?php endif; ?>
                                     <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p class="text-sm text-gray-500 italic">No categories available for this pillar.</p>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -203,20 +212,32 @@
                                 <article class="bg-white rounded-xl shadow-sm border hover:shadow-2xl transition-shadow flex flex-col justify-between overflow-hidden shadow-md z-10">
                                     <!-- Resource Image -->
                                     <div class="mb-4">
-                                        <img src="<?= esc(is_array($resource) ? ($resource['image_url'] ?? '') : ($resource->image_url ?? '')) ?>" alt="<?= esc(is_array($resource) ? ($resource['title'] ?? '') : ($resource->title ?? '')) ?>" class="w-full h-48 object-cover rounded-t-lg">
+                                        <?php 
+                                            $imageUrl = is_array($resource) ? ($resource['image_url'] ?? '') : ($resource->image_url ?? '');
+                                            if (empty($imageUrl)) {
+                                                $imageUrl = base_url('assets/images/placeholder-resource.jpg');
+                                            }
+                                        ?>
+                                        <img src="<?= esc($imageUrl) ?>" alt="<?= esc(is_array($resource) ? ($resource['title'] ?? '') : ($resource->title ?? '')) ?>" 
+                                             class="w-full h-48 object-cover rounded-t-lg" 
+                                             onerror="this.src='<?= base_url('assets/images/placeholder-resource.jpg') ?>'">
                                     </div>
                                     
                                     <div class="px-6">
                                         <!-- Resource Header -->
                                         <div class="flex items-start justify-between mb-4">
                                             <div class="flex-1">
-                                                <div class="flex items-center mb-2">
-                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                                                        <i class="fa fa-file w-3 h-3 mr-1"></i>
-                                                        <?= esc(is_array($resource) ? ($resource['file_type'] ?? 'Document') : ($resource->file_type ?? 'Document')) ?>
+                                                <div class="flex items-center mb-2 flex-wrap gap-2">
+                                                    <?php 
+                                                        $docTypeName = is_array($resource) ? ($resource['document_type_name'] ?? 'Document') : ($resource->document_type_name ?? 'Document');
+                                                        $docTypeColor = is_array($resource) ? ($resource['document_type_color'] ?? '#6B7280') : ($resource->document_type_color ?? '#6B7280');
+                                                    ?>
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: <?= esc($docTypeColor) ?>20; color: <?= esc($docTypeColor) ?>;">
+                                                        <i data-lucide="file-type" class="w-3 h-3 mr-1"></i>
+                                                        <?= esc($docTypeName) ?>
                                                     </span>
                                                     <?php if (!empty(is_array($resource) ? $resource['category_name'] : $resource->category_name)): ?>
-                                                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                                                             <?= esc(is_array($resource) ? $resource['category_name'] : $resource->category_name) ?>
                                                         </span>
                                                     <?php endif; ?>
@@ -230,9 +251,22 @@
                                                     <?= esc(is_array($resource) ? ($resource['description'] ?? 'No description available.') : ($resource->description ?? 'No description available.')) ?>
                                                 </p>
                                             </div>
-                                            <button onclick="bookmarkResource('<?= is_array($resource) ? $resource['id'] : $resource->id ?>')" class="text-gray-400 hover:text-primary transition-colors ml-4">
-                                                <i data-lucide="bookmark" class="w-5 h-5"></i>
-                                            </button>
+                                            <?php 
+                                            $resourceId = is_array($resource) ? $resource['id'] : $resource->id;
+                                            $isBookmarked = isset($bookmarkedResources[$resourceId]) && $bookmarkedResources[$resourceId];
+                                            ?>
+                                            <?php if ($isLoggedIn): ?>
+                                                <button id="bookmark-btn-<?= $resourceId ?>" 
+                                                        onclick="bookmarkResource('<?= $resourceId ?>')" 
+                                                        class="text-gray-400 hover:text-primary transition-colors ml-4 <?= $isBookmarked ? 'text-secondary' : '' ?>">
+                                                    <i id="bookmark-icon-<?= $resourceId ?>" data-lucide="bookmark" class="w-5 h-5 <?= $isBookmarked ? 'fill-secondary' : '' ?>"></i>
+                                                </button>
+                                            <?php else: ?>
+                                                <a href="<?= base_url('ksp/login') ?>" 
+                                                   class="text-gray-400 hover:text-primary transition-colors ml-4">
+                                                    <i data-lucide="bookmark" class="w-5 h-5"></i>
+                                                </a>
+                                            <?php endif; ?>
                                         </div>
 
                                         <!-- Resource Meta -->
@@ -385,9 +419,90 @@
         }
 
         function bookmarkResource(resourceId) {
-            // Placeholder for bookmark functionality
-            console.log('Bookmarking resource:', resourceId);
-            // You can implement this with AJAX to save/remove bookmarks
+            console.log('Toggle bookmark called for resource:', resourceId);
+            
+            $.ajax({
+                url: '<?= base_url('ksp/api/resource/toggle-bookmark') ?>',
+                type: 'POST',
+                data: {
+                    resource_id: resourceId,
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                beforeSend: function() {
+                    $('#bookmark-btn-' + resourceId).prop('disabled', true).addClass('opacity-50');
+                },
+                success: function(response) {
+                    console.log('Bookmark response:', response);
+                    if (response.success) {
+                        // Update bookmark state
+                        const bookmarkIcon = $('#bookmark-icon-' + resourceId);
+                        const bookmarkBtn = $('#bookmark-btn-' + resourceId);
+                        
+                        if (response.bookmarked) {
+                            bookmarkIcon.addClass('fill-secondary');
+                            bookmarkBtn.addClass('text-secondary');
+                        } else {
+                            bookmarkIcon.removeClass('fill-secondary');
+                            bookmarkBtn.removeClass('text-secondary');
+                        }
+                        
+                        // Re-initialize Lucide icons
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                        
+                        // Show success message
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: response.message,
+                                showConfirmButton: false,
+                                timer: 2000,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+                    } else {
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.message || 'An error occurred. Please try again.',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Bookmark error:', xhr);
+                    console.error('Response:', xhr.responseJSON);
+                    const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
+                    if (xhr.status === 401 && xhr.responseJSON?.redirect) {
+                        window.location.href = xhr.responseJSON.redirect;
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: errorMsg + (xhr.responseJSON?.errors ? '\n' + JSON.stringify(xhr.responseJSON.errors) : ''),
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Error: ' + errorMsg);
+                        }
+                    }
+                },
+                complete: function() {
+                    $('#bookmark-btn-' + resourceId).prop('disabled', false).removeClass('opacity-50');
+                }
+            });
         }
 
         // Sort functionality

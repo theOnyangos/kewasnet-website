@@ -182,7 +182,7 @@
                         <!-- Filter Type -->
                         <div>
                             <label for="filter" class="block text-sm font-medium text-slate-700 mb-2">Course Type</label>
-                            <select id="filter" name="filter" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <select id="filter" name="filter" class="select2 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                                 <option value="all" <?= $filter === 'all' ? 'selected' : '' ?>>All Courses</option>
                                 <option value="free" <?= $filter === 'free' ? 'selected' : '' ?>>Free Courses</option>
                                 <option value="paid" <?= $filter === 'paid' ? 'selected' : '' ?>>Paid Courses</option>
@@ -192,7 +192,7 @@
                         <!-- Level -->
                         <div>
                             <label for="level" class="block text-sm font-medium text-slate-700 mb-2">Level</label>
-                            <select id="level" name="level" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <select id="level" name="level" class="select2 w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                                 <option value="">All Levels</option>
                                 <option value="beginner" <?= $level === 'beginner' ? 'selected' : '' ?>>Beginner</option>
                                 <option value="intermediate" <?= $level === 'intermediate' ? 'selected' : '' ?>>Intermediate</option>
@@ -347,7 +347,7 @@
         </section>
         
         <!-- Learning Experience Section -->
-        <section class="container mx-auto px-4 mb-16 bg-white rounded-xl overflow-hidden border borderColor">
+        <section class="container mx-auto px-4 mb-16 bg-white rounded-xl overflow-hidden border borderColor shadow-md hover:shadow-2xl transition-shadow">
             <div class="flex flex-col lg:flex-row">
                 <div class="lg:w-1/2 p-8 md:p-12">
                     <h2 class="text-3xl font-bold text-dark mb-6">Our Learning Experience</h2>

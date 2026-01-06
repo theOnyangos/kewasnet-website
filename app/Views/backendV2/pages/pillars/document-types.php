@@ -14,27 +14,27 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/pillars/partials/header_section') ?>
+    <main class="flex-1 overflow-y-auto">
+        <!-- Page Banner -->
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Document Types',
+            'pageDescription' => 'Manage document types and classifications for pillar articles',
+            'breadcrumbs' => [
+                ['label' => 'Pillars', 'url' => base_url('auth/pillars')],
+                ['label' => 'Document Types']
+            ],
+            'bannerActions' => '<button type="button" onclick="showCreateDocumentTypeModal()" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="file-type" class="w-4 h-4 mr-2"></i>
+                Add Document Type
+            </button>'
+        ]) ?>
 
+        <div class="px-6 pb-6">
         <!-- Navigation Tabs -->
         <?= $this->include('backendV2/pages/pillars/partials/navigation_section') ?>
         
         <!-- Document Types Management Content -->
         <div class="bg-white rounded-b-xl shadow-sm p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800">Document Types</h1>
-                    <p class="mt-1 text-sm text-slate-500">Manage document types and classifications for pillar articles</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="showCreateDocumentTypeModal()" class="gradient-btn flex items-center px-8 py-2 rounded-full text-white hover:shadow-md transition-all duration-300">
-                        <i data-lucide="file-type" class="w-4 h-4 mr-2 z-10"></i>
-                        <span>Add Document Type</span>
-                    </button>
-                </div>
-            </div>
 
             <!-- Document Types Table -->
             <div class="overflow-x-auto">
@@ -52,6 +52,7 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
         </div>
     </main>
 <?= $this->endSection() ?>
@@ -174,36 +175,6 @@
         });
     });
 
-    // Confirmation Modal HTML
-    const confirmModalHtml = `
-        <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-            <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-                <div class="flex flex-col gap-5 items-center justify-center mb-3">
-                    <div class="h-20 w-20 flex justify-center items-center rounded-full bg-red-50 border border-red-100">
-                        <i data-lucide="alert-triangle" class="w-10 h-10 text-red-500"></i>
-                    </div>
-                    <h1 class="text-xl font-bold text-gray-800">Confirm Deletion?</h3>
-                </div>
-                <div class="p-3 bg-red-50 rounded-md mb-6 border border-red-100">
-                    <p class="text-dark">Are you sure you want to delete this document types? This action may interfere with the normal operation of some resources. Once triggered this cannot be undone.</p>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button id="cancelDeleteBtn" class="px-8 py-2 rounded-[50px] bg-red-100 text-red-700 hover:bg-red-200">
-                        <i data-lucide="circle-minus" class="w-4 h-4 text-red-500 inline-block"></i>
-                        Cancel
-                    </button>
-                    <button id="confirmDeleteBtn" class="px-8 py-2 rounded-[50px] bg-gradient-to-br from-red-800 via-red-500 to-red-800 text-white hover:bg-red-700">
-                        <i data-lucide="trash-2" class="w-4 h-4 text-white inline-block"></i>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    if (!document.getElementById('confirmModal')) {
-        $('body').append(confirmModalHtml);
-        lucide.createIcons();
-    }
 
     // Function to show create document type modal
     function showCreateDocumentTypeModal() {
@@ -253,40 +224,61 @@
                         contentType: false,
                         dataType: 'json',
                         success: function(response) {
-                            $submitBtn.prop('disabled', false).html('<span>Create Category</span>');
+                            $submitBtn.prop('disabled', false).html('<span>Create Document Type</span>');
                             if (response.status === 'success') {
-                                // Show Notification
-                                showNotification('success', response.message);
-
-                                // Reset Form
-                                $(form)[0].reset();
-
-                                // Clear Error
-                                clearFormErrors();
-
-                                // Close the modal
-                                closeModel();
-
-                                // Reload table
-                                documentTypesTable.ajax.reload(function() {
-                                    lucide.createIcons();
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: response.message || 'Document type created successfully',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK'
+                                }).then(() => {
+                                    // Reset Form
+                                    $(form)[0].reset();
+                                    // Clear Error
+                                    clearFormErrors();
+                                    // Close the modal
+                                    closeModal();
+                                    // Reload table
+                                    documentTypesTable.ajax.reload(function() {
+                                        lucide.createIcons();
+                                    });
                                 });
                             } else if (response.errors) {
                                 showFormErrors(response.errors);
-                                showNotification('error', 'Please fix the errors and try again');
+                                Swal.fire({
+                                    title: 'Validation Error',
+                                    html: '<p class="text-gray-700">Please fix the errors and try again.</p>',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
                             } else {
-                                showNotification('error', 'An unexpected error occurred. Please try again.');
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: response.message || 'An unexpected error occurred. Please try again.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
                             }
                         },
                         error: function(xhr) {
-                            $submitBtn.prop('disabled', false).html('<span>Create Category</span>');
+                            $submitBtn.prop('disabled', false).html('<span>Create Document Type</span>');
                             const response = xhr.responseJSON || {};
                             const errors = response.errors || {};
                             if (Object.keys(errors).length > 0) {
                                 showFormErrors(errors);
-                                showNotification('error', 'Please fix the errors and try again');
+                                Swal.fire({
+                                    title: 'Validation Error',
+                                    html: '<p class="text-gray-700">Please fix the errors and try again.</p>',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
                             } else {
-                                showNotification('error', response.message || 'Failed to create category');
+                                Swal.fire({
+                                    title: 'Error!',
+                                    text: response.message || 'Failed to create document type',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
                             }
                         }
                     });
@@ -306,65 +298,150 @@
     }
 
     function editDocumentType(id) {
-        // Implementation for editing document type
-        console.log('Edit document type:', id);
+        // Redirect to edit page
+        window.location.href = '<?= site_url('auth/pillars/edit-document-type') ?>/' + id;
     }
 
     function duplicateDocumentType(id) {
-        if (confirm('Are you sure you want to duplicate this document type?')) {
-            $.ajax({
-                url: `<?= site_url('auth/pillars/duplicate-document-type') ?>/${id}`,
-                type: 'POST',
-                success: function(response) {
-                    documentTypesTable.ajax.reload();
-                    showNotification('success', 'Document type duplicated successfully');
-                },
-                error: function(xhr) {
-                    showNotification('error', 'Error duplicating document type');
-                }
-            });
-        }
-    }
+        Swal.fire({
+            title: 'Duplicate Document Type?',
+            html: '<p class="text-gray-700 mb-4">Are you sure you want to duplicate this document type?</p><p class="text-sm text-gray-500">A new document type will be created with the same properties.</p>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#8b5cf6',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i data-lucide="copy" class="w-4 h-4 mr-1"></i> Yes, duplicate it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Duplicating...',
+                    text: 'Please wait while we duplicate the document type',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
-    let deleteDocumentTypeId = null
-    function deleteDocumentType(id) {
-        deleteDocumentTypeId = id;
-        $('#confirmModal').removeClass('hidden').addClass('flex');
-    }
-
-    // Modal button handlers
-    $(document).on('click', '#cancelDeleteBtn', function() {
-        $('#confirmModal').addClass('hidden').removeClass('flex');
-        deleteDocumentTypeId = null;
-    });
-    $(document).on('click', '#confirmDeleteBtn', function() {
-        if (!deleteDocumentTypeId) return;
-        $('#confirmModal').addClass('hidden').removeClass('flex');
-        $.ajax({
-            url: `<?= site_url('auth/pillars/delete-document-type') ?>/${deleteDocumentTypeId}`,
-            type: 'POST',
-            data: {
-                csrf_test_name: '<?= csrf_token() ?>',
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    showNotification('success', 'Document type deleted successfully');
-                } else {
-                    showNotification('error', response.message || 'Error deleting document type');
-                }
-            },
-            error: function(xhr) {
-                showNotification('error', 'Error deleting document type');
-            },
-            complete: function() {
-                documentTypesTable.ajax.reload(function() {
-                    lucide.createIcons();
+                $.ajax({
+                    url: `<?= site_url('auth/pillars/duplicate-document-type') ?>/${id}`,
+                    type: 'POST',
+                    data: {
+                        csrf_test_name: '<?= csrf_token() ?>',
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                title: 'Duplicated!',
+                                text: response.message || 'Document type duplicated successfully',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                documentTypesTable.ajax.reload(function() {
+                                    lucide.createIcons();
+                                });
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: response.message || 'Error duplicating document type',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Error duplicating document type';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            title: 'Error!',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
                 });
             }
         });
-        deleteDocumentTypeId = null;
-    });
+    }
+
+    function deleteDocumentType(id) {
+        Swal.fire({
+            title: 'Are you sure?',
+            html: '<p class="text-gray-700 mb-4">Are you sure you want to delete this document type?</p><p class="text-sm text-gray-500">This action may interfere with the normal operation of some resources. Once triggered, this cannot be undone.</p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Yes, delete it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the document type',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                $.ajax({
+                    url: `<?= site_url('auth/pillars/delete-document-type') ?>/${id}`,
+                    type: 'POST',
+                    data: {
+                        csrf_test_name: '<?= csrf_token() ?>',
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: response.message || 'Document type deleted successfully',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                documentTypesTable.ajax.reload(function() {
+                                    lucide.createIcons();
+                                });
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: response.message || 'Error deleting document type',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Error deleting document type';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            title: 'Error!',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    complete: function() {
+                        documentTypesTable.ajax.reload(function() {
+                            lucide.createIcons();
+                        });
+                    }
+                });
+            }
+        });
+    }
 
     function showFormErrors(errors) {
         clearFormErrors();

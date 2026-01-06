@@ -7,6 +7,7 @@ use App\Models\DocumentType;
 use App\Models\Resource;
 use App\Models\Contributor;
 use App\Models\ResourceContributor;
+use App\Models\FileAttachment;
 use App\Services\PillarService;
 use App\Models\ResourceCategory;
 use App\Services\DataTableService;
@@ -30,6 +31,7 @@ class PillarsController extends BaseController
     protected Resource $resourceModel;
     protected Contributor $contributorModel;
     protected ResourceContributor $resourceContributorModel;
+    protected FileAttachment $fileAttachmentModel;
     protected DataTableService $dataTableService;
 
     public function __construct()
@@ -41,6 +43,7 @@ class PillarsController extends BaseController
         $this->resourceModel = new Resource();
         $this->contributorModel = new Contributor();
         $this->resourceContributorModel = new ResourceContributor();
+        $this->fileAttachmentModel = new FileAttachment();
         $this->dataTableService = new DataTableService();
     }
 
@@ -117,6 +120,38 @@ class PillarsController extends BaseController
         ]);
     }
 
+    public function edit($id)
+    {
+        // Use where() for UUID lookup to ensure it works correctly
+        $pillar = $this->pillarModel->where('id', $id)->first();
+        
+        if (!$pillar) {
+            return redirect()->to(site_url('auth/pillars'))
+                ->with('error', 'Pillar not found');
+        }
+
+        // Convert to array if it's an object
+        if (is_object($pillar)) {
+            $pillar = (array) $pillar;
+        }
+
+        // Ensure image_path is properly formatted
+        if (!empty($pillar['image_path'])) {
+            // If it's already a full URL, use it as is
+            // If it's a relative path, ensure it's accessible
+            if (strpos($pillar['image_path'], 'http') !== 0 && strpos($pillar['image_path'], '/') !== 0) {
+                // It's a relative path, make it a full URL
+                $pillar['image_path'] = base_url($pillar['image_path']);
+            }
+        }
+
+        return view('backendV2/pages/pillars/edit', [
+            'title' => 'Edit Pillar - KEWASNET',
+            'dashboardTitle' => 'Edit Pillar',
+            'pillar' => $pillar
+        ]);
+    }
+
     public function createResourceCategory()
     {
         $pillars = $this->pillarModel->select('id, title')->findAll();
@@ -126,6 +161,73 @@ class PillarsController extends BaseController
             'dashboardTitle' => 'Create Resource Category',
             'pillars'        => $pillars
         ]);
+    }
+
+    public function editResourceCategory($id)
+    {
+        try {
+            // Find the category
+            $category = $this->resourceCategoryModel->where('id', $id)->first();
+            
+            if (!$category) {
+                return redirect()->to(base_url('auth/pillars/resources'))
+                    ->with('error', 'Resource category not found');
+            }
+
+            // Convert to array if object
+            if (is_object($category)) {
+                $category = (array) $category;
+            }
+
+            $pillars = $this->pillarModel->select('id, title')->findAll();
+
+            return view('backendV2/pages/pillars/edit-resource-category', [
+                'title'    => 'Edit Resource Category - KEWASNET',
+                'category' => $category,
+                'pillars'  => $pillars
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading edit resource category: ' . $e->getMessage());
+            return redirect()->to(base_url('auth/pillars/resources'))
+                ->with('error', 'Error loading resource category');
+        }
+    }
+
+    public function handleEditResourceCategory($id)
+    {
+        try {
+            if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
+            $categoryData = $this->request->getPost();
+            $categoryId = $categoryData['category_id'] ?? $id;
+
+            // Debug log
+            log_message('info', 'Resource category update data: ' . json_encode($categoryData));
+
+            $category = $this->pillarService->updateResourceCategory($categoryId, $categoryData);
+
+            $response = [
+                'status'        => 'success',
+                'message'       => 'Resource category updated successfully!',
+                'data'          => $category,
+                'redirect_url'  => site_url('auth/pillars/resources')
+            ];
+
+            return $this->response->setJSON($response)
+                                 ->setStatusCode(ResponseInterface::HTTP_OK);
+
+        } catch (ValidationException $e) {
+            return $this->failValidationErrors($e->getErrors());
+        } catch (\Exception $e) {
+            log_message('error', 'Resource category update error: ' . $e->getMessage());
+            return $this->generateJsonResponse(
+                'error',
+                ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to update resource category: ' . $e->getMessage(),
+                [],
+                $e
+            );
+        }
     }
 
     public function createPillarArticle()
@@ -141,6 +243,112 @@ class PillarsController extends BaseController
             'documentTypes' => $documentTypes,
             'categories' => $categories
         ]);
+    }
+
+    public function editPillarArticle($id)
+    {
+        try {
+            // Get the article
+            $article = $this->resourceModel->where('id', $id)->first();
+            
+            if (!$article) {
+                return redirect()->to(site_url('auth/pillars/articles'))
+                    ->with('error', 'Article not found');
+            }
+            
+            // Convert to array if object
+            if (is_object($article)) {
+                if (method_exists($article, 'toArray')) {
+                    $article = $article->toArray();
+                } else {
+                    $article = (array) $article;
+                }
+            }
+            
+            // Get related data
+            $pillars = $this->pillarModel->findAll();
+            $documentTypes = $this->documentTypeModel->findAll();
+            $categories = $this->resourceCategoryModel->findAll();
+            
+            // Get contributors
+            $contributors = $this->pillarService->getContributorsForArticle($id);
+            
+            // Get attachments
+            $attachments = $this->fileAttachmentModel
+                ->where('attachable_id', $id)
+                ->where('attachable_type', 'resources')
+                ->findAll();
+            
+            // Convert attachments to array
+            if (!empty($attachments)) {
+                foreach ($attachments as &$attachment) {
+                    if (is_object($attachment)) {
+                        if (method_exists($attachment, 'toArray')) {
+                            $attachment = $attachment->toArray();
+                        } else {
+                            $attachment = (array) $attachment;
+                        }
+                    }
+                }
+                unset($attachment);
+            }
+            
+            return view('backendV2/pages/pillars/edit-pillar-article', [
+                'title' => 'Edit Pillar Article - KEWASNET',
+                'dashboardTitle' => 'Edit Article',
+                'article' => $article,
+                'pillars' => $pillars,
+                'documentTypes' => $documentTypes,
+                'categories' => $categories,
+                'contributors' => $contributors,
+                'attachments' => $attachments ?? []
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading edit article page: ' . $e->getMessage());
+            return redirect()->to(site_url('auth/pillars/articles'))
+                ->with('error', 'Failed to load article for editing');
+        }
+    }
+
+    public function handleEditPillarArticle($id)
+    {
+        try {
+            if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
+            $articleId = $this->request->getPost('article_id') ?? $id;
+            $formData = $this->request->getPost();
+            $files = $this->request->getFiles();
+            
+            // Get files to delete
+            $filesToDelete = $this->request->getPost('files_to_delete') ?? [];
+            
+            log_message('info', 'Article update data: ' . json_encode($formData));
+            log_message('info', 'Files to delete: ' . json_encode($filesToDelete));
+            
+            $article = $this->pillarService->updatePillarArticle($articleId, $formData, $files, $filesToDelete);
+
+            $response = [
+                'status' => 'success',
+                'message' => 'Article updated successfully!',
+                'data' => $article,
+                'redirect_url' => site_url('auth/pillars/articles')
+            ];
+
+            return $this->response->setJSON($response)
+                                 ->setStatusCode(ResponseInterface::HTTP_OK);
+                                 
+        } catch (ValidationException $e) {
+            return $this->failValidationErrors($e->getErrors());
+        } catch (\Exception $e) {
+            log_message('error', 'Article update error: ' . $e->getMessage());
+            return $this->generateJsonResponse(
+                'error',
+                ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to update article: ' . $e->getMessage(),
+                [],
+                $e
+            );
+        }
     }
 
     public function handleCreatePillar()
@@ -178,6 +386,81 @@ class PillarsController extends BaseController
                 [],
                 $e
             );
+        }
+    }
+
+    public function handleEdit($id = null)
+    {
+        try {
+            if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
+            $pillarData = $this->request->getPost();
+            $files = $this->request->getFiles();
+
+            // Use pillar_id from POST as primary source, fallback to route parameter
+            $pillarId = !empty($pillarData['pillar_id']) ? $pillarData['pillar_id'] : $id;
+            
+            if (empty($pillarId)) {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Pillar ID is required'
+                ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+            }
+            
+            log_message('info', 'Pillar update - Route ID: ' . ($id ?? 'null') . ', POST ID: ' . ($pillarData['pillar_id'] ?? 'none') . ', Using ID: ' . $pillarId);
+            log_message('info', 'Pillar update data: ' . json_encode($pillarData));
+            log_message('info', 'Pillar update files: ' . json_encode(array_keys($files)));
+            
+            $updatedPillar = $this->pillarService->updatePillar($pillarId, $pillarData, $files);
+
+            $response = [
+                'status' => 'success',
+                'message' => 'Pillar updated successfully!',
+                'data' => $updatedPillar,
+                'redirect_url' => site_url('auth/pillars')
+            ];
+
+            return $this->response->setJSON($response)
+                                 ->setStatusCode(ResponseInterface::HTTP_OK);
+                                 
+        } catch (ValidationException $e) {
+            return $this->failValidationErrors($e->getErrors());
+        } catch (\Exception $e) {
+            log_message('error', 'Pillar update error: ' . $e->getMessage());
+            return $this->generateJsonResponse(
+                'error',
+                ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to update pillar: ' . $e->getMessage(),
+                [],
+                $e
+            );
+        }
+    }
+
+    public function removePillarImage($id)
+    {
+        try {
+            if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
+            $result = $this->pillarService->removePillarImage($id);
+
+            if ($result) {
+                return $this->response->setJSON([
+                    'status' => 'success',
+                    'message' => 'Pillar image removed successfully'
+                ])->setStatusCode(ResponseInterface::HTTP_OK);
+            } else {
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => 'Failed to remove pillar image'
+                ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Pillar image removal error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'An error occurred while removing the image: ' . $e->getMessage()
+            ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -271,6 +554,65 @@ class PillarsController extends BaseController
         }
     }
 
+    public function editDocumentType($id)
+    {
+        try {
+            $documentType = $this->documentTypeModel->where('id', $id)->first();
+            
+            if (!$documentType) {
+                return redirect()->to(site_url('auth/pillars/document-types'))
+                    ->with('error', 'Document type not found');
+            }
+
+            // Convert to array if object
+            if (is_object($documentType)) {
+                $documentType = (array) $documentType;
+            }
+
+            return view('backendV2/pages/pillars/edit-document-type', [
+                'title' => 'Edit Document Type - KEWASNET',
+                'documentType' => $documentType
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error loading document type for edit: ' . $e->getMessage());
+            return redirect()->to(site_url('auth/pillars/document-types'))
+                ->with('error', 'Failed to load document type for editing');
+        }
+    }
+
+    public function handleEditDocumentType($id)
+    {
+        try {
+            if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
+            $documentTypeId = $this->request->getPost('document_type_id') ?? $id;
+            
+            // Validate UUID format
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $documentTypeId)) {
+                return $this->response->setJSON([
+                    'status'  => 'error',
+                    'message' => 'Invalid document type ID format'
+                ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
+            }
+
+            $formData = $this->request->getPost();
+            $result = $this->pillarService->updateDocumentType($documentTypeId, $formData);
+
+            return $this->response->setJSON($result)->setStatusCode(ResponseInterface::HTTP_OK);
+        } catch (ValidationException $e) {
+            return $this->failValidationErrors($e->getErrors());
+        } catch (\Exception $e) {
+            log_message('error', 'Document type update error: ' . $e->getMessage());
+            return $this->generateJsonResponse(
+                'error',
+                ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to update document type: ' . $e->getMessage(),
+                [],
+                $e
+            );
+        }
+    }
+
     public function handleDeleteDocumentType($id)
     {
         try {
@@ -309,9 +651,21 @@ class PillarsController extends BaseController
                 throw new ValidationException(['image_file' => 'Invalid main image file upload.']);
             }
 
-            // Check resource file is attached
-            if (!empty($files['resource_file']) && !$files['resource_file']->isValid()) {
-                throw new ValidationException(['resource_file' => 'Invalid resource file file upload.']);
+            // Check resource files (can be single file or array of files)
+            if (!empty($files['resource_file'])) {
+                $resourceFiles = $files['resource_file'];
+                // Handle both single file and array of files
+                if (is_array($resourceFiles)) {
+                    foreach ($resourceFiles as $file) {
+                        if (!$file->isValid()) {
+                            throw new ValidationException(['resource_file' => 'One or more resource files are invalid.']);
+                        }
+                    }
+                } else {
+                    if (!$resourceFiles->isValid()) {
+                        throw new ValidationException(['resource_file' => 'Invalid resource file file upload.']);
+                    }
+                }
             }
             
             $resource = $this->pillarService->createPillarArticle($articleData, $files, $contributors);
@@ -352,22 +706,27 @@ class PillarsController extends BaseController
             
             if ($result) {
                 return $this->response->setJSON([
+                    'status' => 'success',
                     'success' => true,
                     'message' => 'Article deleted successfully',
                     'redirect' => site_url('auth/pillars/articles')
-                ]);
+                ])->setStatusCode(ResponseInterface::HTTP_OK);
             } else {
                 return $this->response->setJSON([
+                    'status' => 'error',
                     'success' => false,
                     'message' => 'Failed to delete article'
-                ]);
+                ])->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST);
             }
         } catch (\Exception $e) {
             log_message('error', 'Error deleting article: ' . $e->getMessage());
-            return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'An error occurred while deleting article'
-            ])->setStatusCode(500);
+            return $this->generateJsonResponse(
+                'error',
+                ResponseInterface::HTTP_INTERNAL_SERVER_ERROR,
+                'Failed to delete article: ' . $e->getMessage(),
+                [],
+                $e
+            );
         }
     }
 
@@ -421,7 +780,7 @@ class PillarsController extends BaseController
      */
     public function getCategories()
     {
-        $columns = ['id', 'name', 'description', 'pillar_count', 'pillar_title', 'created_at'];
+        $columns = ['id', 'name', 'description', 'resource_count', 'pillar_title', 'created_at'];
 
         return $this->dataTableService->handle(
             $this->resourceCategoryModel,
@@ -553,6 +912,8 @@ class PillarsController extends BaseController
     public function duplicateDocumentType($id)
     {
         try {
+            if (!$this->isValidAjaxRequest()) return $this->respondToNonAjax();
+
             $originalType = $this->documentTypeModel->find($id);
             
             if (!$originalType) {
@@ -562,10 +923,15 @@ class PillarsController extends BaseController
                 ])->setStatusCode(404);
             }
 
+            // Convert to array if object
+            if (is_object($originalType)) {
+                $originalType = (array) $originalType;
+            }
+
             $newTypeData = [
-                'name' => $originalType->name . ' (Copy)',
-                'slug' => $originalType->slug . '-copy-' . time(),
-                'color' => $originalType->color
+                'name' => $originalType['name'] . ' (Copy)',
+                'slug' => $originalType['slug'] . '-copy-' . time(),
+                'color' => $originalType['color'] ?? '#6B7280'
             ];
 
             $result = $this->documentTypeModel->insert($newTypeData);

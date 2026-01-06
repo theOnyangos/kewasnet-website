@@ -92,6 +92,14 @@ $routes->group('', ['filter' => 'auth:guest,/ksp'], static function ($routes) {
         $routes->post('send-reset-code', 'FrontendV2\KspController::handleSendResetCode');
         $routes->post('verify-reset-code', 'FrontendV2\KspController::handleVerifyResetCode');
         $routes->post('update-password', 'FrontendV2\KspController::handleUpdateUserPassword');
+        
+        // Download and view attachments - MUST be before pillar-article route to avoid conflicts
+        $routes->get('attachments/download/(.*)', 'FrontendV2\PillarController::downloadAttachment/$1');
+        $routes->get('attachments/view/(.*)', 'FrontendV2\PillarController::viewAttachment/$1');
+        // Download attachments (for discussions - keep original)
+        $routes->get('discussions/attachments/download/(.*)', 'FrontendV2\DiscussionController::downloadAttachment/$1');
+        $routes->get('discussions/attachments/view/(.*)', 'FrontendV2\DiscussionController::viewAttachment/$1');
+        
         $routes->get('pillar-articles/(:segment)', 'FrontendV2\PillarController::pillarArticles/$1');
         $routes->get('pillar-article/(:segment)', 'FrontendV2\PillarController::pillarArticleDetails/$1');
         
@@ -99,9 +107,7 @@ $routes->group('', ['filter' => 'auth:guest,/ksp'], static function ($routes) {
         $routes->post('api/comment/add', 'FrontendV2\PillarController::addComment');
         $routes->post('api/vote/resource-helpful', 'FrontendV2\PillarController::voteResourceHelpful');
         $routes->post('api/vote/comment-helpful', 'FrontendV2\PillarController::voteCommentHelpful');
-
-        // Download attachments
-        $routes->get('attachments/download/(:any)', 'FrontendV2\DiscussionController::downloadAttachment/$1');
+        $routes->post('api/resource/toggle-bookmark', 'FrontendV2\PillarController::toggleBookmark');
     });
 });
 
@@ -194,6 +200,10 @@ $routes->group('', ['filter' => 'auth:auth,/ksp/login'], static function ($route
         $routes->get('discussion/reply-attachments/(:segment)', 'FrontendV2\DiscussionController::getReplyAttachments/$1');
         $routes->post('discussion/create', 'FrontendV2\DiscussionController::createDiscussion');
         $routes->post('discussion/contact-moderators', 'FrontendV2\DiscussionController::contactModerators');
+        
+        // Resource bookmark route (for authenticated users)
+        $routes->post('api/resource/toggle-bookmark', 'FrontendV2\PillarController::toggleBookmark');
+        $routes->post('api/resource/publish', 'FrontendV2\PillarController::publishArticle');
     });
 });
 
@@ -486,6 +496,8 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->get('document-types', 'BackendV2\PillarsController::documentTypes');
         $routes->get('create-resource-category', 'BackendV2\PillarsController::createResourceCategory');
         $routes->post('create-resource-category', 'BackendV2\PillarsController::handleCreateResourceCategory');
+        $routes->get('edit-resource-category/(:segment)', 'BackendV2\PillarsController::editResourceCategory/$1');
+        $routes->post('edit-resource-category/(:segment)', 'BackendV2\PillarsController::handleEditResourceCategory/$1');
         $routes->post('create-document-type', 'BackendV2\PillarsController::handleCreateDocumentType');
 
         // DataTable endpoints
@@ -500,10 +512,13 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->post('create', 'BackendV2\PillarsController::handleCreatePillar');
         $routes->get('create-pillar-article', 'BackendV2\PillarsController::createPillarArticle');
         $routes->post('create-pillar-article', 'BackendV2\PillarsController::handleCreatePillarArticle');
+        $routes->get('edit-article/(:segment)', 'BackendV2\PillarsController::editPillarArticle/$1');
+        $routes->post('edit-article/(:segment)', 'BackendV2\PillarsController::handleEditPillarArticle/$1');
         
         // Action routes
         $routes->post('update-status/(:segment)', 'BackendV2\PillarsController::updatePillarStatus/$1');
         $routes->post('update-article-status/(:segment)', 'BackendV2\PillarsController::updateArticleStatus/$1');
+        $routes->post('delete-article/(:segment)', 'BackendV2\PillarsController::deleteArticle/$1');
         $routes->delete('delete/(:segment)', 'BackendV2\PillarsController::deletePillar/$1');
         $routes->delete('delete-article/(:segment)', 'BackendV2\PillarsController::deleteArticle/$1');
         $routes->delete('delete-document-type/(:segment)', 'BackendV2\PillarsController::deleteDocumentType/$1');
@@ -511,11 +526,14 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->get('download/(:segment)', 'BackendV2\PillarsController::downloadArticle/$1');
         $routes->post('delete-category/(:segment)', 'BackendV2\PillarsController::handleDeleteResourceCategory/$1');
         $routes->post('delete-document-type/(:segment)', 'BackendV2\PillarsController::handleDeleteDocumentType/$1');
+        $routes->get('edit-document-type/(:segment)', 'BackendV2\PillarsController::editDocumentType/$1');
+        $routes->post('edit-document-type/(:segment)', 'BackendV2\PillarsController::handleEditDocumentType/$1');
 
         // Detail routes (most generic - keep last)
         $routes->get('(:segment)/edit', 'BackendV2\PillarsController::edit/$1');
         $routes->get('(:segment)', 'BackendV2\PillarsController::details/$1');
         $routes->post('(:segment)/edit', 'BackendV2\PillarsController::handleEdit/$1');
+        $routes->post('(:segment)/remove-image', 'BackendV2\PillarsController::removePillarImage/$1');
     });
 
     // API endpoints

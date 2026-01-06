@@ -27,7 +27,7 @@
         ]) ?>
 
         <!-- Pillar Article Form Section -->
-        <div class="bg-white rounded-b-xl shadow-sm max-w-full pillar-form-container mx-5 mb-5">
+        <div class="bg-white rounded-xl shadow-sm max-w-full pillar-form-container mx-5 mb-5">
             <div class="w-full flex justify-between items-center p-6 border-b border-gray-200">
                 <div class="">
                     <h3 class="text-2xl font-bold text-primary">Create New Pillar Article</h3>
@@ -186,27 +186,23 @@
 
                         <!-- Resource File Upload -->
                         <div>
-                            <label for="resource_file" class="block text-sm font-medium text-dark mb-1">Resource File</label>
+                            <label for="resource_file" class="block text-sm font-medium text-dark mb-1">Resource Files</label>
                             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-borderColor border-dashed rounded-lg hover:border-secondary transition-colors">
-                                <div class="space-y-1 text-center">
-                                    <div id="filePreviewContainer" class="hidden">
-                                        <div id="filePreview" class="mx-auto p-4 bg-gray-50 rounded-lg">
-                                            <i data-lucide="file" class="mx-auto h-8 w-8 text-gray-600"></i>
-                                            <p id="fileName" class="text-sm text-gray-600 mt-2"></p>
-                                            <p id="fileSize" class="text-xs text-gray-500"></p>
-                                        </div>
-                                        <button type="button" id="removeFile" class="mt-2 text-sm text-red-600 hover:text-red-500">Remove</button>
+                                <div class="space-y-1 text-center w-full">
+                                    <div id="filePreviewContainer" class="hidden space-y-2">
+                                        <div id="filePreviewList" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                                        <button type="button" id="removeAllFiles" class="mt-2 text-sm text-red-600 hover:text-red-500">Remove All</button>
                                     </div>
                                     <div id="fileUploadPlaceholder">
                                         <i data-lucide="upload" class="mx-auto h-12 w-12 text-gray-400"></i>
-                                        <div class="flex text-sm text-gray-600">
+                                        <div class="flex text-sm text-gray-600 justify-center">
                                             <label for="resource_file" class="relative cursor-pointer bg-white rounded-md font-medium text-secondary hover:text-secondaryShades-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-secondary">
-                                                <span>Upload resource file</span>
-                                                <input id="resource_file" name="resource_file" type="file" class="sr-only">
+                                                <span>Upload resource files</span>
+                                                <input id="resource_file" name="resource_file[]" type="file" multiple class="sr-only" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.rtf">
                                             </label>
                                             <p class="pl-1">or drag and drop</p>
                                         </div>
-                                        <p class="text-xs text-gray-500">PDF, DOC, XLS, PPT up to 50MB</p>
+                                        <p class="text-xs text-gray-500">PDF, DOC, XLS, PPT up to 50MB each (multiple files allowed)</p>
                                     </div>
                                 </div>
                             </div>
@@ -424,30 +420,85 @@
             imageUploadPlaceholder.classList.remove('hidden');
         });
         
-        // File upload preview
+        // File upload preview (multiple files)
         const fileInput              = document.getElementById('resource_file');
-        const filePreview            = document.getElementById('filePreview');
+        const filePreviewList        = document.getElementById('filePreviewList');
         const filePreviewContainer   = document.getElementById('filePreviewContainer');
         const fileUploadPlaceholder  = document.getElementById('fileUploadPlaceholder');
-        const fileName               = document.getElementById('fileName');
-        const fileSize               = document.getElementById('fileSize');
-        const removeFileBtn          = document.getElementById('removeFile');
+        const removeAllFilesBtn      = document.getElementById('removeAllFiles');
+        let selectedFiles            = [];
         
         fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                fileName.textContent = file.name;
-                fileSize.textContent = formatFileSize(file.size);
-                filePreviewContainer.classList.remove('hidden');
-                fileUploadPlaceholder.classList.add('hidden');
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                selectedFiles = files;
+                updateFilePreview();
             }
         });
         
-        removeFileBtn.addEventListener('click', function() {
+        function updateFilePreview() {
+            filePreviewList.innerHTML = '';
+            
+            if (selectedFiles.length === 0) {
+                filePreviewContainer.classList.add('hidden');
+                fileUploadPlaceholder.classList.remove('hidden');
+                return;
+            }
+            
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200';
+                fileItem.innerHTML = `
+                    <div class="flex items-center flex-1 min-w-0">
+                        <i data-lucide="file" class="w-5 h-5 text-gray-600 mr-3 flex-shrink-0"></i>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${file.name}</p>
+                            <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                        </div>
+                    </div>
+                    <button type="button" class="ml-3 text-red-600 hover:text-red-500 remove-file-btn" data-index="${index}" title="Remove file">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                `;
+                filePreviewList.appendChild(fileItem);
+            });
+            
+            filePreviewContainer.classList.remove('hidden');
+            fileUploadPlaceholder.classList.add('hidden');
+            lucide.createIcons();
+        }
+        
+        // Remove individual file
+        filePreviewList.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-file-btn')) {
+                const index = parseInt(e.target.closest('.remove-file-btn').getAttribute('data-index'));
+                selectedFiles.splice(index, 1);
+                
+                // Update the file input
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                fileInput.files = dataTransfer.files;
+                
+                updateFilePreview();
+            }
+        });
+        
+        // Remove all files
+        removeAllFilesBtn.addEventListener('click', function() {
+            selectedFiles = [];
             fileInput.value = '';
             filePreviewContainer.classList.add('hidden');
             fileUploadPlaceholder.classList.remove('hidden');
         });
+        
+        // Format file size helper
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
         
         // Contributors management
         let contributorCount = 1;

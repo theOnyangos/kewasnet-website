@@ -1318,6 +1318,23 @@ class LearningHubController extends BaseController
             ->get()
             ->getResultArray();
 
+        // Get bookmarked articles/resources (including drafts)
+        $bookmarkedArticles = $db->table('user_bookmarks ub')
+            ->select('r.id, r.title, r.slug, r.description, r.image_url, r.view_count, r.download_count, r.created_at, r.is_published, r.created_by,
+                      p.id as pillar_id, p.title as pillar_title, p.slug as pillar_slug,
+                      dt.name as document_type_name, dt.color as document_type_color,
+                      ub.created_at as bookmarked_at')
+            ->join('resources r', 'r.id = ub.resource_id')
+            ->join('pillars p', 'p.id = r.pillar_id', 'left')
+            ->join('document_types dt', 'dt.id = r.document_type_id', 'left')
+            ->where('ub.user_id', $userId)
+            ->where('r.deleted_at', null)
+            ->where('(p.deleted_at IS NULL OR p.id IS NULL)', null, false)
+            ->orderBy('ub.created_at', 'DESC')
+            ->limit(6)
+            ->get()
+            ->getResultArray();
+
         $data = [
             'title' => 'Dashboard - KEWASNET',
             'description' => 'Your personalized dashboard',
@@ -1328,6 +1345,8 @@ class LearningHubController extends BaseController
             'forumSubscriptions' => $forumSubscriptions,
             'userDiscussions' => $userDiscussions,
             'bookmarkedDiscussions' => $bookmarkedDiscussions,
+            'bookmarkedArticles' => $bookmarkedArticles,
+            'userId' => $userId,
         ];
 
         return view('frontendV2/ksp/pages/learning-hub/dashboard/index', $data);

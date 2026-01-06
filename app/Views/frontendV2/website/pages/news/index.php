@@ -45,7 +45,7 @@
     </section>
 
     <!-- Main Content -->
-    <section class="py-16 bg-white">
+    <section class="py-16 bg-white relative">
         <!-- Diagonal Grid Pattern -->
         <div class="events-page-pattern-bg"></div>
         

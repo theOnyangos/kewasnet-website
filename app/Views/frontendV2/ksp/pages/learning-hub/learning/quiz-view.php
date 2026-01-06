@@ -12,14 +12,40 @@
 
 <?= $this->section('content') ?>
 
-<div class="container mx-auto px-4 py-8">
+<!-- Page Header -->
+<section class="relative py-20 bg-gradient-to-r from-primary to-secondary">
+    <div class="container mx-auto px-4 text-center text-white">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4">
+                <?php if (isset($quiz) && !empty($quiz['title'])): ?>
+                    <?= esc($quiz['title']) ?>
+                <?php else: ?>
+                    Quiz
+                <?php endif; ?>
+            </h1>
+            <p class="text-xl leading-relaxed">
+                <?php if (isset($quiz) && !empty($quiz['description'])): ?>
+                    <?= esc(substr($quiz['description'], 0, 150)) ?><?= strlen($quiz['description']) > 150 ? '...' : '' ?>
+                <?php elseif (isset($section) && !empty($section['title'])): ?>
+                    Section Quiz: <?= esc($section['title']) ?>
+                <?php elseif (isset($course) && !empty($course['title'])): ?>
+                    Test your knowledge: <?= esc($course['title']) ?>
+                <?php else: ?>
+                    Test your understanding and reinforce your learning.
+                <?php endif; ?>
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="pb-8">
     <!-- Breadcrumb -->
-    <div class="bg-white pb-3 border-b border-slate-200">
+    <div class="bg-white border-b borderColor mb-6">
         <div class="container mx-auto px-4 py-3">
             <nav class="flex" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
-                        <a href="/" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
+                        <a href="/ksp" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
                             <i data-lucide="home" class="w-4 h-4 mr-2"></i>
                             Home
                         </a>
@@ -45,7 +71,7 @@
                     <li aria-current="page">
                         <div class="flex items-center">
                             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                            <span class="ml-1 text-sm font-medium text-primary md:ml-2"><?= esc($quiz['title']) ?></span>
+                            <span class="ml-1 text-sm font-medium text-secondary md:ml-2"><?= esc($quiz['title']) ?></span>
                         </div>
                     </li>
                 </ol>
@@ -53,27 +79,9 @@
         </div>
     </div>
 
-    <div class="max-w-7xl mx-auto">
+    <div class="container mx-auto px-4 mb-8">
         <!-- Header -->
         <div class="my-6">
-            <a href="<?= base_url('ksp/learning-hub/learn/' . $course_id) ?>" 
-               class="text-primary hover:text-primary-dark font-medium mb-4 inline-block border border-primary/20 rounded-lg px-4 py-2 hover:bg-primary/10 transition-colors">
-                ← Back to Course
-            </a>
-            
-            <!-- Course & Section Info -->
-            <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
-                <span class="text-slate-500">Course:</span>
-                <a href="<?= base_url('ksp/learning-hub/learn/' . $course_id) ?>" 
-                   class="text-primary hover:text-primary-dark font-medium">
-                    <?= esc($course['title']) ?>
-                </a>
-                <span class="text-slate-400">•</span>
-                <span class="text-slate-500">Section:</span>
-                <span class="font-medium text-slate-700"><?= esc($section['title']) ?></span>
-            </div>
-            
-            <h1 class="text-3xl font-bold text-dark mb-2"><?= esc($quiz['title']) ?></h1>
             <?php if (!empty($quiz['description'])): ?>
                 <p class="text-slate-600"><?= esc($quiz['description']) ?></p>
             <?php endif; ?>
@@ -375,13 +383,26 @@
                             $totalCorrect = 0;
                             $totalIncorrect = 0;
                             
+                            // Passing grade is 70%
+                            $passingGrade = 70;
+                            
                             foreach ($previous_attempts as $attempt) {
-                                if ($attempt['passed']) {
+                                // Use percentage as primary source of truth (most reliable)
+                                $isPassed = false;
+                                if (isset($attempt['percentage'])) {
+                                    $isPassed = (float)$attempt['percentage'] >= $passingGrade;
+                                } elseif (isset($attempt['passed'])) {
+                                    // Fallback to passed field if percentage not available
+                                    // Handle different data types: 1, '1', true
+                                    $isPassed = ($attempt['passed'] == 1 || $attempt['passed'] === true || $attempt['passed'] === '1');
+                                }
+                                
+                                if ($isPassed) {
                                     $passedAttempts++;
                                 } else {
                                     $failedAttempts++;
                                 }
-                                $totalPercentage += $attempt['percentage'];
+                                $totalPercentage += (float)($attempt['percentage'] ?? 0);
                             }
                             
                             $averageScore = $totalAttempts > 0 ? $totalPercentage / $totalAttempts : 0;

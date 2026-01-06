@@ -14,27 +14,27 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/pillars/partials/header_section') ?>
+    <main class="flex-1 overflow-y-auto">
+        <!-- Page Banner -->
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Resource Categories',
+            'pageDescription' => 'Manage pillar resource categories and view detailed statistics',
+            'breadcrumbs' => [
+                ['label' => 'Pillars', 'url' => base_url('auth/pillars')],
+                ['label' => 'Resource Categories']
+            ],
+            'bannerActions' => '<button type="button" onclick="showCreateCategoryModal()" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="folder-plus" class="w-4 h-4 mr-2"></i>
+                Add Category
+            </button>'
+        ]) ?>
 
+        <div class="px-6 pb-6">
         <!-- Navigation Tabs -->
         <?= $this->include('backendV2/pages/pillars/partials/navigation_section') ?>
         
         <!-- Overview Tab Content - Pillar Resource Categories -->
         <div class="bg-white rounded-b-xl shadow-sm p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800">Pillar Resource</h1>
-                    <p class="mt-1 text-sm text-slate-500">Manage pillar resource categories and view detailed statistics</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="showCreateCategoryModal()" class="gradient-btn flex items-center px-8 py-2 rounded-full text-white hover:shadow-md transition-all duration-300">
-                        <i data-lucide="folder-plus" class="w-4 h-4 mr-2 z-10"></i>
-                        <span>Add Category</span>
-                    </button>
-                </div>
-            </div>
 
             <!-- Resource Categories Table -->
             <div class="overflow-x-auto">
@@ -51,6 +51,7 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
         </div>
     </main>
 <?= $this->endSection() ?>
@@ -103,10 +104,11 @@
                     "data": null,
                     "className": "text-left",
                     "render": function(data, type, row) {
+                        const resourceCount = parseInt(row.resource_count || 0);
                         return `<div class="flex flex-col items-start space-y-2">
                             <div class="text-sm font-medium text-gray-900">${row.pillar_title || 'No Pillar'}</div>
                             <span class="bg-emerald-100 text-emerald-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                ${row.resource_count || 0} resource${(row.resource_count || 0) !== 1 ? 's' : ''}
+                                ${resourceCount} resource${resourceCount !== 1 ? 's' : ''}
                             </span>
                         </div>`;
                     }
@@ -174,88 +176,90 @@
 
     function viewCategory(id) {
         // Implementation for viewing category details
-        console.log('View category:', id);
+        Swal.fire({
+            title: 'Category Details',
+            text: 'Category details view coming soon',
+            icon: 'info',
+            confirmButtonText: 'OK'
+        });
     }
 
     function editCategory(id) {
-        // Implementation for editing category
-        console.log('Edit category:', id);
+        // Redirect to edit page
+        window.location.href = '<?= site_url('auth/pillars/edit-resource-category') ?>/' + id;
     }
 
-    // Confirmation Modal HTML
-    const confirmModalHtml = `
-        <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
-            <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-                <div class="flex flex-col gap-5 items-center justify-center mb-3">
-                    <div class="h-20 w-20 flex justify-center items-center rounded-full bg-red-50 border border-red-100">
-                        <i data-lucide="alert-triangle" class="w-10 h-10 text-red-500"></i>
-                    </div>
-                    <h1 class="text-xl font-bold text-gray-800">Confirm Deletion?</h3>
-                </div>
-                <div class="p-3 bg-red-50 rounded-md mb-6 border border-red-100">
-                    <p class="text-dark">Are you sure you want to delete this category? This action may interfere with the normal operation of some resources. Once triggered this cannot be undone.</p>
-                </div>
-                <div class="flex justify-end gap-3">
-                    <button id="cancelDeleteBtn" class="px-8 py-2 rounded-[50px] bg-red-100 text-red-700 hover:bg-red-200">
-                        <i data-lucide="circle-minus" class="w-4 h-4 text-red-500 inline-block"></i>
-                        Cancel
-                    </button>
-                    <button id="confirmDeleteBtn" class="px-8 py-2 rounded-[50px] bg-gradient-to-br from-red-800 via-red-500 to-red-800 text-white hover:bg-red-700">
-                        <i data-lucide="trash-2" class="w-4 h-4 text-white inline-block"></i>
-                        Delete
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    if (!document.getElementById('confirmModal')) {
-        $('body').append(confirmModalHtml);
-        lucide.createIcons();
-    }
-
-    let deleteCategoryId = null;
     function deleteCategory(id) {
-        deleteCategoryId = id;
-        $('#confirmModal').removeClass('hidden').addClass('flex');
-    }
+        Swal.fire({
+            title: 'Are you sure?',
+            html: '<p class="text-gray-700 mb-4">Are you sure you want to delete this category?</p><p class="text-sm text-gray-500">This action may interfere with the normal operation of some resources. Once triggered, this cannot be undone.</p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Yes, delete it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the category',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
-    // Modal button handlers
-    $(document).on('click', '#cancelDeleteBtn', function() {
-        $('#confirmModal').addClass('hidden').removeClass('flex');
-        deleteCategoryId = null;
-    });
-    $(document).on('click', '#confirmDeleteBtn', function() {
-        if (!deleteCategoryId) return;
-        $('#confirmModal').addClass('hidden').removeClass('flex');
-        $.ajax({
-            url: `<?= site_url('auth/pillars/delete-category') ?>/${deleteCategoryId}`,
-            type: 'POST',
-            data: {
-                csrf_test_name: '<?= csrf_token() ?>',
-            },
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    showNotification('success', 'Category deleted successfully');
-                } else {
-                    showNotification('error', response.message || 'Error deleting category');
-                }
-            },
-            error: function(xhr) {
-                showNotification('error', 'Error deleting category');
-            },
-            complete: function() {
-                categoriesTable.ajax.reload(function() {
-                    lucide.createIcons();
+                $.ajax({
+                    url: `<?= site_url('auth/pillars/delete-category') ?>/${id}`,
+                    type: 'POST',
+                    data: {
+                        csrf_test_name: '<?= csrf_token() ?>',
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: response.message || 'Category deleted successfully',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                categoriesTable.ajax.reload(function() {
+                                    lucide.createIcons();
+                                });
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: response.message || 'Error deleting category',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Error deleting category';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            title: 'Error!',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    },
+                    complete: function() {
+                        categoriesTable.ajax.reload(function() {
+                            lucide.createIcons();
+                        });
+                    }
                 });
             }
         });
-        deleteCategoryId = null;
-    });
-
-    function showToast(message, type) {
-        // Implementation for showing toast notifications
-        console.log(type + ': ' + message);
     }
 </script>
 <?= $this->endSection() ?>

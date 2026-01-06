@@ -5,26 +5,11 @@
 
  session()->set([ 'redirect_url' => $currentUrl::currentUrl() ]);
 
- // Define the desired order
- $desiredOrder = ['wash', 'governance', 'climate', 'nexus', 'iwrm'];
- 
- // Create ordered pillars array
- $orderedPillars = [];
- foreach ($desiredOrder as $slug) {
- foreach ($pillars as $pillar) {
- if ($pillar['slug'] === $slug) {
- $orderedPillars[] = $pillar;
- break;
- }
- }
- }
- 
- // Add any remaining pillars not in the desired order
- foreach ($pillars as $pillar) {
- if (!in_array($pillar['slug'], $desiredOrder)) {
- $orderedPillars[] = $pillar;
- }
- }
+ // Sort pillars by title for consistent ordering (or use a sort_order field if available)
+ $orderedPillars = $pillars;
+ usort($orderedPillars, function($a, $b) {
+ return strcmp($a['title'] ?? '', $b['title'] ?? '');
+ });
 ?>
 
 <?= $this->extend('frontendV2/ksp/layouts/main') ?>
@@ -46,7 +31,7 @@
  <div class="container mx-auto px-4 text-center text-white">
  <h1 class="text-4xl md:text-5xl font-bold mb-6">Our Strategic Pillars</h1>
  <p class="text-xl max-w-3xl mx-auto leading-relaxed">
- Explore the five foundational pillars that guide KEWASNET's work in transforming Kenya's water, sanitation, and hygiene sector.
+ Explore the foundational pillars that guide KEWASNET's work in transforming Kenya's water, sanitation, and hygiene sector.
  </p>
  </div>
 
@@ -91,7 +76,7 @@
  left: 0;
  right: 0;
  bottom: 0;
- z-index: 0;
+ z-index: -1;
  pointer-events: none;
  background-image: 
  repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px),
@@ -101,7 +86,7 @@
  </style>
 
  <!-- Pillar Content Sections -->
- <section class="pb-16 bg-lightGray">
+ <section class="pb-16 bg-lightGray py-8">
  <!-- Diagonal Grid Pattern -->
  <div class="events-page-pattern-bg"></div>
 
@@ -112,7 +97,7 @@
  <div class="text-center mb-12">
  <h2 class="text-3xl font-bold text-gray-900 mb-4">Our Strategic Pillars</h2>
  <p class="text-lg text-gray-600 max-w-3xl mx-auto">
- KEWASNET's work is organized around five strategic pillars that guide our approach to water, sanitation, and hygiene.
+ KEWASNET's work is organized around strategic pillars that guide our approach to water, sanitation, and hygiene.
  </p>
  </div>
  
@@ -136,26 +121,22 @@
  </div>
  </div>
  <?php else: ?>
- <!-- Individual Pillar Content -->
- <?php if ($activeView === 'wash'): ?>
- <div id="wash" class="container pillar-section pillar_active pt-16">
- <?= $this->include('frontendV2/ksp/pages/pillars/landing/partials/wash_pillar') ?>
+ <!-- Individual Pillar Content - Dynamic for all pillars -->
+ <?php if (isset($activePillar) && !empty($activePillar)): ?>
+ <div id="<?= esc($activePillar['slug']) ?>" class="pillar-section pillar_active bg-white rounded-xl shadow-lg max-w-5xl mx-auto">
+ <?= $this->include('frontendV2/ksp/pages/pillars/landing/partials/pillar_content') ?>
  </div>
- <?php elseif ($activeView === 'governance'): ?>
- <div id="governance" class="container pillar-section pillar_active pt-16">
- <?= $this->include('frontendV2/ksp/pages/pillars/landing/partials/governance_pillar') ?>
+ <?php else: ?>
+ <div class="container mx-auto pt-16 text-center">
+ <div class="bg-white rounded-xl shadow-lg p-12 max-w-2xl mx-auto">
+ <i data-lucide="alert-circle" class="w-16 h-16 text-slate-400 mx-auto mb-4"></i>
+ <h2 class="text-2xl font-bold text-gray-900 mb-4">Pillar Not Found</h2>
+ <p class="text-gray-600 mb-6">The requested pillar could not be found.</p>
+ <a href="<?= base_url('ksp/pillars') ?>" class="inline-flex items-center text-primary hover:text-secondary font-medium">
+ <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+ Back to All Pillars
+ </a>
  </div>
- <?php elseif ($activeView === 'climate'): ?>
- <div id="climate" class="container pillar-section pillar_active pt-16">
- <?= $this->include('frontendV2/ksp/pages/pillars/landing/partials/climate_pillar') ?>
- </div>
- <?php elseif ($activeView === 'nexus'): ?>
- <div id="nexus" class="container pillar-section pillar_active pt-16">
- <?= $this->include('frontendV2/ksp/pages/pillars/landing/partials/nexus_pillar') ?>
- </div>
- <?php elseif ($activeView === 'iwrm'): ?>
- <div id="iwrm" class="container pillar-section pillar_active pt-16">
- <?= $this->include('frontendV2/ksp/pages/pillars/landing/partials/iwrm_pillar') ?>
  </div>
  <?php endif; ?>
  <?php endif; ?>

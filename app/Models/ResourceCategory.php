@@ -99,7 +99,8 @@ class ResourceCategory extends Model
      */
     public function getCategoriesTable($start, $length, $search = null, $orderBy = 'id', $orderDir = 'DESC', $forumId = null)
     {
-        $builder = $this->select('resource_categories.*, COUNT(pillars.id) as pillar_count, pillars.title as pillar_title')
+        $builder = $this->select('resource_categories.*, pillars.title as pillar_title, 
+                    (SELECT COUNT(*) FROM resources WHERE resources.category_id = resource_categories.id) as resource_count')
             ->join('pillars', 'pillars.id = resource_categories.pillar_id', 'left', false);
 
         if ($search) {

@@ -17,11 +17,11 @@
 <?= $this->section('content') ?>
 <main class="flex-1 overflow-y-auto">
     <?= view('backendV2/partials/page_banner', [
-        'pageTitle' => 'Create Pillar',
-        'pageDescription' => 'Create a new knowledge pillar for the platform',
+        'pageTitle' => 'Edit Pillar',
+        'pageDescription' => 'Update pillar information and settings',
         'breadcrumbs' => [
             ['label' => 'Pillars', 'url' => base_url('auth/pillars')],
-            ['label' => 'Create']
+            ['label' => 'Edit']
         ],
         'bannerActions' => '<a href="' . base_url('auth/pillars') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
             <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
@@ -34,8 +34,8 @@
         <div class="bg-white rounded-b-xl shadow-sm max-w-full pillar-form-container">
             <div class="w-full flex justify-between items-center p-6 border-b border-gray-200">
                 <div class="">
-                    <h3 class="text-2xl font-bold text-primary">Create New Pillar</h3>
-                    <p class="text-gray-600">Fill in the details below to publish a new pillar</p>
+                    <h3 class="text-2xl font-bold text-primary">Edit Pillar</h3>
+                    <p class="text-gray-600">Update the details below to modify this pillar</p>
                 </div>
 
                 <div class="mt-4 md:mt-0">
@@ -47,11 +47,14 @@
             </div>
 
             <!-- Main Form -->
-            <form class="p-6 space-y-6" autocomplete="off" id="createPillarForm" method="POST" action="<?= site_url('auth/pillars/create') ?>" enctype="multipart/form-data">
+            <form class="p-6 space-y-6" autocomplete="off" id="editPillarForm" method="POST" action="<?= site_url('auth/pillars/' . $pillar['id'] . '/edit') ?>" enctype="multipart/form-data">
+                <!-- Hidden field for pillar ID -->
+                <input type="hidden" name="pillar_id" value="<?= esc($pillar['id']) ?>">
+
                 <!-- Title Field -->
                 <div>
                     <label for="title" class="block text-sm font-medium text-dark mb-1">Pillar Title <span class="text-red-500">*</span></label>
-                    <input type="text" id="title" name="title" required maxlength="100" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Enter pillar title">
+                    <input type="text" id="title" name="title" required maxlength="100" value="<?= esc($pillar['title'] ?? '') ?>" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Enter pillar title">
                 </div>
 
                 <!-- Slug Field -->
@@ -61,7 +64,7 @@
                         <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-borderColor bg-lightGray text-dark text-sm whitespace-nowrap">
                             kewasnet.co.ke/pillars/
                         </span>
-                        <input type="text" id="pillarSlug" name="slug" required maxlength="50" class="flex-1 min-w-0 px-4 py-3 rounded-none rounded-r-md border border-borderColor focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="url-friendly-slug">
+                        <input type="text" id="pillarSlug" name="slug" required maxlength="50" value="<?= esc($pillar['slug'] ?? '') ?>" class="flex-1 min-w-0 px-4 py-3 rounded-none rounded-r-md border border-borderColor focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="url-friendly-slug">
                     </div>
                     <p class="mt-1 text-xs text-gray-500">This will be the URL for your pillar page. It should be unique and descriptive.</p>
                 </div>
@@ -69,7 +72,7 @@
                 <!-- Icon Field -->
                 <div>
                     <label for="icon" class="block text-sm font-medium text-dark mb-1">Icon</label>
-                    <input type="text" id="icon" name="icon" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="e.g., fas fa-users, lucide-home, etc.">
+                    <input type="text" id="icon" name="icon" value="<?= esc($pillar['icon'] ?? '') ?>" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="e.g., fas fa-users, lucide-home, etc.">
                     <p class="mt-1 text-xs text-gray-500">Icon class name (FontAwesome, Lucide, etc.) to display with this pillar</p>
                 </div>
 
@@ -77,14 +80,14 @@
                 <div>
                     <label for="description" class="block text-sm font-medium text-dark mb-1">Description</label>
                     <div class="relative">
-                        <textarea id="description" name="description" rows="3" maxlength="500" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none" placeholder="A brief description of this pillar"></textarea>
+                        <textarea id="description" name="description" rows="3" maxlength="500" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none" placeholder="A brief description of this pillar"><?= esc($pillar['description'] ?? '') ?></textarea>
                         <div class="absolute top-3 left-0 pl-3 flex items-start pointer-events-none">
                             <i data-lucide="file-text" class="w-5 h-5 text-gray-400 mt-0.5"></i>
                         </div>
                     </div>
                     <div class="flex justify-between text-xs text-gray-500 mt-1">
                         <span>Write a brief description that summarizes this pillar</span>
-                        <span id="description-count">0/500</span>
+                        <span id="description-count"><?= strlen($pillar['description'] ?? '') ?>/500</span>
                     </div>
                 </div>
 
@@ -92,13 +95,45 @@
                 <div>
                     <label for="content" class="block text-sm font-medium text-dark mb-1">Content</label>
                     <div class="rounded-lg">
-                        <textarea id="content" name="content" class="summernote-editor w-full px-4 py-3 focus:outline-none" placeholder="Write detailed content about this pillar..."></textarea>
+                        <textarea id="content" name="content" class="summernote-editor w-full px-4 py-3 focus:outline-none" placeholder="Write detailed content about this pillar..."><?= esc($pillar['content'] ?? '') ?></textarea>
                     </div>
                 </div>
 
                 <!-- Image Upload -->
                 <div>
                     <label class="block text-sm font-medium text-dark mb-1">Pillar Image</label>
+                    <?php 
+                    $imagePath = $pillar['image_path'] ?? null;
+                    // Ensure image path is properly formatted
+                    if (!empty($imagePath)) {
+                        // If it's already a full URL, use it as is
+                        if (strpos($imagePath, 'http') === 0 || strpos($imagePath, '//') === 0) {
+                            // Already a full URL
+                        } elseif (strpos($imagePath, '/') === 0) {
+                            // Absolute path from root
+                            $imagePath = base_url(ltrim($imagePath, '/'));
+                        } else {
+                            // Relative path
+                            $imagePath = base_url($imagePath);
+                        }
+                    }
+                    ?>
+                    <?php if (!empty($imagePath) && !empty($pillar['image_path'])): ?>
+                        <div class="mb-4">
+                            <p class="text-sm text-gray-600 mb-2">Current Image:</p>
+                            <div class="relative inline-block group">
+                                <img src="<?= esc($imagePath) ?>" alt="Current Pillar Image" class="max-w-48 max-h-32 rounded-lg border-2 border-gray-200 object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none;" class="text-sm text-red-500">Image not found</div>
+                                <button type="button" onclick="removePillarImage('<?= esc($pillar['id']) ?>')" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" title="Remove image">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            <button type="button" onclick="removePillarImage('<?= esc($pillar['id']) ?>')" class="mt-2 text-sm text-red-600 hover:text-red-700 flex items-center gap-1">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                Remove Image
+                            </button>
+                        </div>
+                    <?php endif; ?>
                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-borderColor border-dashed rounded-md">
                         <div class="space-y-1 text-center">
                             <svg class="mx-auto h-12 w-12 text-slate-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
@@ -106,7 +141,7 @@
                             </svg>
                             <div class="flex text-sm text-slate-600">
                                 <label for="pillar_image" class="relative cursor-pointer bg-white rounded-md font-medium text-secondary hover:text-secondaryShades-600 focus-within:outline-none">
-                                    <span>Upload a pillar image</span>
+                                    <span><?= !empty($pillar['image_path']) ? 'Replace image' : 'Upload a pillar image' ?></span>
                                     <input id="pillar_image" name="pillar_image" type="file" accept="image/*" class="sr-only">
                                 </label>
                                 <p class="pl-1">or drag and drop</p>
@@ -124,12 +159,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label for="button_text" class="block text-sm font-medium text-dark mb-1">Button Text</label>
-                            <input type="text" id="button_text" name="button_text" value="Explore Resources" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Button text">
+                            <input type="text" id="button_text" name="button_text" value="<?= esc($pillar['button_text'] ?? 'Explore Resources') ?>" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Button text">
                         </div>
                         
                         <div>
                             <label for="button_link" class="block text-sm font-medium text-dark mb-1">Button Link</label>
-                            <input type="url" id="button_link" name="button_link" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="https://example.com">
+                            <input type="url" id="button_link" name="button_link" value="<?= esc($pillar['button_link'] ?? '') ?>" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="https://example.com">
                         </div>
                     </div>
                 </div>
@@ -141,12 +176,12 @@
                     <div class="space-y-4">
                         <div>
                             <label for="meta_title" class="block text-sm font-medium text-dark mb-1">Meta Title</label>
-                            <input type="text" id="meta_title" name="meta_title" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Title for search engines">
+                            <input type="text" id="meta_title" name="meta_title" value="<?= esc($pillar['meta_title'] ?? '') ?>" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Title for search engines">
                         </div>
                         
                         <div>
                             <label for="meta_description" class="block text-sm font-medium text-dark mb-1">Meta Description</label>
-                            <textarea id="meta_description" name="meta_description" rows="3" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Description for search engines"></textarea>
+                            <textarea id="meta_description" name="meta_description" rows="3" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Description for search engines"><?= esc($pillar['meta_description'] ?? '') ?></textarea>
                         </div>
                     </div>
                 </div>
@@ -160,14 +195,14 @@
                             <label class="block text-sm font-medium text-dark mb-3">Privacy</label>
                             <div class="flex flex-col space-y-3">
                                 <label class="inline-flex items-center p-3 border border-borderColor rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-secondary has-[:checked]:bg-secondaryShades-100">
-                                    <input type="radio" name="is_private" value="0" checked class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
+                                    <input type="radio" name="is_private" value="0" <?= (!isset($pillar['is_private']) || $pillar['is_private'] == 0) ? 'checked' : '' ?> class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
                                     <div class="ml-3">
                                         <span class="text-sm font-medium text-dark">Public</span>
                                         <p class="text-xs text-gray-500">Visible to all users</p>
                                     </div>
                                 </label>
                                 <label class="inline-flex items-center p-3 border border-borderColor rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-secondary has-[:checked]:bg-secondaryShades-100">
-                                    <input type="radio" name="is_private" value="1" class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
+                                    <input type="radio" name="is_private" value="1" <?= (isset($pillar['is_private']) && $pillar['is_private'] == 1) ? 'checked' : '' ?> class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
                                     <div class="ml-3">
                                         <span class="text-sm font-medium text-dark">Private</span>
                                         <p class="text-xs text-gray-500">Only visible to logged-in users</p>
@@ -180,14 +215,14 @@
                             <label class="block text-sm font-medium text-dark mb-3">Status</label>
                             <div class="flex flex-col space-y-3">
                                 <label class="inline-flex items-center p-3 border border-borderColor rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-secondary has-[:checked]:bg-secondaryShades-100">
-                                    <input type="radio" name="is_active" value="1" checked class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
+                                    <input type="radio" name="is_active" value="1" <?= (!isset($pillar['is_active']) || $pillar['is_active'] == 1) ? 'checked' : '' ?> class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
                                     <div class="ml-3">
                                         <span class="text-sm font-medium text-dark">Active</span>
                                         <p class="text-xs text-gray-500">Pillar is live and visible</p>
                                     </div>
                                 </label>
                                 <label class="inline-flex items-center p-3 border border-borderColor rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-secondary has-[:checked]:bg-secondaryShades-100">
-                                    <input type="radio" name="is_active" value="0" class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
+                                    <input type="radio" name="is_active" value="0" <?= (isset($pillar['is_active']) && $pillar['is_active'] == 0) ? 'checked' : '' ?> class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
                                     <div class="ml-3">
                                         <span class="text-sm font-medium text-dark">Inactive</span>
                                         <p class="text-xs text-gray-500">Pillar is hidden from display</p>
@@ -208,7 +243,7 @@
                     </button>
                     <button type="submit" class="gradient-btn rounded-[50px] px-8 text-white flex justify-center items-center gap-2">
                         <i data-lucide="save" class="w-5 h-5 z-10"></i>
-                        <span>Create Pillar</span>
+                        <span>Update Pillar</span>
                     </button>
                 </div>
             </form>
@@ -222,8 +257,8 @@
                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
                     
                     <!-- Progress text -->
-                    <h3 class="text-lg font-medium text-gray-900 mb-1">Creating Pillar</h3>
-                    <p class="text-sm text-gray-500 mb-4">Please wait while we process your pillar...</p>
+                    <h3 class="text-lg font-medium text-gray-900 mb-1">Updating Pillar</h3>
+                    <p class="text-sm text-gray-500 mb-4">Please wait while we process your changes...</p>
                     
                     <!-- Progress bar -->
                     <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
@@ -251,6 +286,24 @@
         // Initialize lucide icons
         lucide.createIcons();
 
+        // Initialize Summernote editor
+        if (typeof $('.summernote-editor').summernote === 'function') {
+            $('.summernote-editor').summernote({
+                height: 300,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['fontsize', ['fontsize']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'video']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                ]
+            });
+        }
+
         // Helper function to clear field errors
         function clearFieldError(field) {
             field.removeClass('is-invalid border-red-500');
@@ -260,18 +313,17 @@
         // Helper function to generate slug
         function generateSlug(text) {
             return text.toLowerCase()
-                .replace(/[^\w\s-]/g, '') // Remove all non-word characters (except spaces and hyphens)
-                .replace(/\s+/g, '-')     // Replace spaces with hyphens
-                .replace(/--+/g, '-')     // Replace multiple hyphens with single hyphen
-                .replace(/^-+|-+$/g, '')  // Remove leading/trailing hyphens
+                .replace(/[^\w\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/--+/g, '-')
+                .replace(/^-+|-+$/g, '')
                 .trim();
         }
 
-        // Auto-generate slug from title
+        // Auto-generate slug from title (only if slug is empty)
         $('#title').on('input', function() {
             clearFieldError($(this));
             
-            // Only auto-generate slug if the slug field is empty or hasn't been manually edited
             const $slugField = $('#pillarSlug');
             if (!$slugField.val() || !$slugField.data('manual')) {
                 const title = $(this).val();
@@ -287,6 +339,9 @@
         });
 
         // Description character counter
+        const initialDescriptionLength = $('#description').val().length;
+        $('#description-count').text(`${initialDescriptionLength}/500`);
+
         $('#description').on('input', function() {
             const currentLength = $(this).val().length;
             const maxLength = 500;
@@ -295,7 +350,6 @@
             
             counter.text(`${currentLength}/500`);
             
-            // Update counter color based on remaining characters
             counter.removeClass('text-gray-500 text-orange-500 text-red-500');
             if (remaining <= 50) {
                 counter.addClass('text-orange-500');
@@ -305,7 +359,6 @@
                 counter.addClass('text-gray-500');
             }
             
-            // Show warning when approaching limit
             if (remaining <= 20 && remaining > 0) {
                 if (!$('.description-warning').length) {
                     $(this).parent().parent().append(`
@@ -339,7 +392,6 @@
             previewContainer.empty();
             
             if (file && file.type.startsWith('image/')) {
-                // Check file size (5MB limit)
                 if (file.size > 5 * 1024 * 1024) {
                     Swal.fire({
                         icon: 'error',
@@ -356,7 +408,7 @@
                     const preview = $(`
                         <div class="file-preview mt-2">
                             <img src="${e.target.result}" alt="Pillar Image Preview" class="max-w-48 max-h-32 rounded-lg border-2 border-gray-200">
-                            <div class="remove-file cursor-pointer" onclick="removePillarImage()">×</div>
+                            <div class="remove-file cursor-pointer" onclick="removePillarImagePreview()">×</div>
                         </div>
                     `);
                     previewContainer.append(preview);
@@ -365,14 +417,83 @@
             }
         });
 
-        // Remove pillar image function
-        window.removePillarImage = function() {
+        // Remove pillar image function (for file input preview)
+        window.removePillarImagePreview = function() {
             $('#pillar_image').val('');
             $('#pillar-image-preview').empty();
         }
 
+        // Remove existing pillar image from server
+        window.removePillarImage = function(pillarId) {
+            Swal.fire({
+                title: 'Remove Image?',
+                text: 'Are you sure you want to remove this image? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, remove it!',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'Removing...',
+                        text: 'Please wait',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    $.ajax({
+                        url: `<?= site_url('auth/pillars') ?>/${pillarId}/remove-image`,
+                        type: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        data: {
+                            '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                        },
+                        success: function(response) {
+                            if (response.status === 'success') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Removed!',
+                                    text: response.message || 'Image removed successfully',
+                                    confirmButtonColor: '#3b82f6',
+                                    timer: 2000,
+                                    showConfirmButton: true
+                                }).then(() => {
+                                    // Reload the page to show updated state
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    text: response.message || 'Failed to remove image',
+                                    confirmButtonColor: '#ef4444'
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            const response = xhr.responseJSON || {};
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: response.message || 'An error occurred while removing the image',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
         // Handle form submission
-        $('#createPillarForm').on('submit', function(e) {
+        $('#editPillarForm').on('submit', function(e) {
             e.preventDefault();
             
             const form = $(this);
@@ -389,7 +510,7 @@
             
             // Disable form elements during submission
             form.find('input, textarea, button, select').prop('disabled', true);
-            submitBtn.html('<i class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full inline-block"></i>Creating...');
+            submitBtn.html('<i class="animate-spin w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full inline-block"></i>Updating...');
             
             $.ajax({
                 url: form.attr('action'),
@@ -411,21 +532,15 @@
                     return xhr;
                 },
                 success: function(response) {
-                    console.log('Success response:', response);
-                    
                     if (response.status === 'success') {
-                        // Complete progress bar
                         progressBar.css('width', '100%');
                         progressPercent.text('100');
-                        
-                        // Hide progress modal
                         progressModal.hide();
                         
-                        // Show success alert
                         Swal.fire({
                             icon: 'success',
                             title: 'Success!',
-                            text: response.message || 'Pillar created successfully!',
+                            text: response.message || 'Pillar updated successfully!',
                             confirmButtonColor: '#3b82f6',
                             confirmButtonText: 'OK'
                         }).then(() => {
@@ -446,14 +561,12 @@
                             confirmButtonText: 'OK'
                         });
                         
-                        // Show form errors if validation failed
                         if (response.errors) {
                             showFormErrors(response.errors);
                         }
                     }
                 },
                 error: function(xhr) {
-                    console.error('AJAX Error:', xhr);
                     progressModal.hide();
                     
                     try {
@@ -490,7 +603,6 @@
                     }
                 },
                 complete: function() {
-                    // Re-enable form elements
                     form.find('input, textarea, button, select').prop('disabled', false);
                     submitBtn.html(originalText);
                 }
@@ -514,7 +626,6 @@
                     
                     $field.after($errorDiv);
                     
-                    // Scroll to first error
                     if ($('.is-invalid').first().is($field)) {
                         $field.focus();
                         $('html, body').animate({
@@ -539,3 +650,4 @@
     });
 </script>
 <?= $this->endSection() ?>
+

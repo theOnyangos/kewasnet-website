@@ -82,13 +82,32 @@ class UserBookmark extends Model
      */
     public function addBookmark($userId, $resourceId)
     {
-        if (!$this->isBookmarked($userId, $resourceId)) {
-            return $this->insert([
-                'user_id' => $userId,
-                'resource_id' => $resourceId
-            ]);
+        // Double-check it's not already bookmarked (race condition protection)
+        if ($this->isBookmarked($userId, $resourceId)) {
+            log_message('debug', "Bookmark already exists: User {$userId}, Resource {$resourceId}");
+            return false; // Already bookmarked
         }
-        return false; // Already bookmarked
+        
+        $data = [
+            'user_id' => $userId,
+            'resource_id' => $resourceId
+        ];
+        
+        log_message('debug', "Attempting to insert bookmark: " . json_encode($data));
+        
+        // Insert the bookmark
+        $result = $this->insert($data);
+        
+        if (!$result) {
+            $errors = $this->errors();
+            log_message('error', 'UserBookmark insert failed: ' . json_encode($errors));
+            log_message('error', 'Attempted data: ' . json_encode($data));
+            log_message('error', 'Model validation: ' . ($this->skipValidation ? 'skipped' : 'enabled'));
+        } else {
+            log_message('info', "Bookmark inserted successfully. Insert ID: {$result}");
+        }
+        
+        return $result;
     }
     
     /**

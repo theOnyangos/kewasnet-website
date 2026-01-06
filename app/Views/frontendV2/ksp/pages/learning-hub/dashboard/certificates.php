@@ -80,7 +80,23 @@ $(document).ready(function() {
 
 function copyVerificationCode(code) {
     navigator.clipboard.writeText(code).then(function() {
-        alert('Verification code copied to clipboard!');
+        Swal.fire({
+            icon: 'success',
+            title: 'Code Copied!',
+            text: 'Verification code copied to clipboard',
+            timer: 2000,
+            showConfirmButton: false,
+            toast: true,
+            position: 'top-end'
+        });
+    }).catch(function(err) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Copy Failed',
+            text: 'Failed to copy verification code. Please try again.',
+            timer: 3000,
+            showConfirmButton: false
+        });
     });
 }
 </script>

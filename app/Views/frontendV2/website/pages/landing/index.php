@@ -275,10 +275,8 @@
     <!-- News Section -->
     <?php if(!empty($blogs)): ?>
         <section class="py-20 bg-slate-50 relative">
-            <!-- Dotted background overlay -->
-            <div class="radial-pattern-container">
-                <div class="radial-pattern"></div>
-            </div>
+            <!-- Diagonal Grid Pattern -->
+            <div class="events-pattern-bg"></div>
 
             <div class="container mx-auto px-4">
                 <div class="text-center mb-16">

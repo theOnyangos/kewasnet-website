@@ -68,110 +68,105 @@ class PillarArticlesService
     public function getResourcesForPillar(string $pillarId, array $filters = [], int $page = 1, int $perPage = 6): array
     {
         try {
-            // Use raw query to handle collation issues
-            $sql = "SELECT resources.*, resource_categories.name as category_name 
-                    FROM resources 
-                    LEFT JOIN resource_categories ON resources.category_id COLLATE utf8mb4_general_ci = resource_categories.id COLLATE utf8mb4_general_ci
-                    WHERE resource_categories.pillar_id COLLATE utf8mb4_general_ci = ? 
-                    AND resources.deleted_at IS NULL";
+            // Build query using query builder for better flexibility
+            $builder = $this->db->table('resources r')
+                ->select('r.*, 
+                    rc.name as category_name,
+                    dt.name as document_type_name,
+                    dt.color as document_type_color,
+                    p.title as pillar_name')
+                ->join('resource_categories rc', 'r.category_id = rc.id', 'left')
+                ->join('document_types dt', 'r.document_type_id = dt.id', 'left')
+                ->join('pillars p', 'r.pillar_id = p.id', 'left')
+                ->where('r.pillar_id', $pillarId)
+                ->where('r.is_published', 1)
+                ->where('r.deleted_at IS NULL', null, false);
             
-            $params = [$pillarId];
-            
-            // Apply filters
-            if (!empty($filters['category'])) {
-                $sql .= " AND resource_categories.id COLLATE utf8mb4_general_ci = ?";
-                $params[] = $filters['category'];
+            // Apply category filter
+            if (!empty($filters['category']) && $filters['category'] !== 'all') {
+                $builder->where('r.category_id', $filters['category']);
             }
             
+            // Apply document type filter
+            if (!empty($filters['document_type']) && $filters['document_type'] !== 'all') {
+                $builder->where('r.document_type_id', $filters['document_type']);
+            }
+            
+            // Apply search filter
             if (!empty($filters['search'])) {
-                $sql .= " AND (resources.title LIKE ? OR resources.description LIKE ?)";
-                $params[] = '%' . $filters['search'] . '%';
-                $params[] = '%' . $filters['search'] . '%';
+                $builder->groupStart()
+                    ->like('r.title', $filters['search'])
+                    ->orLike('r.description', $filters['search'])
+                    ->groupEnd();
             }
             
-            if (!empty($filters['document_type'])) {
-                $sql .= " AND resources.document_type = ?";
-                $params[] = $filters['document_type'];
-            }
+            // Get total count before pagination
+            $total = $builder->countAllResults(false);
             
             // Apply sorting
-            $sort = $filters['sort'] ?? 'latest';
+            $sort = $filters['sort'] ?? 'newest';
             switch ($sort) {
+                case 'oldest':
+                    $builder->orderBy('r.created_at', 'ASC');
+                    break;
                 case 'title':
-                    $sql .= " ORDER BY resources.title ASC";
+                    $builder->orderBy('r.title', 'ASC');
                     break;
-                case 'type':
-                    $sql .= " ORDER BY resources.document_type ASC";
+                case 'downloads':
+                    // Order by download count (we'll need to join with file_attachments or use a subquery)
+                    $builder->orderBy('r.download_count', 'DESC');
                     break;
-                case 'latest':
+                case 'newest':
                 default:
-                    $sql .= " ORDER BY resources.created_at DESC";
+                    $builder->orderBy('r.created_at', 'DESC');
                     break;
             }
-            
-            // Get total count for pagination
-            $countSql = "SELECT COUNT(*) as total 
-                        FROM resources 
-                        LEFT JOIN resource_categories ON resources.category_id COLLATE utf8mb4_general_ci = resource_categories.id COLLATE utf8mb4_general_ci
-                        WHERE resource_categories.pillar_id COLLATE utf8mb4_general_ci = ? 
-                        AND resources.deleted_at IS NULL";
-            
-            $countParams = [$pillarId];
-            
-            // Apply the same filters to count query
-            if (!empty($filters['category'])) {
-                $countSql .= " AND resource_categories.id COLLATE utf8mb4_general_ci = ?";
-                $countParams[] = $filters['category'];
-            }
-            
-            if (!empty($filters['search'])) {
-                $countSql .= " AND (resources.title LIKE ? OR resources.description LIKE ?)";
-                $countParams[] = '%' . $filters['search'] . '%';
-                $countParams[] = '%' . $filters['search'] . '%';
-            }
-            
-            if (!empty($filters['document_type'])) {
-                $countSql .= " AND resources.document_type = ?";
-                $countParams[] = $filters['document_type'];
-            }
-            
-            $countResult = $this->db->query($countSql, $countParams)->getRow();
-            $total = $countResult->total ?? 0;
             
             // Apply pagination
             $offset = ($page - 1) * $perPage;
-            $sql .= " LIMIT ? OFFSET ?";
-            $params[] = $perPage;
-            $params[] = $offset;
+            $builder->limit($perPage, $offset);
             
-            $resources = $this->db->query($sql, $params)->getResultArray();
+            $resources = $builder->get()->getResultArray();
             
-            // Add file attachments to each resource
+            // Add file attachments data to each resource
             if (!empty($resources)) {
                 foreach ($resources as &$resource) {
-                    $attachmentData = $this->fileAttachmentModel->getAttachmentsForResource($resource['id']);
-                    $resource['total_downloads'] = $attachmentData['total_downloads'] ?? 0;
-                    $resource['total_file_size'] = $attachmentData['total_file_size'] ?? 0;
+                    try {
+                        $attachmentData = $this->fileAttachmentModel->getAttachmentsForResource($resource['id']);
+                        $resource['total_downloads'] = $attachmentData['total_downloads'] ?? 0;
+                        $resource['total_file_size'] = $attachmentData['total_file_size'] ?? 0;
+                        
+                        // Get file type from first attachment if available
+                        if (!empty($attachmentData['attachments']) && is_array($attachmentData['attachments'])) {
+                            $firstAttachment = $attachmentData['attachments'][0];
+                            $resource['file_type'] = $firstAttachment['file_type'] ?? $resource['file_type'] ?? 'Document';
+                        }
+                    } catch (\Exception $e) {
+                        log_message('error', 'Error fetching attachments for resource ' . $resource['id'] . ': ' . $e->getMessage());
+                        $resource['total_downloads'] = 0;
+                        $resource['total_file_size'] = 0;
+                    }
                 }
                 unset($resource); // Unset the reference
             }
             
             return [
                 'data' => $resources ?? [],
-                'pagination'        => [
+                'pagination' => [
                     'total'         => $total,
                     'per_page'      => $perPage,
                     'current_page'  => $page,
-                    'last_page'     => ceil($total / $perPage),
-                    'from'          => $offset + 1,
+                    'last_page'     => ceil($total / $perPage) ?: 1,
+                    'from'          => $total > 0 ? $offset + 1 : 0,
                     'to'            => min($offset + $perPage, $total)
                 ]
             ];
         } catch (\Exception $e) {
             log_message('error', 'Error fetching resources for pillar: ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
             return [
                 'data' => [],
-                'pagination'        => [
+                'pagination' => [
                     'total'         => 0,
                     'per_page'      => $perPage,
                     'current_page'  => $page,
@@ -189,43 +184,76 @@ class PillarArticlesService
     public function getCategoriesForPillar(string $pillarId): array
     {
         try {
-            $categories = $this->resourceCategoryModel
-                ->where('pillar_id', $pillarId)
-                ->findAll() ?? [];
+            // Validate pillar ID
+            if (empty($pillarId)) {
+                log_message('error', 'Empty pillar ID provided to getCategoriesForPillar');
+                return [];
+            }
             
-            // Convert objects to arrays and add resource counts
-            return array_map(function($category) {
-                $categoryArray = is_object($category) ? (array)$category : $category;
-                
-                // Get resource count for this category
+            // Use query builder directly to query resource_categories table
+            $query = $this->db->table('resource_categories')
+                ->select('resource_categories.id, resource_categories.pillar_id, resource_categories.name, resource_categories.slug, resource_categories.description, resource_categories.created_at, resource_categories.updated_at')
+                ->where('resource_categories.pillar_id', $pillarId)
+                ->orderBy('resource_categories.name', 'ASC');
+            
+            $categories = $query->get()->getResultArray();
+            
+            if (empty($categories)) {
+                log_message('debug', 'No categories found in resource_categories table for pillar ID: ' . $pillarId);
+                // Try to verify if pillar exists
+                $pillarExists = $this->db->table('pillars')
+                    ->where('id', $pillarId)
+                    ->countAllResults();
+                log_message('debug', 'Pillar exists check: ' . ($pillarExists > 0 ? 'Yes' : 'No'));
+                return [];
+            }
+            
+            log_message('debug', 'Found ' . count($categories) . ' categories in resource_categories table for pillar ID: ' . $pillarId);
+            
+            // Add resource counts to each category
+            foreach ($categories as &$category) {
                 try {
+                    // Count published resources for this category
                     $resourceCount = $this->db->table('resources')
-                        ->where('category_id', $categoryArray['id'])
+                        ->where('category_id', $category['id'])
                         ->where('is_published', 1)
-                        ->where('deleted_at IS NULL')
+                        ->where('deleted_at IS NULL', null, false)
                         ->countAllResults();
                     
-                    $categoryArray['resource_count'] = $resourceCount;
+                    $category['resource_count'] = (int)$resourceCount;
                 } catch (\Exception $e) {
-                    log_message('error', 'Error counting resources for category ' . $categoryArray['id'] . ': ' . $e->getMessage());
-                    $categoryArray['resource_count'] = 0;
+                    log_message('error', 'Error counting resources for category ' . ($category['id'] ?? 'unknown') . ': ' . $e->getMessage());
+                    $category['resource_count'] = 0;
                 }
-                
-                return $categoryArray;
-            }, $categories);
+            }
+            unset($category); // Unset reference
+            
+            log_message('debug', 'Successfully processed ' . count($categories) . ' categories with resource counts');
+            return $categories;
         } catch (\Exception $e) {
-            log_message('error', 'Error fetching categories for pillar: ' . $e->getMessage());
+            log_message('error', 'Error fetching categories from resource_categories table for pillar ' . $pillarId . ': ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
             return [];
         }
     }
 
     /**
-     * Get all document types
+     * Get all document types formatted for filters
      */
     public function getDocumentTypes(): array
     {
         try {
-            return $this->documentTypeModel->findAll() ?? [];
+            $documentTypes = $this->documentTypeModel->orderBy('name', 'ASC')->findAll() ?? [];
+            
+            // Format for view
+            return array_map(function($docType) {
+                $docTypeArray = is_object($docType) ? (array)$docType : $docType;
+                return [
+                    'value' => $docTypeArray['id'],
+                    'label' => $docTypeArray['name'],
+                    'color' => $docTypeArray['color'] ?? '#6B7280'
+                ];
+            }, $documentTypes);
         } catch (\Exception $e) {
             log_message('error', 'Error fetching document types: ' . $e->getMessage());
             return [];
@@ -353,6 +381,7 @@ class PillarArticlesService
             return $this->db->table('resources')
                 ->where('pillar_id', $pillarId)
                 ->where('is_published', 1)
+                ->where('deleted_at IS NULL', null, false)
                 ->countAllResults();
         } catch (\Exception $e) {
             log_message('error', 'Error counting resources: ' . $e->getMessage());
@@ -427,7 +456,7 @@ class PillarArticlesService
         return [
             'title'             => 'KEWASNET - Pillar Articles',
             'description'       => 'Pillar articles page',
-            'pillar'            => ['title' => 'Unknown Pillar', 'slug' => $slug, 'description' => 'No description available'],
+            'pillar'            => ['title' => 'Unknown Pillar', 'slug' => $slug, 'description' => 'No description available', 'id' => ''],
             'resources'         => [],
             'categories'        => [],
             'documentTypes'     => [],
@@ -435,13 +464,14 @@ class PillarArticlesService
             'totalCategories'   => 0,
             'totalContributors' => 0,
             'currentPage'       => 1,
-            'totalPages'        => 0,
+            'totalPages'        => 1,
             'perPage'           => 6,
             'totalItems'        => 0,
             'filters' => [
                 'category' => null,
                 'document_type' => null,
-                'search' => null
+                'search' => null,
+                'sort' => 'newest'
             ]
         ];
     }

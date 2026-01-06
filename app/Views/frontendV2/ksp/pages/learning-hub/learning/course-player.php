@@ -12,14 +12,36 @@
 
 <?= $this->section('content') ?>
 
-<div class="container mx-auto px-4 py-8 pt-5">
+<!-- Page Header -->
+<section class="relative py-20 bg-gradient-to-r from-primary to-secondary">
+    <div class="container mx-auto px-4 text-center text-white">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl md:text-5xl font-bold mb-4">
+                <?php if (isset($course) && !empty($course['title'])): ?>
+                    <?= esc($course['title']) ?>
+                <?php else: ?>
+                    Course Learning
+                <?php endif; ?>
+            </h1>
+            <p class="text-xl leading-relaxed">
+                <?php if (isset($course) && !empty($course['summary'])): ?>
+                    <?= esc(substr($course['summary'], 0, 150)) ?><?= strlen($course['summary']) > 150 ? '...' : '' ?>
+                <?php else: ?>
+                    Continue your learning journey and master new skills.
+                <?php endif; ?>
+            </p>
+        </div>
+    </div>
+</section>
+
+<div class="pb-8">
     <!-- Breadcrumb -->
-    <div class="bg-white pb-4">
+    <div class="bg-white border-b borderColor mb-6">
         <div class="container mx-auto px-4 py-3">
             <nav class="flex" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
-                        <a href="/" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
+                        <a href="/ksp" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
                             <i data-lucide="home" class="w-4 h-4 mr-2"></i>
                             Home
                         </a>
@@ -39,7 +61,7 @@
                     <li aria-current="page">
                         <div class="flex items-center">
                             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                            <span class="ml-1 text-sm font-medium text-primary md:ml-2">Learning</span>
+                            <span class="ml-1 text-sm font-medium text-secondary md:ml-2">Learning</span>
                         </div>
                     </li>
                 </ol>
@@ -47,7 +69,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 container mx-auto px-4 mb-8">
         <!-- Sidebar - Course Content -->
         <div class="lg:col-span-1">
             <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6 sticky top-[120px]">

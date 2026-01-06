@@ -171,7 +171,7 @@ class FileAttachment extends Model
         log_message('debug', "FileAttachment: Looking for attachments with resourceId: " . $resourceId);
         
         // Use 'resources' (plural) to match the database value
-        $attachments = $this->select('file_path, file_size, original_name, download_count')
+        $attachments = $this->select('file_path, file_size, original_name, download_count, file_type, mime_type')
                             ->where('attachable_type', 'resources')
                            ->where('attachable_id', $resourceId)
                            ->findAll();
@@ -180,13 +180,19 @@ class FileAttachment extends Model
 
         $totalDownloads = 0;
         $totalFileSize = 0;
+        $attachmentsArray = [];
+        
         foreach ($attachments as $attachment) {
-            $totalDownloads += $attachment->download_count;
-            $totalFileSize += $attachment->file_size;
+            // Convert to array if object
+            $attachmentArray = is_object($attachment) ? (array)$attachment : $attachment;
+            
+            $totalDownloads += $attachmentArray['download_count'] ?? 0;
+            $totalFileSize += $attachmentArray['file_size'] ?? 0;
+            $attachmentsArray[] = $attachmentArray;
         }
 
         return [
-            'attachments' => $attachments,
+            'attachments' => $attachmentsArray,
             'total_downloads' => $totalDownloads,
             'total_file_size' => $totalFileSize,
         ];

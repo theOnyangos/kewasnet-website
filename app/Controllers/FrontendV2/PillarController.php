@@ -3,6 +3,7 @@
 namespace App\Controllers\FrontendV2;
 
 use App\Models\Pillar;
+use App\Models\Resource;
 use App\Libraries\ClientAuth;
 use App\Controllers\BaseController;
 use App\Services\PillarArticlesService;
@@ -12,6 +13,7 @@ use App\Services\ResourceCommentService;
 class PillarController extends BaseController
 {
     protected $pillarModel;
+    protected $resourceModel;
     protected $commentService;
     protected $pillarArticlesService;
 
@@ -21,6 +23,7 @@ class PillarController extends BaseController
     public function __construct()
     {
         $this->pillarModel           = new Pillar();
+        $this->resourceModel         = new Resource();
         $this->commentService        = new ResourceCommentService();
         $this->pillarArticlesService = new PillarArticlesService();
     }
@@ -33,14 +36,33 @@ class PillarController extends BaseController
         $title       = "KEWASNET - Pillars of Water and Sanitation";
         $description = "Explore KEWASNET's pillars of water and sanitation, including governance, service delivery, and community engagement. Learn how we promote sustainable practices and improve access to clean water and sanitation across Kenya.";
 
-        // Get Pillars
-        $pillars = $this->pillarModel->findAll();
+        // Get all pillars
+        $allPillars = $this->pillarModel->findAll();
+        
+        // Filter pillars based on privacy and login status
+        $isLoggedIn = ClientAuth::isLoggedIn();
+        $pillars = [];
+        
+        foreach ($allPillars as $pillar) {
+            // Convert to array if object
+            if (is_object($pillar)) {
+                $pillar = (array) $pillar;
+            }
+            
+            // If pillar is private and user is not logged in, skip it
+            if (isset($pillar['is_private']) && $pillar['is_private'] == 1 && !$isLoggedIn) {
+                continue;
+            }
+            
+            $pillars[] = $pillar;
+        }
 
         $data = [
             'title'       => $title,
             'pillars'     => $pillars,
             'description' => $description,
-            'activeView'  => 'all'
+            'activeView'  => 'all',
+            'isLoggedIn'  => $isLoggedIn
         ];
 
         return view('frontendV2/ksp/pages/pillars/landing/index', $data);
@@ -51,12 +73,34 @@ class PillarController extends BaseController
      */
     public function pillarView($slug)
     {
-        // Get all pillars for navigation
-        $pillars = $this->pillarModel->findAll();
+        $isLoggedIn = ClientAuth::isLoggedIn();
         
-        // Find the specific pillar by slug
+        // Get all pillars for navigation (filtered by privacy)
+        $allPillars = $this->pillarModel->findAll();
+        $pillars = [];
+        
+        foreach ($allPillars as $pillar) {
+            // Convert to array if object
+            if (is_object($pillar)) {
+                $pillar = (array) $pillar;
+            }
+            
+            // If pillar is private and user is not logged in, skip it
+            if (isset($pillar['is_private']) && $pillar['is_private'] == 1 && !$isLoggedIn) {
+                continue;
+            }
+            
+            $pillars[] = $pillar;
+        }
+        
+        // Find the specific pillar by slug (check all pillars, not just filtered)
         $activePillar = null;
-        foreach ($pillars as $pillar) {
+        foreach ($allPillars as $pillar) {
+            // Convert to array if object
+            if (is_object($pillar)) {
+                $pillar = (array) $pillar;
+            }
+            
             if ($pillar['slug'] === $slug) {
                 $activePillar = $pillar;
                 break;
@@ -68,6 +112,16 @@ class PillarController extends BaseController
             return redirect()->to(base_url('ksp/pillars'));
         }
 
+        // Check if pillar is private and user is not logged in
+        if (isset($activePillar['is_private']) && $activePillar['is_private'] == 1 && !$isLoggedIn) {
+            // Store the current URL for redirect after login
+            session()->set('redirect_url', current_url());
+            
+            // Redirect to login with a message
+            return redirect()->to(base_url('ksp/login'))
+                ->with('error', 'Please log in to access this private pillar.');
+        }
+
         $title = "KEWASNET - " . $activePillar['title'] . " Pillar";
         $description = $activePillar['description'] ?? "Explore the " . $activePillar['title'] . " pillar of KEWASNET's water and sanitation work.";
 
@@ -76,7 +130,8 @@ class PillarController extends BaseController
             'pillars'      => $pillars,
             'description'  => $description,
             'activeView'   => $slug,
-            'activePillar' => $activePillar
+            'activePillar' => $activePillar,
+            'isLoggedIn'   => $isLoggedIn
         ];
 
         return view('frontendV2/ksp/pages/pillars/landing/index', $data);
@@ -90,13 +145,30 @@ class PillarController extends BaseController
         $title = "KEWASNET - Pillar Articles";
         $description = "Explore comprehensive resources, articles, and publications across all pillars of water and sanitation from KEWASNET's knowledge repository.";
 
-        // Get all pillars for navigation
-        $pillars = $this->pillarModel->findAll();
+        // Get all pillars and filter by privacy
+        $isLoggedIn = ClientAuth::isLoggedIn();
+        $allPillars = $this->pillarModel->findAll();
+        $pillars = [];
+        
+        foreach ($allPillars as $pillar) {
+            // Convert to array if object
+            if (is_object($pillar)) {
+                $pillar = (array) $pillar;
+            }
+            
+            // If pillar is private and user is not logged in, skip it
+            if (isset($pillar['is_private']) && $pillar['is_private'] == 1 && !$isLoggedIn) {
+                continue;
+            }
+            
+            $pillars[] = $pillar;
+        }
 
         $data = [
             'title' => $title,
             'description' => $description,
-            'pillars' => $pillars
+            'pillars' => $pillars,
+            'isLoggedIn' => $isLoggedIn
         ];
 
         return view('frontendV2/ksp/pages/pillars/articles/landing', $data);
@@ -108,11 +180,28 @@ class PillarController extends BaseController
     public function pillarArticles($slug)
     {
         try {
+            $isLoggedIn = ClientAuth::isLoggedIn();
+            
             // Get pillar by slug
             $pillar = $this->pillarArticlesService->getPillarBySlug($slug);
             
             if (!$pillar) {
                 throw new \Exception('Pillar not found');
+            }
+            
+            // Convert to array if object
+            if (is_object($pillar)) {
+                $pillar = (array) $pillar;
+            }
+            
+            // Check if pillar is private and user is not logged in
+            if (isset($pillar['is_private']) && $pillar['is_private'] == 1 && !$isLoggedIn) {
+                // Store the current URL for redirect after login
+                session()->set('redirect_url', current_url());
+                
+                // Redirect to login with a message
+                return redirect()->to(base_url('ksp/login'))
+                    ->with('error', 'Please log in to access articles for this private pillar.');
             }
             
             // Get request parameters
@@ -128,6 +217,12 @@ class PillarController extends BaseController
             
             // Get categories for this pillar
             $categories = $this->pillarArticlesService->getCategoriesForPillar($pillar['id']);
+            
+            // Log for debugging
+            log_message('debug', 'Categories fetched for pillar ' . $pillar['id'] . ': ' . count($categories));
+            
+            // Get document types dynamically
+            $documentTypes = $this->pillarArticlesService->getDocumentTypes();
             
             // Get pillar statistics
             $statistics = $this->pillarArticlesService->getPillarStatistics($pillar['id']);
@@ -145,28 +240,35 @@ class PillarController extends BaseController
                 $perPage
             );
             
-            // Document types (static for now)
-            $documentTypes = [
-                ['value' => 'pdf', 'label' => 'PDF'],
-                ['value' => 'doc', 'label' => 'Word Document'],
-                ['value' => 'xls', 'label' => 'Excel'],
-                ['value' => 'ppt', 'label' => 'PowerPoint']
-            ];
+            // Check bookmark status for each resource (if user is logged in)
+            $bookmarkedResources = [];
+            if ($isLoggedIn && !empty($resources['data'])) {
+                $userId = session()->get('id') ?? session()->get('user_id');
+                if ($userId) {
+                    $userBookmarkModel = new \App\Models\UserBookmark();
+                    foreach ($resources['data'] as $resource) {
+                        $resourceId = is_array($resource) ? $resource['id'] : $resource->id;
+                        $bookmarkedResources[$resourceId] = $userBookmarkModel->isBookmarked($userId, $resourceId);
+                    }
+                }
+            }
             
             $data = [
                 'title'             => "KEWASNET - {$pillar['title']} Articles",
                 'description'       => $pillar['meta_description'] ?? "Explore resources and articles for {$pillar['title']} pillar",
                 'pillar'            => $pillar,
-                'resources'         => $resources['data'],
-                'categories'        => $categories,
-                'documentTypes'     => $documentTypes,
-                'totalResources'    => $statistics['totalResources'],
-                'totalCategories'   => $statistics['totalCategories'],
-                'totalContributors' => $statistics['totalContributors'],
-                'currentPage'       => $resources['pagination']['current_page'],
-                'totalPages'        => $resources['pagination']['last_page'],
-                'perPage'           => $resources['pagination']['per_page'],
-                'totalItems'        => $resources['pagination']['total'],
+                'resources'         => $resources['data'] ?? [],
+                'bookmarkedResources' => $bookmarkedResources,
+                'isLoggedIn'        => $isLoggedIn,
+                'categories'        => $categories ?? [],
+                'documentTypes'     => $documentTypes ?? [],
+                'totalResources'    => $statistics['totalResources'] ?? 0,
+                'totalCategories'   => $statistics['totalCategories'] ?? 0,
+                'totalContributors' => $statistics['totalContributors'] ?? 0,
+                'currentPage'       => $resources['pagination']['current_page'] ?? 1,
+                'totalPages'        => $resources['pagination']['last_page'] ?? 1,
+                'perPage'           => $resources['pagination']['per_page'] ?? $perPage,
+                'totalItems'        => $resources['pagination']['total'] ?? 0,
                 'filters' => [
                     'category' => $category,
                     'document_type' => $documentType,
@@ -212,7 +314,7 @@ class PillarController extends BaseController
             
             // If we don't have pillar slug in resource, get pillar by ID
             if (!$pillar && !empty($resource['pillar_id'])) {
-                $pillar = $this->pillarModel->find($resource['pillar_id']);
+                $pillar = $this->pillarModel->where('id', $resource['pillar_id'])->first();
                 if (is_object($pillar)) {
                     // Handle both Entity objects and stdClass objects
                     if (method_exists($pillar, 'toArray')) {
@@ -222,6 +324,22 @@ class PillarController extends BaseController
                         $pillar = (array) $pillar;
                     }
                 }
+            }
+            
+            // Convert to array if still object
+            if (is_object($pillar)) {
+                $pillar = (array) $pillar;
+            }
+            
+            // Check if pillar is private and user is not logged in
+            $isLoggedIn = ClientAuth::isLoggedIn();
+            if (isset($pillar['is_private']) && $pillar['is_private'] == 1 && !$isLoggedIn) {
+                // Store the current URL for redirect after login
+                session()->set('redirect_url', current_url());
+                
+                // Redirect to login with a message
+                return redirect()->to(base_url('ksp/login'))
+                    ->with('error', 'Please log in to access this article from a private pillar.');
             }
             
             // Get related resources from the same category (excluding current article)
@@ -260,8 +378,45 @@ class PillarController extends BaseController
             // Get helpful vote status for this resource
             $helpfulStatus = $this->commentService->getResourceHelpfulStatus($resource['id']);
 
-            // Increment view count
-            $this->pillarArticlesService->incrementViewCount($resource['id']);
+            // Check if resource is bookmarked (if user is logged in)
+            $isBookmarked = false;
+            if ($isLoggedIn) {
+                $userId = session()->get('id') ?? session()->get('user_id');
+                if ($userId) {
+                    $userBookmarkModel = new \App\Models\UserBookmark();
+                    $isBookmarked = $userBookmarkModel->isBookmarked($userId, $resource['id']);
+                }
+            }
+
+            // Track view using session-based tracking (similar to news-details)
+            $userId = session()->get('id') ?? session()->get('user_id');
+            
+            // Check if this user/session has already viewed this resource
+            $viewedResources = session()->get('viewed_resources') ?? [];
+            
+            if (!in_array($resource['id'], $viewedResources)) {
+                // Mark as viewed in session
+                $viewedResources[] = $resource['id'];
+                session()->set('viewed_resources', $viewedResources);
+                
+                // Increment the resource view count
+                $this->pillarArticlesService->incrementViewCount($resource['id']);
+                
+                log_message('info', "Resource {$resource['id']} view incremented for " . ($userId ?? 'guest'));
+            } else {
+                log_message('info', "Resource {$resource['id']} already viewed in this session");
+            }
+            
+            // Check if article is draft and user is not logged in
+            $isLoggedIn = ClientAuth::isLoggedIn();
+            if (isset($resource['is_published']) && $resource['is_published'] == 0 && !$isLoggedIn) {
+                // Store the current URL for redirect after login
+                session()->set('redirect_url', current_url());
+                
+                // Redirect to login with a message
+                return redirect()->to(base_url('ksp/login'))
+                    ->with('error', 'This article is currently in draft mode. Please log in to view it.');
+            }
             
             $data = [
                 'title'             => "KEWASNET - {$resource['title']}",
@@ -273,6 +428,7 @@ class PillarController extends BaseController
                 'comments'          => $comments,
                 'commentCount'      => $commentCount,
                 'helpfulStatus'     => $helpfulStatus,
+                'isBookmarked'      => $isBookmarked,
                 'isLoggedIn'        => ClientAuth::isLoggedIn(),
                 'currentUser'       => ClientAuth::user(),
                 'breadcrumb' => [
@@ -369,5 +525,317 @@ class PillarController extends BaseController
         $result = $this->commentService->voteCommentHelpful($commentId);
         
         return $this->response->setJSON($result);
+    }
+
+    /**
+     * Download resource attachment
+     * Similar to FilesController::downloadAttachment but with resource-specific logic
+     */
+    public function downloadAttachment()
+    {
+        // Get the entire URI path after the route (exactly like FilesController)
+        $uri = service('uri');
+        $segmentCount = $uri->getTotalSegments();
+        $pathParts = [];
+        
+        // Start from segment 4 (ksp = 1, attachments = 2, download = 3, path starts at 4)
+        for ($i = 4; $i <= $segmentCount; $i++) {
+            $pathParts[] = $uri->getSegment($i);
+        }
+        
+        $filePath = implode('/', $pathParts);
+        
+        log_message('debug', 'PillarController downloadAttachment - File path: ' . $filePath);
+        
+        $fullPath = WRITEPATH . 'uploads/' . $filePath;
+        log_message('debug', 'PillarController downloadAttachment - Full file path: ' . $fullPath);
+
+        if (!file_exists($fullPath)) {
+            log_message('error', 'File not found: ' . $fullPath);
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('File not found');
+        }
+
+        // Find attachment record to get original name (exactly like FilesController)
+        $fileAttachmentModel = new \App\Models\FileAttachment();
+        $attachment = $fileAttachmentModel->where('file_path', $filePath)->first();
+        
+        // Convert to array if object (FileAttachment returns arrays)
+        if ($attachment && is_object($attachment)) {
+            $attachment = (array) $attachment;
+        }
+        
+        $originalName = $attachment ? ($attachment['original_name'] ?? basename($filePath)) : basename($filePath);
+        
+        // If it's a resource attachment, handle additional logic
+        if ($attachment && isset($attachment['attachable_type']) && $attachment['attachable_type'] === 'resources') {
+            // Get the resource
+            $resource = $this->resourceModel->find($attachment['attachable_id']);
+            
+            // Convert to array if object
+            if ($resource && is_object($resource)) {
+                $resource = (array) $resource;
+            }
+            
+            if ($resource) {
+                // Check if resource is published (or draft and user is logged in)
+                $isLoggedIn = ClientAuth::isLoggedIn();
+                if (isset($resource['is_published']) && $resource['is_published'] == 0 && !$isLoggedIn) {
+                    return redirect()->to(base_url('ksp/login'))
+                        ->with('error', 'Please log in to download this resource.');
+                }
+                
+                // Increment resource download count
+                $this->pillarArticlesService->incrementDownloadCount($resource['id']);
+            }
+        } else if ($attachment && isset($attachment['attachable_type']) && $attachment['attachable_type'] !== 'resources') {
+            // For non-resource attachments (discussions, replies), pass to DiscussionController
+            log_message('debug', 'Passing non-resource attachment to DiscussionController');
+            $discussionController = new \App\Controllers\FrontendV2\DiscussionController();
+            return $discussionController->downloadAttachment();
+        }
+
+        // Increment download count (like FilesController)
+        if ($attachment) {
+            $fileAttachmentModel->incrementDownloadCount($attachment['id']);
+        }
+
+        return $this->response->download($fullPath, null)->setFileName($originalName);
+    }
+
+    /**
+     * View resource attachment (for previewing documents)
+     * Similar to FilesController::viewAttachment but with resource-specific logic
+     */
+    public function viewAttachment()
+    {
+        // Get the entire URI path after the route (exactly like FilesController)
+        $uri = service('uri');
+        $segmentCount = $uri->getTotalSegments();
+        $pathParts = [];
+        
+        // Start from segment 4 (ksp = 1, attachments = 2, view = 3, path starts at 4)
+        for ($i = 4; $i <= $segmentCount; $i++) {
+            $pathParts[] = $uri->getSegment($i);
+        }
+        
+        $filePath = implode('/', $pathParts);
+        
+        log_message('debug', 'PillarController viewAttachment - File path: ' . $filePath);
+        
+        $fullPath = WRITEPATH . 'uploads/' . $filePath;
+        log_message('debug', 'PillarController viewAttachment - Full file path: ' . $fullPath);
+
+        if (!file_exists($fullPath)) {
+            log_message('error', 'File not found: ' . $fullPath);
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('File not found');
+        }
+
+        // Find attachment record
+        $fileAttachmentModel = new \App\Models\FileAttachment();
+        $attachment = $fileAttachmentModel->where('file_path', $filePath)->first();
+        
+        // Convert to array if object (FileAttachment returns arrays)
+        if ($attachment && is_object($attachment)) {
+            $attachment = (array) $attachment;
+        }
+        
+        // If it's a resource attachment, check access
+        if ($attachment && isset($attachment['attachable_type']) && $attachment['attachable_type'] === 'resources') {
+            // Get the resource
+            $resource = $this->resourceModel->find($attachment['attachable_id']);
+            
+            // Convert to array if object
+            if ($resource && is_object($resource)) {
+                $resource = (array) $resource;
+            }
+            
+            if ($resource) {
+                // Check if resource is published (or draft and user is logged in)
+                $isLoggedIn = ClientAuth::isLoggedIn();
+                if (isset($resource['is_published']) && $resource['is_published'] == 0 && !$isLoggedIn) {
+                    return redirect()->to(base_url('ksp/login'))
+                        ->with('error', 'Please log in to view this resource.');
+                }
+            }
+        } else if ($attachment && isset($attachment['attachable_type']) && $attachment['attachable_type'] !== 'resources') {
+            // For non-resource attachments (discussions, replies), pass to DiscussionController
+            log_message('debug', 'Passing non-resource attachment to DiscussionController');
+            $discussionController = new \App\Controllers\FrontendV2\DiscussionController();
+            return $discussionController->viewAttachment();
+        }
+
+        // Get file mime type and return (exactly like FilesController)
+        $file = new \CodeIgniter\Files\File($fullPath);
+        $mime = $file->getMimeType();
+
+        return $this->response->setContentType($mime)
+                            ->setBody(file_get_contents($fullPath));
+    }
+
+    /**
+     * Toggle bookmark for a resource article
+     */
+    public function toggleBookmark()
+    {
+        log_message('debug', 'toggleBookmark called. Is AJAX: ' . ($this->request->isAJAX() ? 'yes' : 'no'));
+        log_message('debug', 'Request method: ' . $this->request->getMethod());
+        log_message('debug', 'Request URI: ' . $this->request->getUri()->getPath());
+        
+        if (!$this->request->isAJAX()) {
+            log_message('warning', 'toggleBookmark called but not AJAX request');
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Invalid request'
+            ]);
+        }
+
+        // Check if user is logged in
+        $userId = session()->get('id') ?? session()->get('user_id');
+        log_message('debug', 'User ID from session: ' . ($userId ?? 'null'));
+        
+        if (!$userId) {
+            log_message('warning', 'toggleBookmark called but user not logged in');
+            return $this->response->setStatusCode(401)->setJSON([
+                'success' => false,
+                'message' => 'Please log in to bookmark articles',
+                'redirect' => base_url('ksp/login')
+            ]);
+        }
+
+        $resourceId = $this->request->getPost('resource_id');
+        log_message('debug', 'Resource ID from POST: ' . ($resourceId ?? 'null'));
+        
+        if (!$resourceId) {
+            log_message('error', 'toggleBookmark called without resource_id');
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Resource ID is required'
+            ]);
+        }
+
+        $userBookmarkModel = new \App\Models\UserBookmark();
+        
+        // Check if already bookmarked
+        $isBookmarked = $userBookmarkModel->isBookmarked($userId, $resourceId);
+
+        if ($isBookmarked) {
+            // Remove bookmark
+            $deleted = $userBookmarkModel->removeBookmark($userId, $resourceId);
+            if ($deleted) {
+                log_message('info', "Bookmark removed: User {$userId}, Resource {$resourceId}");
+                return $this->response->setJSON([
+                    'success' => true,
+                    'bookmarked' => false,
+                    'message' => 'Bookmark removed'
+                ]);
+            } else {
+                log_message('error', "Failed to remove bookmark: User {$userId}, Resource {$resourceId}");
+                return $this->response->setStatusCode(500)->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to remove bookmark'
+                ]);
+            }
+        } else {
+            // Add bookmark
+            $insertId = $userBookmarkModel->addBookmark($userId, $resourceId);
+            if ($insertId) {
+                log_message('info', "Bookmark added: User {$userId}, Resource {$resourceId}, Insert ID: {$insertId}");
+                return $this->response->setJSON([
+                    'success' => true,
+                    'bookmarked' => true,
+                    'message' => 'Article bookmarked'
+                ]);
+            } else {
+                // Check for validation errors
+                $errors = $userBookmarkModel->errors();
+                $errorMessage = !empty($errors) ? implode(', ', $errors) : 'Failed to bookmark article';
+                log_message('error', "Failed to add bookmark: User {$userId}, Resource {$resourceId}. Errors: " . json_encode($errors));
+                return $this->response->setStatusCode(500)->setJSON([
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'errors' => $errors
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Publish article (remove from draft)
+     */
+    public function publishArticle()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Invalid request'
+            ]);
+        }
+
+        // Check if user is logged in
+        $userId = session()->get('id') ?? session()->get('user_id');
+        if (!$userId) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'success' => false,
+                'message' => 'Please log in to publish articles',
+                'redirect' => base_url('ksp/login')
+            ]);
+        }
+
+        $resourceId = $this->request->getPost('resource_id');
+        
+        if (!$resourceId) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => 'Resource ID is required'
+            ]);
+        }
+
+        // Get the resource
+        $resource = $this->resourceModel->find($resourceId);
+        
+        if (!$resource) {
+            return $this->response->setStatusCode(404)->setJSON([
+                'success' => false,
+                'message' => 'Article not found'
+            ]);
+        }
+
+        // Convert to array if object
+        if (is_object($resource)) {
+            $resource = (array) $resource;
+        }
+
+        // Check if user is the author
+        if (isset($resource['created_by']) && $resource['created_by'] != $userId) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'message' => 'You do not have permission to publish this article'
+            ]);
+        }
+
+        // Check if already published
+        if (isset($resource['is_published']) && $resource['is_published'] == 1) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Article is already published'
+            ]);
+        }
+
+        // Publish the article
+        $updated = $this->resourceModel->update($resourceId, ['is_published' => 1]);
+        
+        if ($updated) {
+            log_message('info', "Article published: User {$userId}, Resource {$resourceId}");
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Article published successfully'
+            ]);
+        } else {
+            log_message('error', "Failed to publish article: User {$userId}, Resource {$resourceId}");
+            return $this->response->setStatusCode(500)->setJSON([
+                'success' => false,
+                'message' => 'Failed to publish article'
+            ]);
+        }
     }
 }

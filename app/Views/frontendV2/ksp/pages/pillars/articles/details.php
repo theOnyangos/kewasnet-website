@@ -244,10 +244,11 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                  <div class="mb-3 flex flex-wrap gap-4">
                     <?php if (!empty($resource['attachments'])): ?>
                         <?php foreach($resource['attachments'] as $attachment): ?>
-                            <a href="<?= base_url('ksp/attachments/download/' . $attachment->file_path) ?>" 
-                            class="flex items-center space-x-2 bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300">
+                            <a href="<?= base_url('ksp/attachments/download/' . ($attachment['file_path'] ?? '')) ?>" 
+                            class="flex items-center space-x-2 bg-gradient-to-r from-primary to-secondary text-white px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-300"
+                            onclick="incrementDownloadCount('<?= esc($resource['id']) ?>', '<?= esc($attachment['id'] ?? '') ?>')">
                                 <i data-lucide="download" class="w-5 h-5"></i>
-                                <span>Download <?= esc($attachment->original_name ?? 'Document') ?></span>
+                                <span>Download <?= esc($attachment['original_name'] ?? 'Document') ?></span>
                             </a>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -255,10 +256,19 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
 
                 <div class="flex flex-wrap justify-between items-center gap-4 mb-12">
                     <div class="flex items-center space-x-4">
-                        <button class="flex items-center space-x-2 text-slate-600 hover:text-primary">
-                            <i data-lucide="bookmark" class="w-5 h-5"></i>
-                            <span>Save for later</span>
-                        </button>
+                        <?php if ($isLoggedIn): ?>
+                            <button id="bookmark-btn" onclick="toggleBookmark('<?= esc($resource['id']) ?>')" 
+                                    class="flex items-center space-x-2 text-slate-600 hover:text-primary transition-colors <?= ($isBookmarked ?? false) ? 'text-secondary' : '' ?>">
+                                <i id="bookmark-icon" data-lucide="bookmark" class="w-5 h-5 <?= ($isBookmarked ?? false) ? 'fill-secondary' : '' ?>"></i>
+                                <span id="bookmark-text"><?= ($isBookmarked ?? false) ? 'Bookmarked' : 'Save for later' ?></span>
+                            </button>
+                        <?php else: ?>
+                            <a href="<?= base_url('ksp/login') ?>" 
+                               class="flex items-center space-x-2 text-slate-600 hover:text-primary transition-colors">
+                                <i data-lucide="bookmark" class="w-5 h-5"></i>
+                                <span>Save for later</span>
+                            </a>
+                        <?php endif; ?>
                         <button class="flex items-center space-x-2 text-slate-600 hover:text-primary">
                             <i data-lucide="share-2" class="w-5 h-5"></i>
                             <span>Share</span>
@@ -444,19 +454,37 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                                     <div class="bg-primaryShades-100 p-3 rounded-lg">
                                         <i data-lucide="file-text" class="w-6 h-6 text-primary"></i>
                                     </div>
-                                    <div>
-                                        <h3 class="font-bold mb-1"><?= esc($attachment->original_name) ?></h3>
-                                        <p class="text-sm text-slate-500 mb-2">
-                                            <?= esc($attachment->file_type ?? 'Document') ?>
-                                            <?php if (!empty($attachment->file_size)): ?>
-                                                <?= esc(format_file_size($attachment->file_size)) ?>
+                                    <div class="flex-1">
+                                        <h3 class="font-bold mb-1"><?= esc($attachment['original_name'] ?? 'Document') ?></h3>
+                                        <p class="text-sm text-slate-500 mb-3">
+                                            <?= esc($attachment['file_type'] ?? 'Document') ?>
+                                            <?php if (!empty($attachment['file_size'])): ?>
+                                                • <?= esc(format_file_size($attachment['file_size'])) ?>
                                             <?php endif; ?>
                                         </p>
-                                        <a href="<?= base_url('ksp/attachments/download/' . $attachment->file_path) ?>" 
-                                        class="text-sm font-medium text-secondary flex items-center hover:text-primaryShades-700">
-                                            <i data-lucide="download" class="w-4 h-4 mr-2"></i>
-                                            Download Now
-                                        </a>
+                                        <div class="flex items-center gap-3">
+                                            <?php 
+                                            // Check if file type supports viewing (PDF, images, text files)
+                                            $fileExtension = strtolower(pathinfo($attachment['original_name'] ?? '', PATHINFO_EXTENSION));
+                                            $viewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt', 'html', 'htm'];
+                                            $canView = in_array($fileExtension, $viewableTypes);
+                                            ?>
+                                            <?php if ($canView): ?>
+                                                <a href="<?= base_url('ksp/attachments/view/' . ($attachment['file_path'] ?? '')) ?>" 
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-md hover:bg-primary hover:text-white transition-colors">
+                                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                                    <span>View</span>
+                                                </a>
+                                            <?php endif; ?>
+                                            <a href="<?= base_url('ksp/attachments/download/' . ($attachment['file_path'] ?? '')) ?>" 
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-secondary rounded-md hover:bg-secondary/90 transition-colors"
+                                            onclick="incrementDownloadCount('<?= esc($resource['id']) ?>', '<?= esc($attachment['id'] ?? '') ?>')">
+                                                <i data-lucide="download" class="w-4 h-4"></i>
+                                                <span>Download</span>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -774,10 +802,17 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
             });
         }
         
-        // Submit comment form
+        // Submit comment form - prevent duplicate submissions
+        let isSubmittingComment = false;
         if (commentForm) {
             commentForm.addEventListener('submit', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
+                
+                // Prevent duplicate submissions
+                if (isSubmittingComment) {
+                    return false;
+                }
                 
                 const formData = new FormData();
                 formData.append('resource_id', document.getElementById('resourceId').value);
@@ -789,8 +824,11 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                 
                 if (!commentContent.value.trim()) {
                     showNotification('error', 'Please enter a comment.');
-                    return;
+                    return false;
                 }
+                
+                // Set submitting flag
+                isSubmittingComment = true;
                 
                 // Disable submit button
                 const submitBtn = commentForm.querySelector('button[type="submit"]');
@@ -825,11 +863,15 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                         }, 1000);
                     } else {
                         showNotification(data.message || 'Failed to post comment.', 'error');
+                        // Reset submitting flag on error
+                        isSubmittingComment = false;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     showNotification('An error occurred while posting your comment.', 'error');
+                    // Reset submitting flag on error
+                    isSubmittingComment = false;
                 })
                 .finally(() => {
                     // Re-enable submit button
@@ -841,7 +883,21 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                         lucide.createIcons();
                     }
                 });
+                
+                return false;
             });
+        }
+        
+        // Handle mark helpful function for non-logged in users
+        function handleMarkHelpful(resourceId, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            // Redirect to login
+            window.location.href = '<?= base_url('ksp/login') ?>?redirect=' + encodeURIComponent(window.location.href);
+            return false;
         }
         
         // Vote helpful functionality
@@ -925,6 +981,119 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                 });
             }
         });
+        
+        // Increment download count function (matches resources page pattern)
+        window.incrementDownloadCount = function(resourceId, attachmentId) {
+            // Make AJAX call to increment download count (server-side handler also increments)
+            if (resourceId && attachmentId) {
+                $.ajax({
+                    url: '<?= base_url('api/resources/increment-download') ?>',
+                    method: 'POST',
+                    data: { 
+                        resource_id: resourceId,
+                        attachment_id: attachmentId
+                    },
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    }
+                }).done(function(response) {
+                    console.log('Download count incremented:', response);
+                }).fail(function(xhr, status, error) {
+                    console.log('Failed to increment download count:', error);
+                });
+            }
+        };
+
+        // Toggle bookmark function
+        window.toggleBookmark = function(resourceId) {
+            console.log('Toggle bookmark called for resource:', resourceId);
+            $.ajax({
+                url: '<?= base_url('ksp/api/resource/toggle-bookmark') ?>',
+                type: 'POST',
+                data: {
+                    resource_id: resourceId,
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                beforeSend: function() {
+                    $('#bookmark-btn').prop('disabled', true).addClass('opacity-50');
+                },
+                success: function(response) {
+                    console.log('Bookmark response:', response);
+                    if (response.success) {
+                        // Update bookmark state
+                        const bookmarkIcon = $('#bookmark-icon');
+                        const bookmarkText = $('#bookmark-text');
+                        const bookmarkBtn = $('#bookmark-btn');
+                        
+                        if (response.bookmarked) {
+                            bookmarkIcon.addClass('fill-secondary');
+                            bookmarkBtn.addClass('text-secondary');
+                            bookmarkText.text('Bookmarked');
+                        } else {
+                            bookmarkIcon.removeClass('fill-secondary');
+                            bookmarkBtn.removeClass('text-secondary');
+                            bookmarkText.text('Save for later');
+                        }
+                        
+                        // Re-initialize Lucide icons
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons();
+                        }
+                        
+                        // Show success message
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: response.message,
+                                showConfirmButton: false,
+                                timer: 2000,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        }
+                    } else {
+                        if (response.redirect) {
+                            window.location.href = response.redirect;
+                        } else {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: response.message || 'An error occurred. Please try again.',
+                                    confirmButtonText: 'OK'
+                                });
+                            }
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Bookmark error:', xhr);
+                    console.error('Response:', xhr.responseJSON);
+                    const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
+                    if (xhr.status === 401 && xhr.responseJSON?.redirect) {
+                        window.location.href = xhr.responseJSON.redirect;
+                    } else {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: errorMsg + (xhr.responseJSON?.errors ? '\n' + JSON.stringify(xhr.responseJSON.errors) : ''),
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Error: ' + errorMsg);
+                        }
+                    }
+                },
+                complete: function() {
+                    $('#bookmark-btn').prop('disabled', false).removeClass('opacity-50');
+                }
+            });
+        };
     });
 </script>
 <?= $this->endSection() ?>

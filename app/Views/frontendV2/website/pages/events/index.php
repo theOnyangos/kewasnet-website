@@ -42,22 +42,6 @@
         </div>
     </section>
 
-    <!-- Main Content -->
-    <style>
-        .events-page-pattern-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 0;
-            pointer-events: none;
-            background-image: 
-                repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px),
-                repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px);
-            background-size: 40px 40px;
-        }
-    </style>
     <section class="py-16 relative text-gray-900" style="background-color: #fafafa; min-height: auto; position: relative;">
         <!-- Diagonal Grid Pattern -->
         <div class="events-page-pattern-bg"></div>

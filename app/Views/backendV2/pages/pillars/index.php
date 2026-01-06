@@ -202,54 +202,135 @@
     }
 
     function editPillar(id) {
-        console.log('Edit pillar:', id);
+        window.location.href = `<?= site_url('auth/pillars') ?>/${id}/edit`;
     }
 
     function activatePillar(id) {
-        if (confirm('Are you sure you want to activate this pillar?')) {
-            updatePillarStatus(id, 1);
-        }
+        Swal.fire({
+            title: 'Activate Pillar?',
+            text: 'Are you sure you want to activate this pillar?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, activate it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updatePillarStatus(id, 1);
+            }
+        });
     }
 
     function deactivatePillar(id) {
-        if (confirm('Are you sure you want to deactivate this pillar?')) {
-            updatePillarStatus(id, 0);
-        }
+        Swal.fire({
+            title: 'Deactivate Pillar?',
+            text: 'Are you sure you want to deactivate this pillar?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f59e0b',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, deactivate it!',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updatePillarStatus(id, 0);
+            }
+        });
     }
 
     function updatePillarStatus(id, status) {
         $.ajax({
             url: `<?= site_url('auth/pillars/update-status') ?>/${id}`,
             type: 'POST',
-            data: { status: status },
+            data: { 
+                status: status,
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
             success: function(response) {
-                pillarsTable.ajax.reload();
-                showToast('Pillar status updated successfully', 'success');
+                if (response.status === 'success') {
+                    pillarsTable.ajax.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: response.message || 'Pillar status updated successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: response.message || 'Failed to update pillar status',
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
             },
             error: function(xhr) {
-                showToast('Error updating pillar status', 'error');
+                const response = xhr.responseJSON || {};
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: response.message || 'An error occurred while updating pillar status',
+                    confirmButtonColor: '#ef4444'
+                });
             }
         });
     }
 
     function deletePillar(id) {
-        if (confirm('Are you sure you want to delete this pillar? This action cannot be undone.')) {
-            $.ajax({
-                url: `<?= site_url('auth/pillars/delete') ?>/${id}`,
-                type: 'DELETE',
-                success: function(response) {
-                    pillarsTable.ajax.reload();
-                    showToast('Pillar deleted successfully', 'success');
-                },
-                error: function(xhr) {
-                    showToast('Error deleting pillar', 'error');
-                }
-            });
-        }
-    }
-
-    function showToast(message, type) {
-        console.log(type + ': ' + message);
+        Swal.fire({
+            title: 'Are you sure?',
+            text: 'This will permanently delete this pillar. This action cannot be undone!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, delete it!',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `<?= site_url('auth/pillars/delete') ?>/${id}`,
+                    type: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    data: {
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            pillarsTable.ajax.reload();
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: response.message || 'Pillar deleted successfully',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: response.message || 'Failed to delete pillar',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        const response = xhr.responseJSON || {};
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: response.message || 'An error occurred while deleting pillar',
+                            confirmButtonColor: '#ef4444'
+                        });
+                    }
+                });
+            }
+        });
     }
 </script>
 <?= $this->endSection() ?>

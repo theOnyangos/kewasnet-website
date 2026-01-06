@@ -14,27 +14,27 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/pillars/partials/header_section') ?>
+    <main class="flex-1 overflow-y-auto">
+        <!-- Page Banner -->
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Pillar Articles (Resources)',
+            'pageDescription' => 'Manage articles, resources, and documentation for organizational pillars',
+            'breadcrumbs' => [
+                ['label' => 'Pillars', 'url' => base_url('auth/pillars')],
+                ['label' => 'Articles']
+            ],
+            'bannerActions' => '<button type="button" onclick="showCreateArticleModal()" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="file-plus" class="w-4 h-4 mr-2"></i>
+                Add Article
+            </button>'
+        ]) ?>
 
+        <div class="px-6 pb-6">
         <!-- Navigation Tabs -->
         <?= $this->include('backendV2/pages/pillars/partials/navigation_section') ?>
         
         <!-- Articles Management Content -->
         <div class="bg-white rounded-b-xl shadow-sm p-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800">Pillar Articles (Resources)</h1>
-                    <p class="mt-1 text-sm text-slate-500">Manage articles, resources, and documentation for organizational pillars</p>
-                </div>
-                <div class="flex space-x-3">
-                    <button type="button" onclick="showCreateArticleModal()" class="gradient-btn flex items-center px-8 py-2 rounded-full text-white hover:shadow-md transition-all duration-300">
-                        <i data-lucide="file-plus" class="w-4 h-4 mr-2 z-10"></i>
-                        <span>Add Article</span>
-                    </button>
-                </div>
-            </div>
 
             <!-- Articles Table -->
             <div class="overflow-x-auto">
@@ -54,6 +54,7 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
         </div>
     </main>
 <?= $this->endSection() ?>
@@ -215,63 +216,188 @@
     }
 
     function editArticle(id) {
-        console.log('Edit article:', id);
+        window.location.href = '<?= site_url('auth/pillars/edit-article') ?>/' + id;
     }
 
     function downloadArticle(url) {
-        window.location.href = url;
+        if (!url || url === '') {
+            Swal.fire({
+                title: 'No File Available',
+                text: 'This article does not have a downloadable file.',
+                icon: 'info',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
         
-        // Reload table
-        articlesTable.ajax.reload(() => {
-            lucide.createIcons();
-        });
+        // Open download in new window
+        window.open(url, '_blank');
+        
+        // Reload table to update download count
+        setTimeout(() => {
+            articlesTable.ajax.reload(function() {
+                lucide.createIcons();
+            });
+        }, 1000);
     }
 
     function publishArticle(id) {
-        if (confirm('Are you sure you want to publish this article?')) {
-            updateArticleStatus(id, 1);
-        }
+        Swal.fire({
+            title: 'Publish Article?',
+            html: '<p class="text-gray-700 mb-4">Are you sure you want to publish this article?</p><p class="text-sm text-gray-500">The article will be visible to all users once published.</p>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i data-lucide="power" class="w-4 h-4 mr-1"></i> Yes, publish it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateArticleStatus(id, 1);
+            }
+        });
     }
 
     function unpublishArticle(id) {
-        if (confirm('Are you sure you want to unpublish this article?')) {
-            updateArticleStatus(id, 0);
-        }
+        Swal.fire({
+            title: 'Unpublish Article?',
+            html: '<p class="text-gray-700 mb-4">Are you sure you want to unpublish this article?</p><p class="text-sm text-gray-500">The article will be hidden from public view but not deleted.</p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f59e0b',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i data-lucide="power-off" class="w-4 h-4 mr-1"></i> Yes, unpublish it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                updateArticleStatus(id, 0);
+            }
+        });
     }
 
     function updateArticleStatus(id, status) {
+        // Show loading
+        Swal.fire({
+            title: 'Updating...',
+            text: 'Please wait while we update the article status',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         $.ajax({
             url: `<?= site_url('auth/pillars/update-article-status') ?>/${id}`,
             type: 'POST',
-            data: { is_published: status },
+            data: {
+                is_published: status,
+                csrf_test_name: '<?= csrf_token() ?>'
+            },
+            dataType: 'json',
             success: function(response) {
-                articlesTable.ajax.reload();
-                showToast('Article status updated successfully', 'success');
+                if (response.status === 'success') {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: response.message || 'Article status updated successfully',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        articlesTable.ajax.reload(function() {
+                            lucide.createIcons();
+                        });
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: response.message || 'Failed to update article status',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                }
             },
             error: function(xhr) {
-                showToast('Error updating article status', 'error');
+                let errorMessage = 'Error updating article status';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                Swal.fire({
+                    title: 'Error!',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
             }
         });
     }
 
     function deleteArticle(id) {
-        if (confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
-            $.ajax({
-                url: `<?= site_url('auth/pillars/delete-article') ?>/${id}`,
-                type: 'DELETE',
-                success: function(response) {
-                    articlesTable.ajax.reload();
-                    showToast('Article deleted successfully', 'success');
-                },
-                error: function(xhr) {
-                    showToast('Error deleting article', 'error');
-                }
-            });
-        }
-    }
+        Swal.fire({
+            title: 'Are you sure?',
+            html: '<p class="text-gray-700 mb-4">Are you sure you want to delete this article?</p><p class="text-sm text-gray-500">This action cannot be undone. All associated data will be permanently removed.</p>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: '<i data-lucide="trash-2" class="w-4 h-4 mr-1"></i> Yes, delete it',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the article',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
-    function showToast(message, type) {
-        console.log(type + ': ' + message);
+                $.ajax({
+                    url: `<?= site_url('auth/pillars/delete-article') ?>/${id}`,
+                    type: 'POST',
+                    data: {
+                        csrf_test_name: '<?= csrf_token() ?>'
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success || response.status === 'success') {
+                            Swal.fire({
+                                title: 'Deleted!',
+                                text: response.message || 'Article deleted successfully',
+                                icon: 'success',
+                                confirmButtonText: 'OK'
+                            }).then(() => {
+                                articlesTable.ajax.reload(function() {
+                                    lucide.createIcons();
+                                });
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error!',
+                                text: response.message || 'Failed to delete article',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = 'Error deleting article';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            title: 'Error!',
+                            text: errorMessage,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                });
+            }
+        });
     }
 </script>
 <?= $this->endSection() ?>

@@ -11,6 +11,8 @@ class Pillar extends Model
 {
     protected $table          = 'pillars';
     protected $primaryKey     = 'id';
+    protected $useAutoIncrement = false; // UUID primary key
+    protected $returnType     = 'array'; // Return as array for consistency
     protected $allowedFields  = [
         'id',
         'user_id',
