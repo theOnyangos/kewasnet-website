@@ -11,56 +11,68 @@ $courseStats = [
 ];
 ?>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
+    <!-- Total Courses Card -->
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Courses</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $courseStats['total_courses'] ?></p>
-                <p class="text-sm text-green-600 mt-1"><?= $courseStats['published_courses'] ?> published</p>
+                <p class="text-primaryShades-300">Total Courses</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $courseStats['total_courses'] ?></h3>
             </div>
-            <div class="p-3 bg-blue-100 rounded-full">
-                <i data-lucide="book-open" class="w-8 h-8 text-blue-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="book-open" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> <?= $courseStats['published_courses'] ?> published
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+    <!-- Total Enrollments Card -->
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Enrollments</p>
-                <p class="text-3xl font-bold text-gray-900"><?= number_format($courseStats['total_enrollments']) ?></p>
-                <p class="text-sm text-blue-600 mt-1"><?= $courseStats['certificates_issued'] ?> certificates</p>
+                <p class="text-primaryShades-300">Total Enrollments</p>
+                <h3 class="text-2xl font-bold mt-1"><?= number_format($courseStats['total_enrollments']) ?></h3>
             </div>
-            <div class="p-3 bg-green-100 rounded-full">
-                <i data-lucide="users" class="w-8 h-8 text-green-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="users" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="award" class="w-4 h-4 mr-1"></i> <?= $courseStats['certificates_issued'] ?> certificates issued
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+    <!-- Content Card -->
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Content</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $courseStats['total_sections'] ?></p>
-                <p class="text-sm text-blue-600 mt-1"><?= $courseStats['total_lectures'] ?> lectures</p>
+                <p class="text-primaryShades-300">Course Content</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $courseStats['total_sections'] ?></h3>
             </div>
-            <div class="p-3 bg-orange-100 rounded-full">
-                <i data-lucide="layers" class="w-8 h-8 text-orange-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="layers" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="play-circle" class="w-4 h-4 mr-1"></i> <?= $courseStats['total_lectures'] ?> lectures
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+    <!-- Total Revenue Card -->
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p class="text-3xl font-bold text-gray-900">KES <?= number_format($courseStats['total_revenue']) ?></p>
-                <p class="text-sm text-green-600 mt-1">From paid courses</p>
+                <p class="text-primaryShades-300">Total Revenue</p>
+                <h3 class="text-2xl font-bold mt-1">KES <?= number_format($courseStats['total_revenue']) ?></h3>
             </div>
-            <div class="p-3 bg-purple-100 rounded-full">
-                <i data-lucide="dollar-sign" class="w-8 h-8 text-purple-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="dollar-sign" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> From paid courses
+        </p>
     </div>
 </div>

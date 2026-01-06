@@ -328,6 +328,22 @@ class NotificationService
     }
 
     /**
+     * Notify admins about new forum report
+     */
+    public function notifyForumReport(int|string $userId, string $reporterName, string $reportedUserName, string $reason, string $reportId)
+    {
+        return $this->create($userId, "{$reporterName} reported {$reportedUserName} for: {$reason}", [
+            'type' => 'warning',
+            'title' => 'New Forum Report',
+            'icon' => 'flag',
+            'action_url' => base_url("auth/forums/reports"),
+            'action_text' => 'Review Report',
+            'reference_id' => $reportId,
+            'reference_type' => 'forum_report',
+        ]);
+    }
+
+    /**
      * Notify about system update
      */
     public function notifySystemUpdate(int|string $userId, string $message, array $options = [])

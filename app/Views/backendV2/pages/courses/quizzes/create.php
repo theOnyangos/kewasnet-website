@@ -5,27 +5,24 @@
 <?= $this->endSection(); ?>
 
 <?= $this->section('content') ?>
+    <main class="flex-1 overflow-y-auto">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Create New Quiz',
+            'pageDescription' => 'Create a new quiz to assess student knowledge and track learning progress',
+            'breadcrumbs' => [
+                ['label' => 'Courses', 'url' => site_url('auth/courses')],
+                ['label' => 'Quizzes', 'url' => site_url('auth/courses/quizzes')],
+                ['label' => 'Create']
+            ],
+            'bannerActions' => '<a href="' . site_url('auth/courses/quizzes') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                Back to Quizzes
+            </a>'
+        ]) ?>
 
-<!-- Page Banner -->
-<?= view('backendV2/partials/page_banner', [
-    'pageTitle' => 'Create Quiz',
-    'pageDescription' => 'Create a new quiz for your courses',
-    'breadcrumbs' => [
-        ['label' => 'Dashboard', 'url' => base_url('auth/dashboard')],
-        ['label' => 'Courses', 'url' => base_url('auth/courses')],
-        ['label' => 'Quizzes', 'url' => base_url('auth/courses/quizzes')],
-        ['label' => 'Create Quiz', 'url' => '']
-    ],
-    'bannerActions' => '<a href="' . site_url('auth/courses/quizzes') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
-        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
-        Back to Quizzes
-    </a>'
-]) ?>
-
-<div class="container-fluid px-4 py-6">
-    <div class="max-w-full mx-auto">
+        <div class="px-6 pb-6">
         <!-- Quiz Form Card -->
-        <div class="bg-white rounded-xl shadow-sm border border-borderColor p-8">
+        <div class="bg-white rounded-b-xl shadow-sm max-w-full p-8">
             <form id="createQuizForm">
                 <div class="space-y-6">
                     <!-- Quiz Title -->
@@ -118,9 +115,8 @@
                 </div>
             </form>
         </div>
-    </div>
-</div>
-
+        </div>
+    </main>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>

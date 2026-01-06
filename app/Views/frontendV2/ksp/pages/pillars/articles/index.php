@@ -96,6 +96,9 @@
 
     <!-- Main Content -->
     <section class="py-12 bg-white">
+        <!-- Diagonal Grid Pattern -->
+        <div class="events-page-pattern-bg"></div>
+
         <div class="container mx-auto px-4">
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Sidebar with filters -->

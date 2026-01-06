@@ -28,57 +28,65 @@
         <?= $this->include('backendV2/pages/blogs/partials/header_section') ?>
 
         <!-- Newsletter Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Newsletters</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($statistics['total_newsletters'] ?? 0) ?></p>
-                        <p class="text-sm text-gray-500 mt-1">All newsletters</p>
+                        <p class="text-primaryShades-300">Total Newsletters</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($statistics['total_newsletters'] ?? 0) ?></h3>
                     </div>
-                    <div class="p-3 bg-green-100 rounded-full">
-                        <i data-lucide="mail" class="w-8 h-8 text-green-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="file-text" class="w-4 h-4 mr-1"></i> All newsletters
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Sent Newsletters</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($statistics['sent_newsletters'] ?? 0) ?></p>
-                        <p class="text-sm text-green-600 mt-1">Successfully delivered</p>
+                        <p class="text-primaryShades-300">Sent Newsletters</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($statistics['sent_newsletters'] ?? 0) ?></h3>
                     </div>
-                    <div class="p-3 bg-blue-100 rounded-full">
-                        <i data-lucide="send" class="w-8 h-8 text-blue-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="send" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> Successfully delivered
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Avg. Open Rate</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($statistics['avg_open_rate'] ?? 0, 1) ?>%</p>
-                        <p class="text-sm text-purple-600 mt-1">Email engagement</p>
+                        <p class="text-primaryShades-300">Avg. Open Rate</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($statistics['avg_open_rate'] ?? 0, 1) ?>%</h3>
                     </div>
-                    <div class="p-3 bg-purple-100 rounded-full">
-                        <i data-lucide="eye" class="w-8 h-8 text-purple-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="eye" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> Email engagement
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Avg. Click Rate</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($statistics['avg_click_rate'] ?? 0, 1) ?>%</p>
-                        <p class="text-sm text-orange-600 mt-1">Link interactions</p>
+                        <p class="text-primaryShades-300">Avg. Click Rate</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($statistics['avg_click_rate'] ?? 0, 1) ?>%</h3>
                     </div>
-                    <div class="p-3 bg-orange-100 rounded-full">
-                        <i data-lucide="mouse-pointer" class="w-8 h-8 text-orange-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="mouse-pointer" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="mouse-pointer-click" class="w-4 h-4 mr-1"></i> Link interactions
+                </p>
             </div>
         </div>
 

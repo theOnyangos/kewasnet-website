@@ -67,7 +67,7 @@
     </section>
 
     <!-- Breadcrumb -->
-    <section class="bg-gray-50 py-4">
+    <section class="bg-gray-50 py-4 border-b border-gray-200">
         <div class="container mx-auto px-4">
             <nav class="flex items-center space-x-2 text-sm text-gray-600" aria-label="Breadcrumb">
                 <a href="<?= base_url() ?>" class="hover:text-primary transition-colors">Home</a>
@@ -83,10 +83,13 @@
 
     <!-- Main Content -->
     <section class="py-12 bg-gray-50">
+        <!-- Diagonal Grid Pattern -->
+        <div class="events-page-pattern-bg"></div>
+
         <div class="container mx-auto px-4">
             <div class="grid lg:grid-cols-4 gap-8">
                 <!-- Sidebar -->
-                <aside class="lg:col-span-1">
+                <aside class="lg:col-span-1 hover:shadow-md transition-shadow">
                     <div class="bg-white rounded-xl shadow-sm border p-6 sticky top-8">
                         <!-- Search -->
                         <div class="mb-8">
@@ -170,7 +173,7 @@
                 <!-- Main Content Area -->
                 <main class="lg:col-span-3">
                     <!-- Header with Sort -->
-                    <div class="bg-white rounded-xl shadow-sm border p-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-md border border-slate-200 p-6 mb-6 hover:shadow-2xl transition-all duration-300 relative z-10">
                         <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                             <div>
                                 <h2 class="text-2xl font-bold text-dark mb-2"><?= esc($pillar['title']) ?> Resources</h2>
@@ -181,6 +184,7 @@
                                     <?php endif; ?>
                                 </p>
                             </div>
+
                             <div class="mt-4 md:mt-0">
                                 <select id="sort" name="sort" class="select2 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
                                     <option value="newest" <?= ($filters['sort'] ?? 'newest') === 'newest' ? 'selected' : '' ?>>Newest First</option>
@@ -196,7 +200,7 @@
                     <?php if (!empty($resources)): ?>
                         <div class="grid md:grid-cols-2 gap-6 mb-8">
                             <?php foreach ($resources as $resource): ?>
-                                <article class="bg-white rounded-xl shadow-sm border hover:shadow-md transition-shadow flex flex-col justify-between">
+                                <article class="bg-white rounded-xl shadow-sm border hover:shadow-2xl transition-shadow flex flex-col justify-between overflow-hidden shadow-md z-10">
                                     <!-- Resource Image -->
                                     <div class="mb-4">
                                         <img src="<?= esc(is_array($resource) ? ($resource['image_url'] ?? '') : ($resource->image_url ?? '')) ?>" alt="<?= esc(is_array($resource) ? ($resource['title'] ?? '') : ($resource->title ?? '')) ?>" class="w-full h-48 object-cover rounded-t-lg">
@@ -268,7 +272,7 @@
                         </div>
                     <?php else: ?>
                         <!-- Empty State -->
-                        <div class="bg-white rounded-xl shadow-sm border p-12 text-center">
+                        <div class="bg-white rounded-xl shadow-sm border p-12 text-center relative z-10">
                             <div class="max-w-md mx-auto">
                                 <i data-lucide="file-search" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i>
                                 <h3 class="text-xl font-semibold text-gray-700 mb-2">No Resources Found</h3>

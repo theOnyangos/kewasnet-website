@@ -64,19 +64,23 @@
             console.log('Click listener added to notification button');
         }
 
-        // Close panel button
-        if (closePanel) {
-            closePanel.addEventListener('click', function(e) {
+        // Close panel button - use event delegation for reliability
+        document.addEventListener('click', function(e) {
+            const closeBtn = e.target.closest('#closeNotificationPanel');
+            if (closeBtn) {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Close button clicked');
                 closeDropdown();
-            });
-        }
+                return false;
+            }
+        });
 
         // Mark all as read
         if (markAllReadBtn) {
             markAllReadBtn.addEventListener('click', function(e) {
                 e.preventDefault();
+                e.stopPropagation();
                 markAllAsRead();
             });
         }
@@ -88,10 +92,13 @@
             });
         }
 
-        // Prevent panel from closing when clicking inside
+        // Prevent panel from closing when clicking inside, but allow close button
         if (notificationDropdown) {
             notificationDropdown.addEventListener('click', function(e) {
-                e.stopPropagation();
+                // Don't stop propagation for close button or its children
+                if (!e.target.closest('#closeNotificationPanel')) {
+                    e.stopPropagation();
+                }
             });
         }
 
@@ -567,5 +574,7 @@
         markAsRead: markAsRead,
         markAllAsRead: markAllAsRead,
         deleteNotification: deleteNotification,
+        close: closeDropdown,
+        open: openDropdown,
     };
 })();

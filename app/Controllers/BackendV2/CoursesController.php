@@ -60,9 +60,13 @@ class CoursesController extends BaseController
 
     public function courses()
     {
+        // Get course statistics
+        $courseStats = $this->getCourseStatistics();
+
         return view('backendV2/pages/courses/courses', [
             'title' => 'All Courses - KEWASNET',
-            'dashboardTitle' => 'All Courses Management'
+            'dashboardTitle' => 'All Courses Management',
+            'courseStats' => $courseStats
         ]);
     }
 
@@ -1218,23 +1222,45 @@ class CoursesController extends BaseController
      */
     private function getCourseStatistics(): array
     {
-        $totalCourses = $this->courseModel->countAll();
-        $publishedCourses = $this->courseModel->where('status', 'published')->countAllResults();
-        $draftCourses = $this->courseModel->where('status', 'draft')->countAllResults();
-        $totalEnrollments = $this->enrollmentModel->countAllResults();
-        $totalSections = $this->sectionModel->countAll();
-        $totalLectures = $this->lectureModel->countAll();
-        $certificatesIssued = $this->certificateModel->countAll();
-
-        // Calculate total revenue from completed orders
+        // Count total courses (excluding soft deleted)
+        $totalCourses = $this->courseModel->countAllResults(false);
+        
+        // Count published courses (status = 1)
+        $publishedCourses = $this->courseModel->where('status', 1)->countAllResults(false);
+        
+        // Count draft courses (status = 0)
+        $draftCourses = $this->courseModel->where('status', 0)->countAllResults(false);
+        
+        // Count total enrollments - count distinct user-course combinations from user_progress table
         $db = \Config\Database::connect();
-        $totalRevenue = $db->table('orders')
+        // Use subquery to count distinct user-course combinations
+        $enrollmentResult = $db->query("
+            SELECT COUNT(*) as count 
+            FROM (
+                SELECT DISTINCT user_id, course_id 
+                FROM user_progress
+            ) as distinct_enrollments
+        ")->getRow();
+        $totalEnrollments = $enrollmentResult ? (int)$enrollmentResult->count : 0;
+        
+        // Count sections (excluding soft deleted)
+        $totalSections = $this->sectionModel->countAllResults(false);
+        
+        // Count lectures (excluding soft deleted)
+        $totalLectures = $this->lectureModel->countAllResults(false);
+        
+        // Count certificates issued
+        $certificatesIssued = $this->certificateModel->countAllResults(false);
+
+        // Calculate total revenue from completed orders for courses only
+        $revenueResult = $db->table('orders')
             ->selectSum('amount')
             ->where('status', 'completed')
+            ->where('course_id IS NOT NULL', null, false)
             ->where('deleted_at', null)
             ->get()
-            ->getRow()
-            ->amount ?? 0;
+            ->getRow();
+        $totalRevenue = $revenueResult ? (float)($revenueResult->amount ?? 0) : 0;
 
         return [
             'total_courses' => $totalCourses,

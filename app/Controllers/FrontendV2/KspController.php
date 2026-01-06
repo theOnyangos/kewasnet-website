@@ -394,6 +394,22 @@ class KspController extends BaseController
                         // Everything succeeded, commit the transaction
                         $db->transComplete();
                         
+                        // Notify admins about new user registration
+                        try {
+                            $userModel = model('UserModel');
+                            $adminUsers = $userModel->getAdministrators();
+                            $userName = $postData['full_name'];
+                            
+                            if (!empty($adminUsers)) {
+                                $notificationService = new \App\Services\NotificationService();
+                                $adminIds = array_column($adminUsers, 'id');
+                                $notificationService->notifyNewUserRegistration($adminIds, $userName, $insertId);
+                            }
+                        } catch (\Exception $notificationError) {
+                            log_message('error', "Error sending admin notification for new user registration: " . $notificationError->getMessage());
+                            // Don't fail registration if notification fails
+                        }
+                        
                         return $this->ajaxSuccessResponse(
                             'Registration successful. Please check your email for a verification link'
                         );
@@ -401,6 +417,21 @@ class KspController extends BaseController
                         // Email sending failed but user was created
                         $db->transComplete();
                         log_message('warning', 'User registered but verification email not sent for: ' . $postData['email']);
+                        
+                        // Notify admins about new user registration even if email failed
+                        try {
+                            $userModel = model('UserModel');
+                            $adminUsers = $userModel->getAdministrators();
+                            $userName = $postData['full_name'];
+                            
+                            if (!empty($adminUsers)) {
+                                $notificationService = new \App\Services\NotificationService();
+                                $adminIds = array_column($adminUsers, 'id');
+                                $notificationService->notifyNewUserRegistration($adminIds, $userName, $insertId);
+                            }
+                        } catch (\Exception $notificationError) {
+                            log_message('error', "Error sending admin notification for new user registration: " . $notificationError->getMessage());
+                        }
                         
                         return $this->ajaxSuccessResponse(
                             'Registration successful. However, we could not send a verification email. Please contact support to verify your account.'

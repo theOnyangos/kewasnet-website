@@ -49,6 +49,21 @@ class UserService
             log_message('error', 'Failed to send verification email to ' . $userData['email'] . ': ' . $emailResult['message']);
         }
 
+        // Notify admins about new user registration
+        try {
+            $adminUsers = $this->userModel->getAdministrators();
+            $userName = ($userData['first_name'] ?? '') . ' ' . ($userData['last_name'] ?? '');
+            
+            if (!empty($adminUsers)) {
+                $notificationService = new \App\Services\NotificationService();
+                $adminIds = array_column($adminUsers, 'id');
+                $notificationService->notifyNewUserRegistration($adminIds, trim($userName), $userId);
+            }
+        } catch (\Exception $notificationError) {
+            log_message('error', "Error sending admin notification for new user registration: " . $notificationError->getMessage());
+            // Don't fail user creation if notification fails
+        }
+
         return [
             'success' => true,
             'message' => $emailResult['success']

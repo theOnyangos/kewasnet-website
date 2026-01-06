@@ -823,7 +823,8 @@ class DiscussionController extends BaseController
             'status' => 'pending'
         ];
 
-        if ($reportModel->insert($reportData)) {
+        $reportId = $reportModel->insert($reportData);
+        if ($reportId) {
             // Log the report for admin review
             log_message('info', "User {$userId} reported user {$input['reported_user_id']} for: {$input['reason']}");
 
@@ -865,6 +866,36 @@ class DiscussionController extends BaseController
             } catch (\Exception $e) {
                 log_message('error', "Error queuing report notification email: " . $e->getMessage());
                 // Don't fail the report submission if email queueing fails
+            }
+
+            // Notify admins about the new report
+            try {
+                $userModel = model('UserModel');
+                $reporter = $userModel->find($userId);
+                $reportedUser = $userModel->find($input['reported_user_id']);
+                
+                if ($reporter && $reportedUser) {
+                    $reporterName = $reporter['first_name'] . ' ' . $reporter['last_name'];
+                    $reportedUserName = $reportedUser['first_name'] . ' ' . $reportedUser['last_name'];
+                    
+                    // Get all admin users
+                    $adminUsers = $userModel->getAdministrators();
+                    
+                    // Send notification to each admin
+                    $notificationService = new \App\Services\NotificationService();
+                    foreach ($adminUsers as $admin) {
+                        $notificationService->notifyForumReport(
+                            $admin['id'],
+                            $reporterName,
+                            $reportedUserName,
+                            $input['reason'],
+                            $reportId
+                        );
+                    }
+                }
+            } catch (\Exception $e) {
+                log_message('error', "Error sending admin notification for forum report: " . $e->getMessage());
+                // Don't fail the report submission if notification fails
             }
 
             return $this->response->setJSON([

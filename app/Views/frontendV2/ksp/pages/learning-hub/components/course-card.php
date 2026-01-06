@@ -30,7 +30,7 @@ $progress = $course['progress'] ?? 0;
 
 ?>
 
-<div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+<div class="bg-white rounded-lg shadow-md border border-slate-200 overflow-hidden hover:shadow-2xl transition-shadow z-10 relative">
     <?php if (!empty($course['image_url'])): ?>
         <img src="<?= base_url(esc($course['image_url'])) ?>" alt="<?= esc($course['title']) ?>" 
              class="w-full h-48 object-cover">

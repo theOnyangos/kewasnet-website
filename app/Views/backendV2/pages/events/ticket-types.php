@@ -37,57 +37,65 @@
             'tickets_checked_in'    => $ticketTypeStats['tickets_checked_in'] ?? 0
         ];
         ?>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Ticket Types</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($stats['total_ticket_types']) ?></p>
-                        <p class="text-sm text-green-600 mt-1"><?= number_format($stats['active_ticket_types']) ?> active</p>
+                        <p class="text-primaryShades-300">Total Ticket Types</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['total_ticket_types']) ?></h3>
                     </div>
-                    <div class="p-3 bg-blue-100 rounded-full">
-                        <i data-lucide="ticket" class="w-8 h-8 text-blue-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="ticket" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> <?= number_format($stats['active_ticket_types']) ?> active
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Tickets Sold</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($stats['total_tickets_sold']) ?></p>
-                        <p class="text-sm text-blue-600 mt-1"><?= number_format($stats['tickets_checked_in']) ?> checked in</p>
+                        <p class="text-primaryShades-300">Total Tickets Sold</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['total_tickets_sold']) ?></h3>
                     </div>
-                    <div class="p-3 bg-green-100 rounded-full">
-                        <i data-lucide="users" class="w-8 h-8 text-green-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="user-check" class="w-4 h-4 mr-1"></i> <?= number_format($stats['tickets_checked_in']) ?> checked in
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-                        <p class="text-3xl font-bold text-gray-900">KES <?= number_format($stats['total_revenue'], 2) ?></p>
-                        <p class="text-sm text-green-600 mt-1">From paid bookings</p>
+                        <p class="text-primaryShades-300">Total Revenue</p>
+                        <h3 class="text-2xl font-bold mt-1">KES <?= number_format($stats['total_revenue'], 2) ?></h3>
                     </div>
-                    <div class="p-3 bg-purple-100 rounded-full">
-                        <i data-lucide="dollar-sign" class="w-8 h-8 text-purple-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="dollar-sign" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> From paid bookings
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Active Tickets Sold</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($stats['active_tickets_sold']) ?></p>
-                        <p class="text-sm text-gray-600 mt-1">From active types</p>
+                        <p class="text-primaryShades-300">Active Tickets Sold</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($stats['active_tickets_sold']) ?></h3>
                     </div>
-                    <div class="p-3 bg-orange-100 rounded-full">
-                        <i data-lucide="check-circle" class="w-8 h-8 text-orange-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="activity" class="w-4 h-4 mr-1"></i> From active types
+                </p>
             </div>
         </div>
 

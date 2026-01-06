@@ -209,6 +209,35 @@ class PaymentService
         );
 
         if ($enrolled) {
+            // Notify admins about new course enrollment
+            try {
+                $course = $this->courseModel->find($order['course_id']);
+                $userModel = model('UserModel');
+                $student = $userModel->find($order['user_id']);
+                
+                if ($course && $student) {
+                    $courseName = $course['title'] ?? 'Unknown Course';
+                    $studentName = ($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? '');
+                    
+                    // Get all admin users
+                    $adminUsers = $userModel->getAdministrators();
+                    
+                    // Send notification to each admin
+                    $notificationService = new \App\Services\NotificationService();
+                    foreach ($adminUsers as $admin) {
+                        $notificationService->notifyNewCourseEnrollment(
+                            $admin['id'],
+                            $courseName,
+                            trim($studentName),
+                            $order['course_id']
+                        );
+                    }
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending admin notification for course enrollment: " . $notificationError->getMessage());
+                // Don't fail enrollment if notification fails
+            }
+            
             return [
                 'status' => 'success',
                 'message' => 'Payment successful and enrollment completed',

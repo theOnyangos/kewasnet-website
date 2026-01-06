@@ -8,8 +8,12 @@
         <!-- Main Styles -->
         <?= $this->include('backendV2/constants/header-styles') ?>
     </head>
+
     <body class="h-screen font-sans antialiased text-dark">
-        <div class="flex h-full overflow-hidden bg-light">
+        <!-- Diagonal Grid Pattern -->
+        <div class="events-page-pattern-bg"></div>
+
+        <div class="flex h-full overflow-hidden">
             <!-- Collapsible Sidebar -->
             <?= $this->include('backendV2/layouts/sidebar') ?>
 
@@ -25,6 +29,9 @@
 
         <!-- Modal -->
         <?= $this->include('partials/modal') ?>
+
+        <!-- Notification Dropdown (Outside header stacking context) -->
+        <?= $this->include('backendV2/partials/notifications_dropdown') ?>
 
         <!-- Main Scripts -->
         <?= $this->include('backendV2/constants/footer-scripts') ?>

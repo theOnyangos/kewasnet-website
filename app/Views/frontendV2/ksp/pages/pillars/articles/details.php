@@ -30,6 +30,28 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
+    <!-- Page Header -->
+    <section class="relative py-20 bg-gradient-to-r from-primary to-secondary">
+        <div class="container mx-auto px-4 text-center text-white">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-3xl md:text-5xl font-bold mb-4">
+                    <?php if (isset($resource) && !empty($resource['title'])): ?>
+                        <?= esc($resource['title']) ?>
+                    <?php else: ?>
+                        <?= esc($pillar['title'] ?? $pillar['name'] ?? 'Article') ?>
+                    <?php endif; ?>
+                </h1>
+                <p class="text-xl leading-relaxed">
+                    <?php if (isset($resource) && !empty($resource['description'])): ?>
+                        <?= esc(substr($resource['description'], 0, 150)) ?><?= strlen($resource['description']) > 150 ? '...' : '' ?>
+                    <?php else: ?>
+                        Explore comprehensive resources, articles, and publications for this strategic pillar.
+                    <?php endif; ?>
+                </p>
+            </div>
+        </div>
+    </section>
+
      <!-- Breadcrumb -->
     <div class="bg-white border-b borderColor">
         <div class="container mx-auto px-4 py-3">
@@ -91,6 +113,7 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                 </div>
             </div>
         <?php else: ?>
+
         <div class="flex flex-col lg:flex-row gap-8">
             <!-- Article Content -->
             <article class="w-full lg:w-2/3">
@@ -147,7 +170,7 @@ Explore research articles, case studies, and policy briefs from the Kenya Sanita
                     <div class="rounded-xl overflow-hidden shadow-md mb-6">
                         <img src="<?= esc($resource['image_url']) ?>" 
                              alt="<?= esc($resource['title']) ?>" 
-                             class="w-full h-auto object-cover">
+                             class="w-full h-[380px] object-cover">
                     </div>
                     <?php endif; ?>
                     <?php endif; ?>

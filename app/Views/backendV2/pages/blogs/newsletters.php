@@ -28,57 +28,65 @@
         <?= $this->include('backendV2/pages/blogs/partials/header_section') ?>
 
         <!-- Newsletter Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Total Subscriptions</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= $statistics['total_newsletters'] ?? 23 ?></p>
-                        <p class="text-sm text-green-600 mt-1">All subscribers</p>
+                        <p class="text-primaryShades-300">Total Subscriptions</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= $statistics['total_newsletters'] ?? 23 ?></h3>
                     </div>
-                    <div class="p-3 bg-purple-100 rounded-full">
-                        <i data-lucide="mail" class="w-8 h-8 text-purple-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="users" class="w-4 h-4 mr-1"></i> All subscribers
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Active Subscribers</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= number_format($statistics['total_subscribers'] ?? 1250) ?></p>
-                        <p class="text-sm text-green-600 mt-1">+8% from last month</p>
+                        <p class="text-primaryShades-300">Active Subscribers</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= number_format($statistics['total_subscribers'] ?? 1250) ?></h3>
                     </div>
-                    <div class="p-3 bg-blue-100 rounded-full">
-                        <i data-lucide="users" class="w-8 h-8 text-blue-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> +8% from last month
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Recent Subscriptions</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= $statistics['recent_subscriptions'] ?? 0 ?></p>
-                        <p class="text-sm text-green-600 mt-1">Last 30 days</p>
+                        <p class="text-primaryShades-300">Recent Subscriptions</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= $statistics['recent_subscriptions'] ?? 0 ?></h3>
                     </div>
-                    <div class="p-3 bg-green-100 rounded-full">
-                        <i data-lucide="user-plus" class="w-8 h-8 text-green-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="calendar" class="w-4 h-4 mr-1"></i> Last 30 days
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-gray-600">Inactive Subscribers</p>
-                        <p class="text-3xl font-bold text-gray-900"><?= $statistics['inactive_subscribers'] ?? 0 ?></p>
-                        <p class="text-sm text-orange-600 mt-1">Unsubscribed users</p>
+                        <p class="text-primaryShades-300">Inactive Subscribers</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= $statistics['inactive_subscribers'] ?? 0 ?></h3>
                     </div>
-                    <div class="p-3 bg-orange-100 rounded-full">
-                        <i data-lucide="user-x" class="w-8 h-8 text-orange-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="user-x" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="alert-circle" class="w-4 h-4 mr-1"></i> Unsubscribed users
+                </p>
             </div>
         </div>
 

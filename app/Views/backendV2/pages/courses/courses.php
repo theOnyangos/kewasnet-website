@@ -14,7 +14,21 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
+    <main class="flex-1 overflow-y-auto">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'All Courses',
+            'pageDescription' => 'Manage and view all learning hub courses',
+            'breadcrumbs' => [
+                ['label' => 'Courses', 'url' => site_url('auth/courses')],
+                ['label' => 'All Courses']
+            ],
+            'bannerActions' => '<a href="' . site_url('auth/courses/create') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                Add New Course
+            </a>'
+        ]) ?>
+
+        <div class="px-6 pb-6">
         <!-- Header Section -->
         <?= $this->include('backendV2/pages/courses/partials/header_section') ?>
 
@@ -57,6 +71,7 @@
                     <tbody></tbody>
                 </table>
             </div>
+        </div>
         </div>
     </main>
 <?= $this->endSection() ?>

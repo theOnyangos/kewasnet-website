@@ -86,6 +86,9 @@
 
     <!-- Main Content -->
     <main class="container mx-auto px-4 py-12">
+        <!-- Diagonal Grid Pattern -->
+        <div class="events-page-pattern-bg"></div>
+
         <!-- Pillars Section -->
         <section class="mb-16">
             <div class="text-center mb-12">

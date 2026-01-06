@@ -25,57 +25,69 @@
 
         <div class="px-6 pb-6">
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
             <!-- Total Programs -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-600">Total Programs</p>
-                        <p class="text-2xl font-bold text-slate-900" id="totalPrograms">0</p>
+                        <p class="text-primaryShades-300">Total Programs</p>
+                        <h3 class="text-2xl font-bold mt-1" id="totalPrograms">0</h3>
                     </div>
-                    <div class="bg-blue-100 p-3 rounded-lg">
-                        <i data-lucide="folder" class="w-6 h-6 text-blue-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="folder" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="layers" class="w-4 h-4 mr-1"></i> All programs
+                </p>
             </div>
 
             <!-- Active Programs -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-600">Active Programs</p>
-                        <p class="text-2xl font-bold text-emerald-600" id="activePrograms">0</p>
+                        <p class="text-primaryShades-300">Active Programs</p>
+                        <h3 class="text-2xl font-bold mt-1" id="activePrograms">0</h3>
                     </div>
-                    <div class="bg-emerald-100 p-3 rounded-lg">
-                        <i data-lucide="check-circle" class="w-6 h-6 text-emerald-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="activity" class="w-4 h-4 mr-1"></i> Currently running
+                </p>
             </div>
 
             <!-- Featured Programs -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-600">Featured Programs</p>
-                        <p class="text-2xl font-bold text-amber-600" id="featuredPrograms">0</p>
+                        <p class="text-primaryShades-300">Featured Programs</p>
+                        <h3 class="text-2xl font-bold mt-1" id="featuredPrograms">0</h3>
                     </div>
-                    <div class="bg-amber-100 p-3 rounded-lg">
-                        <i data-lucide="star" class="w-6 h-6 text-amber-600"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="star" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="sparkles" class="w-4 h-4 mr-1"></i> Highlighted programs
+                </p>
             </div>
 
             <!-- Draft Programs -->
-            <div class="bg-white rounded-xl shadow-sm p-6">
+            <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm font-medium text-slate-600">Draft Programs</p>
-                        <p class="text-2xl font-bold text-slate-500" id="draftPrograms">0</p>
+                        <p class="text-primaryShades-300">Draft Programs</p>
+                        <h3 class="text-2xl font-bold mt-1" id="draftPrograms">0</h3>
                     </div>
-                    <div class="bg-slate-100 p-3 rounded-lg">
-                        <i data-lucide="edit" class="w-6 h-6 text-slate-500"></i>
+                    <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <i data-lucide="edit" class="w-5 h-5"></i>
                     </div>
                 </div>
+                <p class="text-sm text-white/80 mt-3 flex items-center">
+                    <i data-lucide="file-edit" class="w-4 h-4 mr-1"></i> In progress
+                </p>
             </div>
         </div>
 

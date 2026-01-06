@@ -84,8 +84,27 @@
  </div>
  </section>
 
+ <style>
+ .events-page-pattern-bg {
+ position: absolute;
+ top: 0;
+ left: 0;
+ right: 0;
+ bottom: 0;
+ z-index: 0;
+ pointer-events: none;
+ background-image: 
+ repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px),
+ repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px);
+ background-size: 40px 40px;
+ }
+ </style>
+
  <!-- Pillar Content Sections -->
  <section class="pb-16 bg-lightGray">
+ <!-- Diagonal Grid Pattern -->
+ <div class="events-page-pattern-bg"></div>
+
  <div class="px-4">
  <?php if ($activeView === 'all'): ?>
  <!-- All Pillars Overview -->
@@ -99,7 +118,7 @@
  
  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
  <?php foreach ($orderedPillars as $pillar): ?>
- <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group">
+ <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 group z-10">
  <div class="p-6">
  <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
  <i data-lucide="<?= esc($pillar['icon']) ?>" class="w-8 h-8 text-white"></i>

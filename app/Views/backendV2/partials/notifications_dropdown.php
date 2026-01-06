@@ -1,9 +1,9 @@
 <!-- Notification Modal Panel -->
 <!-- Backdrop -->
-<div id="notificationBackdrop" class="hidden fixed inset-0 bg-black bg-opacity-30 z-40" style="display: none;"></div>
+<div id="notificationBackdrop" class="hidden fixed inset-0 bg-black bg-opacity-30 z-[9998]" style="display: none; z-index: 9998;"></div>
 
 <!-- Notification Panel (Fixed Position) -->
-<div id="notificationDropdown" class="hidden fixed top-16 right-4 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50" style="display: none; max-height: calc(100vh - 100px);">
+<div id="notificationDropdown" class="hidden fixed top-16 right-4 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-[99999]" style="display: none; max-height: calc(100vh - 100px); backdrop-filter: none; -webkit-backdrop-filter: none; z-index: 99999;">
     <!-- Panel Header -->
     <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <h3 class="text-lg font-semibold text-gray-800">Notifications</h3>
@@ -11,14 +11,14 @@
             <button id="markAllReadBtn" class="text-sm text-primary hover:text-primaryShades-600 font-medium">
                 Mark all as read
             </button>
-            <button id="closeNotificationPanel" class="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+            <button id="closeNotificationPanel" type="button" class="p-1 hover:bg-gray-100 rounded-full transition-colors cursor-pointer" onclick="if(typeof window.NotificationManager !== 'undefined') { window.NotificationManager.close(); }">
+                <i data-lucide="x" class="w-5 h-5 text-gray-500 pointer-events-none"></i>
             </button>
         </div>
     </div>
 
     <!-- Notifications List -->
-    <div id="notificationsList" class="overflow-y-auto" style="max-height: calc(100vh - 200px);">
+    <div id="notificationsList" class="overflow-y-auto" style="max-height: calc(100vh - 200px); backdrop-filter: none; -webkit-backdrop-filter: none;">
         <!-- Loading State -->
         <div id="notificationsLoading" class="flex items-center justify-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -147,5 +147,33 @@
 #notificationDropdown,
 #notificationBackdrop {
     transition: opacity 0.2s ease-in-out;
+}
+
+/* Remove any blur effects from dropdown */
+#notificationDropdown {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    z-index: 9999 !important;
+    position: fixed !important;
+    pointer-events: auto !important;
+}
+
+#notificationBackdrop {
+    z-index: 9998 !important;
+    position: fixed !important;
+    pointer-events: auto !important;
+}
+
+#notificationDropdown * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    pointer-events: auto !important;
+}
+
+/* Ensure dropdown is clickable and on top */
+#notificationDropdown,
+#notificationBackdrop {
+    isolation: isolate;
 }
 </style>

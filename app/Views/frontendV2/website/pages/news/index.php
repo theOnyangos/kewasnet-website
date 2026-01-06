@@ -46,11 +46,14 @@
 
     <!-- Main Content -->
     <section class="py-16 bg-white">
+        <!-- Diagonal Grid Pattern -->
+        <div class="events-page-pattern-bg"></div>
+        
         <div class="container mx-auto px-4">
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Filters Sidebar -->
                 <div class="lg:w-1/4">
-                    <div class="bg-slate-50 rounded-xl p-6 sticky top-24">
+                    <div class="bg-white rounded-xl p-6 sticky top-24 shadow-lg border border-slate-100">
                         <h3 class="text-xl font-bold text-slate-800 mb-6">Filter Content</h3>
                         
                         <!-- Categories Filter -->
@@ -118,8 +121,8 @@
                             <div class="space-y-4">
                                 <?php if (!empty($featuredPosts)): ?>
                                     <?php foreach ($featuredPosts as $featured): ?>
-                                        <a href="<?= base_url('news-details/' . esc($featured->slug)) ?>" class="flex gap-3 group">
-                                            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                        <a href="<?= base_url('news-details/' . esc($featured->slug)) ?>" class="flex gap-3 group bg-white p-2 rounded-lg hover:shadow-md transition-shadow">
+                                            <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
                                                 <?php if (!empty($featured->featured_image)): ?>
                                                     <img src="<?= $featured->featured_image ?>" 
                                                          alt="<?= esc($featured->title) ?>" 
@@ -171,7 +174,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="blogGrid">
                         <?php if (!empty($blogPosts)): ?>
                             <?php foreach ($blogPosts as $post): ?>
-                                <article class="group hover:shadow-xl transition-all duration-300 border border-slate-200 rounded-xl overflow-hidden">
+                                <article class="group bg-white hover:shadow-2xl transition-all duration-300 border border-slate-200 rounded-xl overflow-hidden shadow-md z-10">
                                     <div class="relative h-48 overflow-hidden">
                                         <?php if (!empty($post->featured_image)): ?>
                                             <img src="<?= $post->featured_image ?>" 
@@ -226,7 +229,7 @@
                             <?php endforeach; ?>
                         <?php else: ?>
                             <div class="col-span-full text-center py-12">
-                                <div class="mx-auto w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                                <div class="mx-auto w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 shadow-lg border border-slate-100">
                                     <i data-lucide="search" class="icon-xl text-slate-400"></i>
                                 </div>
                                 <h3 class="text-lg font-semibold text-slate-800 mb-2">No articles found</h3>

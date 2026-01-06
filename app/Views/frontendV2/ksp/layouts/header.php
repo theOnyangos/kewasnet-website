@@ -24,13 +24,6 @@
                 <?php if($isLoggedIn): ?>
                     <!-- Logged In User Menu -->
                     <div class="flex items-center space-x-3 md:space-x-5">
-                        <!-- Dashboard Link -->
-                        <a href="<?= base_url("ksp/dashboard") ?>"
-                           class="hidden md:flex items-center space-x-2 px-4 py-2 rounded-lg text-slate-700 hover:text-primary hover:bg-primary/5 transition-all duration-200 group">
-                            <i data-lucide="layout-grid" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
-                            <span class="font-medium">Dashboard</span>
-                        </a>
-
                         <!-- User Profile Dropdown -->
                         <div class="relative user-menu-wrapper">
                             <button class="user-menu-trigger flex items-center gap-3 focus:outline-none bg-gradient-to-r from-slate-50 to-slate-100 px-3 py-2 md:px-4 md:py-2.5 rounded-xl hover:shadow-md hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 border border-slate-200 min-w-[180px] md:min-w-[220px]">
@@ -55,7 +48,7 @@
                             </button>
 
                             <!-- Enhanced Dropdown Menu -->
-                            <div class="user-dropdown absolute right-0 mt-3 w-[280px] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden opacity-0 invisible transform scale-95 transition-all duration-200">
+                            <div class="user-dropdown absolute right-0 mt-3 w-[520px] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden opacity-0 invisible transform scale-95 transition-all duration-200">
                                 <!-- User Info Header -->
                                 <div class="px-5 py-4 bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-slate-100">
                                     <div class="flex items-center space-x-3">
@@ -70,50 +63,70 @@
                                 </div>
 
                                 <!-- Menu Items -->
-                                <div class="py-2">
-                                    <a href="<?= base_url("ksp/learning-hub/profile") ?>" class="flex items-center space-x-3 px-5 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group">
-                                        <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                            <i data-lucide="user" class="w-4 h-4 text-primary"></i>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">My Profile</div>
-                                            <div class="text-xs text-slate-500">View and edit profile</div>
-                                        </div>
-                                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                    </a>
+                                <div class="py-2 px-3">
+                                    <div class="grid grid-cols-2">
+                                        <a href="<?= base_url("ksp/dashboard") ?>" class="flex items-center gap-2 p-4 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-200">
+                                            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                <i data-lucide="layout-grid" class="w-5 h-5 text-primary"></i>
+                                            </div>
+                                            <div class="flex-1 w-full">
+                                                <div class="font-medium">Dashboard</div>
+                                                <div class="text-xs text-slate-500 mt-0.5">View your dashboard</div>
+                                            </div>
+                                        </a>
 
-                                    <a href="<?= base_url("ksp/learning-hub/my-courses") ?>" class="flex items-center space-x-3 px-5 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group">
-                                        <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                                            <i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">My Courses</div>
-                                            <div class="text-xs text-slate-500">View enrolled courses</div>
-                                        </div>
-                                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                    </a>
+                                        <a href="<?= base_url("ksp/learning-hub/profile") ?>" class="flex items-center gap-2 p-4 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-200">
+                                            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                <i data-lucide="user" class="w-5 h-5 text-primary"></i>
+                                            </div>
+                                            <div class="flex-1 w-full">
+                                                <div class="font-medium">My Profile</div>
+                                                <div class="text-xs text-slate-500 mt-0.5">View and edit profile</div>
+                                            </div>
+                                        </a>
 
-                                    <a href="<?= base_url("ksp/learning-hub/certificates") ?>" class="flex items-center space-x-3 px-5 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group">
-                                        <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                            <i data-lucide="award" class="w-4 h-4 text-green-600"></i>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">My Certificates</div>
-                                            <div class="text-xs text-slate-500">View your certificates</div>
-                                        </div>
-                                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                    </a>
+                                        <a href="<?= base_url("ksp/learning-hub/my-courses") ?>" class="flex items-center gap-2 p-4 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-200">
+                                            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                                <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+                                            </div>
+                                            <div class="flex-1 w-full">
+                                                <div class="font-medium">My Courses</div>
+                                                <div class="text-xs text-slate-500 mt-0.5">View enrolled courses</div>
+                                            </div>
+                                        </a>
 
-                                    <a href="<?= base_url("ksp/learning-hub/profile") ?>" class="flex items-center space-x-3 px-5 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group">
-                                        <div class="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
-                                            <i data-lucide="settings" class="w-4 h-4 text-secondary"></i>
-                                        </div>
-                                        <div class="flex-1">
-                                            <div class="font-medium">Settings</div>
-                                            <div class="text-xs text-slate-500">Manage preferences</div>
-                                        </div>
-                                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity"></i>
-                                    </a>
+                                        <a href="<?= base_url("ksp/learning-hub/certificates") ?>" class="flex items-center gap-2 p-4 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-200">
+                                            <div class="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                                                <i data-lucide="award" class="w-5 h-5 text-green-600"></i>
+                                            </div>
+                                            <div class="flex-1 w-full">
+                                                <div class="font-medium">My Certificates</div>
+                                                <div class="text-xs text-slate-500 mt-0.5">View your certificates</div>
+                                            </div>
+                                        </a>
+
+                                        <a href="<?= base_url("ksp/learning-hub/profile") ?>" class="flex items-center gap-2 p-4 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-200">
+                                            <div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center group-hover:bg-secondary/20 transition-colors">
+                                                <i data-lucide="settings" class="w-5 h-5 text-secondary"></i>
+                                            </div>
+                                            <div class="flex-1 w-full">
+                                                <div class="font-medium">Settings</div>
+                                                <div class="text-xs text-slate-500 mt-0.5">Manage preferences</div>
+                                            </div>
+                                        </a>
+
+                                        <?php if($isKspSection): ?>
+                                        <a href="<?= base_url('/') ?>" class="flex items-center gap-2 p-4 rounded-lg text-sm text-slate-700 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-200">
+                                            <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                                                <i data-lucide="globe" class="w-5 h-5 text-purple-600"></i>
+                                            </div>
+                                            <div class="flex-1 w-full">
+                                                <div class="font-medium">Main Site</div>
+                                                <div class="text-xs text-slate-500 mt-0.5">Return to main website</div>
+                                            </div>
+                                        </a>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
 
                                 <!-- Logout -->
@@ -128,20 +141,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <?php if($isKspSection): ?>
-                            <!-- Back to Main Site Button (Mobile) -->
-                            <a href="<?= base_url() ?>" class="md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 text-primary hover:bg-primary hover:text-white transition-all duration-200">
-                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            </a>
-
-                            <!-- Back to Main Site Button (Desktop) -->
-                            <a href="<?= base_url('/') ?>" class="hidden md:flex items-center justify-center gap-2 gradient-btn px-6 py-2.5 rounded-xl text-white font-medium shadow-md hover:shadow-lg transition-all duration-300 group">
-                                <i data-lucide="globe" class="w-4 h-4"></i>
-                                <span>Main Site</span>
-                                <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                            </a>
-                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <!-- Guest User Menu -->
@@ -255,12 +254,25 @@
         filter: brightness(1.1);
     }
 
+    /* Desktop Dropdown Width - Force width */
+    .user-dropdown {
+        width: 520px !important;
+        min-width: 520px !important;
+        max-width: 520px !important;
+    }
+    
     /* Mobile Menu Enhancements */
     @media (max-width: 768px) {
         .user-dropdown {
             right: 0;
             left: auto;
-            width: 260px;
+            width: calc(100vw - 2rem) !important;
+            min-width: auto !important;
+            max-width: 400px !important;
+        }
+        
+        .user-dropdown .grid {
+            grid-template-columns: 1fr;
         }
     }
 
@@ -354,6 +366,20 @@
     /* Prevent layout shift */
     #main-header * {
         box-sizing: border-box;
+    }
+
+    .events-page-pattern-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+        pointer-events: none;
+        background-image: 
+            repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px),
+            repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px);
+        background-size: 40px 40px;
     }
 </style>
 

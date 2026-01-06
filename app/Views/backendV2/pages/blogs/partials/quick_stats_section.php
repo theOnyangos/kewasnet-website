@@ -12,56 +12,64 @@ $blogStats = [
 ];
 ?>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Posts</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $blogStats['total_posts'] ?></p>
-                <p class="text-sm text-green-600 mt-1"><?= $blogStats['published_posts'] ?> published</p>
+                <p class="text-primaryShades-300">Total Posts</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $blogStats['total_posts'] ?></h3>
             </div>
-            <div class="p-3 bg-blue-100 rounded-full">
-                <i data-lucide="file-text" class="w-8 h-8 text-blue-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> <?= $blogStats['published_posts'] ?> published
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-green-500">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Views</p>
-                <p class="text-3xl font-bold text-gray-900"><?= number_format($blogStats['total_views']) ?></p>
-                <p class="text-sm text-green-600 mt-1">+15% from last month</p>
+                <p class="text-primaryShades-300">Total Views</p>
+                <h3 class="text-2xl font-bold mt-1"><?= number_format($blogStats['total_views']) ?></h3>
             </div>
-            <div class="p-3 bg-green-100 rounded-full">
-                <i data-lucide="eye" class="w-8 h-8 text-green-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="eye" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> +15% from last month
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Categories</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $blogStats['total_categories'] ?></p>
-                <p class="text-sm text-blue-600 mt-1"><?= $blogStats['total_comments'] ?> comments</p>
+                <p class="text-primaryShades-300">Categories</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $blogStats['total_categories'] ?></h3>
             </div>
-            <div class="p-3 bg-orange-100 rounded-full">
-                <i data-lucide="folder" class="w-8 h-8 text-orange-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="folder" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="message-square" class="w-4 h-4 mr-1"></i> <?= $blogStats['total_comments'] ?> comments
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Newsletter Subscribers</p>
-                <p class="text-3xl font-bold text-gray-900"><?= number_format($blogStats['subscribers']) ?></p>
-                <p class="text-sm text-blue-600 mt-1"><?= $blogStats['newsletters_sent'] ?> campaigns sent</p>
+                <p class="text-primaryShades-300">Newsletter Subscribers</p>
+                <h3 class="text-2xl font-bold mt-1"><?= number_format($blogStats['subscribers']) ?></h3>
             </div>
-            <div class="p-3 bg-purple-100 rounded-full">
-                <i data-lucide="mail" class="w-8 h-8 text-purple-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="mail" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="send" class="w-4 h-4 mr-1"></i> <?= $blogStats['newsletters_sent'] ?> campaigns sent
+        </p>
     </div>
 </div>

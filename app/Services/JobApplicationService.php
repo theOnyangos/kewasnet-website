@@ -469,9 +469,9 @@ class JobApplicationService
      */
     protected function notifyAdminsOfNewApplication(array $opportunity, array $applicationData): void
     {
-        // Get all admin users (you may need to adjust this based on your role system)
+        // Get all admin users (role_id = 1)
         $userModel = new \App\Models\UserModel();
-        $adminUsers = $userModel->where('role', 'admin')->findAll();
+        $adminUsers = $userModel->getAdministrators();
 
         if (empty($adminUsers)) {
             return;

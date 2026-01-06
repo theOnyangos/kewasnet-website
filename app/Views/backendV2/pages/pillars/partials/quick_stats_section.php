@@ -12,56 +12,64 @@ $pillarStats = [
 ];
 ?>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-emerald-500">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Pillars</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $pillarStats['total_pillars'] ?></p>
-                <p class="text-sm text-green-600 mt-1"><?= $pillarStats['active_pillars'] ?> active</p>
+                <p class="text-primaryShades-300">Total Pillars</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $pillarStats['total_pillars'] ?></h3>
             </div>
-            <div class="p-3 bg-emerald-100 rounded-full">
-                <i data-lucide="columns" class="w-8 h-8 text-emerald-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="columns" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> <?= $pillarStats['active_pillars'] ?> active
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-blue-500">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Articles</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $pillarStats['total_articles'] ?></p>
-                <p class="text-sm text-green-600 mt-1"><?= $pillarStats['published_articles'] ?> published</p>
+                <p class="text-primaryShades-300">Total Articles</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $pillarStats['total_articles'] ?></h3>
             </div>
-            <div class="p-3 bg-blue-100 rounded-full">
-                <i data-lucide="file-text" class="w-8 h-8 text-blue-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="file-text" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="check-circle" class="w-4 h-4 mr-1"></i> <?= $pillarStats['published_articles'] ?> published
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-500">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Total Downloads</p>
-                <p class="text-3xl font-bold text-gray-900"><?= number_format($pillarStats['total_downloads']) ?></p>
-                <p class="text-sm text-blue-600 mt-1">+23% this month</p>
+                <p class="text-primaryShades-300">Total Downloads</p>
+                <h3 class="text-2xl font-bold mt-1"><?= number_format($pillarStats['total_downloads']) ?></h3>
             </div>
-            <div class="p-3 bg-purple-100 rounded-full">
-                <i data-lucide="download" class="w-8 h-8 text-purple-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="download" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="trending-up" class="w-4 h-4 mr-1"></i> +23% this month
+        </p>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm p-6 border-l-4 border-orange-500">
+    <div class="bg-gradient-to-br from-primaryShades-400 to-primaryShades-600 rounded-xl shadow-sm p-6 stat-card text-white">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600">Document Types</p>
-                <p class="text-3xl font-bold text-gray-900"><?= $pillarStats['total_document_types'] ?></p>
-                <p class="text-sm text-blue-600 mt-1"><?= $pillarStats['draft_articles'] ?> drafts</p>
+                <p class="text-primaryShades-300">Document Types</p>
+                <h3 class="text-2xl font-bold mt-1"><?= $pillarStats['total_document_types'] ?></h3>
             </div>
-            <div class="p-3 bg-orange-100 rounded-full">
-                <i data-lucide="file-type" class="w-8 h-8 text-orange-600"></i>
+            <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <i data-lucide="file-type" class="w-5 h-5"></i>
             </div>
         </div>
+        <p class="text-sm text-white/80 mt-3 flex items-center">
+            <i data-lucide="edit" class="w-4 h-4 mr-1"></i> <?= $pillarStats['draft_articles'] ?> drafts
+        </p>
     </div>
 </div>

@@ -11,7 +11,28 @@
 <?= $this->endSection(); ?>
 
 <?= $this->section('content') ?>
-<div class="container mx-auto px-4 py-8">
+
+    <style>
+        .events-page-pattern-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 0;
+            pointer-events: none;
+            background-image: 
+                repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px),
+                repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.1) 0, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 20px);
+            background-size: 40px 40px;
+        }
+    </style>
+
+<div class="h-full py-8 relative">
+    <!-- Diagonal Grid Pattern -->
+    <div class="events-page-pattern-bg"></div>
+
+    <div class="container mx-auto px-4 pt-8">
     <div class="max-w-4xl mx-auto">
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-dark mb-2">Profile Settings</h1>
@@ -21,7 +42,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Sidebar Navigation -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 sticky top-4">
+                <div class="bg-white rounded-lg shadow-md border border-slate-200 p-4 sticky top-4 hover:shadow-2xl transition-shadow z-10 relative">
                     <nav class="space-y-1">
                         <button onclick="showSection('profile')" 
                                 class="section-btn w-full text-left px-4 py-3 rounded-lg font-medium flex items-center gap-3 text-primary bg-primary/10">
@@ -45,7 +66,7 @@
             <!-- Main Content -->
             <div class="lg:col-span-2">
                 <!-- Profile Information Section -->
-                <div id="profile-section" class="section-content bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6">
+                <div id="profile-section" class="section-content bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6 shadow-md hover:shadow-2xl transition-shadow z-10 relative">
                     <h2 class="text-xl font-bold text-dark mb-6">Profile Information</h2>
                     
                     <form id="profileForm" enctype="multipart/form-data">
@@ -143,7 +164,7 @@
                 </div>
                 
                 <!-- Change Password Section -->
-                <div id="password-section" class="section-content bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6 hidden">
+                <div id="password-section" class="section-content bg-white rounded-lg shadow-sm border border-slate-200 p-6 mb-6 hidden shadow-md hover:shadow-2xl transition-shadow z-10 relative">
                     <h2 class="text-xl font-bold text-dark mb-2">Change Password</h2>
                     <p class="text-sm text-slate-600 mb-6">Ensure your account stays secure by using a strong password</p>
                     
@@ -154,7 +175,7 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-slate-700 mb-2">Current Password *</label>
                             <div class="relative">
-                                <input type="password" name="current_password" id="current_password" required
+                                <input type="password" name="current_password" id="current_password" required placeholder="Enter your current password"
                                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary pr-10">
                                 <button type="button" onclick="togglePassword('current_password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                     <i data-lucide="eye" class="w-5 h-5"></i>
@@ -166,7 +187,7 @@
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-slate-700 mb-2">New Password *</label>
                             <div class="relative">
-                                <input type="password" name="new_password" id="new_password" required
+                                <input type="password" name="new_password" id="new_password" required placeholder="Enter your new password"
                                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary pr-10">
                                 <button type="button" onclick="togglePassword('new_password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                     <i data-lucide="eye" class="w-5 h-5"></i>
@@ -179,7 +200,7 @@
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-slate-700 mb-2">Confirm New Password *</label>
                             <div class="relative">
-                                <input type="password" name="confirm_password" id="confirm_password" required
+                                <input type="password" name="confirm_password" id="confirm_password" required placeholder="Confirm your new password"
                                        class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary pr-10">
                                 <button type="button" onclick="togglePassword('confirm_password')" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                                     <i data-lucide="eye" class="w-5 h-5"></i>
@@ -203,7 +224,7 @@
                 </div>
                 
                 <!-- Danger Zone Section -->
-                <div id="danger-section" class="section-content bg-white rounded-lg shadow-sm border border-red-200 p-6 hidden">
+                <div id="danger-section" class="section-content bg-white rounded-lg shadow-sm border border-red-200 p-6 hidden shadow-md hover:shadow-2xl transition-shadow z-10 relative">
                     <div class="flex items-start gap-3 mb-6">
                         <div class="bg-red-100 p-2 rounded-full">
                             <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>

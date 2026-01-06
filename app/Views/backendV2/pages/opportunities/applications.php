@@ -14,18 +14,29 @@ Job Applications
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
+    <main class="flex-1 overflow-y-auto">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Job Applications',
+            'pageDescription' => 'Review and manage applications for your job opportunities',
+            'breadcrumbs' => [
+                ['label' => 'Opportunities', 'url' => site_url('auth/opportunities')],
+                ['label' => 'Applications']
+            ]
+        ]) ?>
+
+        <div class="px-6 pb-6">
         <!-- Navigation Menu -->
         <?= $this->include('backendV2/pages/opportunities/partials/navigation_menu') ?>
         
         <!-- Page Content -->
-        <div class="bg-white rounded-xl shadow-sm p-6">
+        <div class="bg-white rounded-b-xl shadow-sm p-6">
             <!-- Top Header -->
-            <?= $this->include('backendV2/pages/opportunities/partials/top_header', [
-                'pageTitle' => 'Job Applications',
-                'pageDescription' => 'Review and manage applications for your job opportunities',
-                'showCreateButton' => false
-            ]) ?>
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-800">Job Applications</h1>
+                    <p class="mt-1 text-sm text-slate-500">Review and manage applications for your job opportunities</p>
+                </div>
+            </div>
 
             <!-- Applications Table -->
             <div class="overflow-x-auto">
@@ -43,6 +54,7 @@ Job Applications
                     </thead>
                 </table>
             </div>
+        </div>
         </div>
     </main>
 <?= $this->endSection() ?>

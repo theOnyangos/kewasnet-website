@@ -61,6 +61,7 @@
     <section class="py-16 relative text-gray-900" style="background-color: #fafafa; min-height: auto; position: relative;">
         <!-- Diagonal Grid Pattern -->
         <div class="events-page-pattern-bg"></div>
+        
         <div class="container mx-auto px-4 relative z-10">
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Filters Sidebar -->
