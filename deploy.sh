@@ -9,6 +9,14 @@
 #          ./deploy.sh staging
 #
 # This script automates the deployment process for the KEWASNET application
+# 
+# Requirements:
+#   - PHP 8.4 or higher
+#   - Composer
+#   - Node.js and npm
+#   - Git
+#   - MySQL/MariaDB
+#   - Nginx or Apache
 ###############################################################################
 
 set -e  # Exit on error
@@ -28,11 +36,11 @@ BACKUP_DIR="backups/$TIMESTAMP"
 
 # Deployment paths (update these based on your server structure)
 if [ "$ENVIRONMENT" = "production" ]; then
-    DEPLOY_PATH="/var/www/kewasnet.co.ke"
-    DOMAIN="kewasnet.co.ke"
+    DEPLOY_PATH="/var/www/html/kewasnet-website"
+    DOMAIN="test.mtalii.tech"  # Update with your actual domain
 elif [ "$ENVIRONMENT" = "staging" ]; then
-    DEPLOY_PATH="/var/www/staging.kewasnet.co.ke"
-    DOMAIN="staging.kewasnet.co.ke"
+    DEPLOY_PATH="/var/www/html/kewasnet-website-staging"
+    DOMAIN="staging.mtalii.tech"  # Update with your actual staging domain
 else
     echo -e "${RED}Error: Invalid environment. Use 'production' or 'staging'${NC}"
     exit 1
@@ -91,14 +99,34 @@ check_command "npm"
 
 print_success "All required commands are available"
 
+# Verify PHP 8.4 is available
+print_info "Verifying PHP 8.4 installation..."
+if ! php -v | grep -q "8.4"; then
+    print_warning "PHP 8.4 not detected in version string. Continuing with available PHP version..."
+    print_info "Note: PHP 8.4 is recommended. To install on Ubuntu/Debian:"
+    print_info "  sudo add-apt-repository ppa:ondrej/php -y"
+    print_info "  sudo apt update"
+    print_info "  sudo apt install -y php8.4-fpm php8.4-cli php8.4-mysql php8.4-mbstring php8.4-xml php8.4-curl php8.4-zip php8.4-gd php8.4-intl"
+fi
+
 # Check PHP version
 PHP_VERSION=$(php -r "echo PHP_VERSION;")
+PHP_MAJOR_MINOR=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 print_info "PHP Version: $PHP_VERSION"
-if php -r "exit(version_compare(PHP_VERSION, '7.4.0', '<') ? 1 : 0);"; then
-    print_error "PHP 7.4 or higher is required"
+
+# Check if PHP 8.4 or higher
+if php -r "exit(version_compare(PHP_VERSION, '8.4.0', '<') ? 1 : 0);"; then
+    print_error "PHP 8.4 or higher is required. Current version: $PHP_VERSION"
+    print_info "Please install PHP 8.4 before continuing."
     exit 1
 fi
-print_success "PHP version check passed"
+
+# Verify it's PHP 8.4.x (not 8.5+ or 9.0+)
+if php -r "exit(version_compare(PHP_VERSION, '8.4.0', '>=') && version_compare(PHP_VERSION, '8.5.0', '<') ? 0 : 1);"; then
+    print_success "PHP 8.4 detected - version check passed"
+else
+    print_warning "PHP 8.4.x is recommended. Current version: $PHP_VERSION (will continue)"
+fi
 
 # Check PHP extensions
 print_info "Checking required PHP extensions..."
@@ -152,10 +180,13 @@ if [ -d "$DEPLOY_PATH" ]; then
         
         if [ -n "$DB_NAME" ] && [ -n "$DB_USER" ]; then
             print_info "Backing up database: $DB_NAME"
-            mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" 2>/dev/null || {
+            # Use MYSQL_PWD environment variable for password (more secure)
+            export MYSQL_PWD="$DB_PASS"
+            mysqldump -u"$DB_USER" "$DB_NAME" > "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" 2>/dev/null || {
                 print_warning "Database backup failed. Continuing deployment..."
             }
-            if [ -f "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" ]; then
+            unset MYSQL_PWD
+            if [ -f "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" ] && [ -s "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" ]; then
                 gzip "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql"
                 print_success "Database backed up successfully"
             fi
@@ -211,17 +242,27 @@ fi
 
 print_header "Pulling Latest Code"
 
-cd "$DEPLOY_PATH" || {
-    print_error "Deployment directory does not exist. Creating it..."
+# Ensure we're in the deployment directory
+if [ ! -d "$DEPLOY_PATH" ]; then
+    print_error "Deployment directory does not exist: $DEPLOY_PATH"
+    print_info "Creating deployment directory..."
     mkdir -p "$DEPLOY_PATH"
-    cd "$DEPLOY_PATH"
+    if [ ! -d "$DEPLOY_PATH" ]; then
+        print_error "Failed to create deployment directory. Check permissions."
+        exit 1
+    fi
+fi
+
+cd "$DEPLOY_PATH" || {
+    print_error "Failed to change to deployment directory: $DEPLOY_PATH"
+    exit 1
 }
 
 # Initialize git if not already initialized
 if [ ! -d ".git" ]; then
     print_info "Initializing git repository..."
     git init
-    git remote add origin https://github.com/yourusername/$APP_NAME.git  # Update with your repo URL
+    git remote add origin https://github.com/theOnyangos/$APP_NAME.git
 fi
 
 # Fetch and pull latest changes
@@ -261,13 +302,16 @@ fi
 print_header "Configuring Environment"
 
 # Restore .env if exists in backup, otherwise prompt to create
-if [ -f "$BACKUP_DIR/.env.backup" ]; then
-    cp "$BACKUP_DIR/.env.backup" .env
+if [ -f "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" ]; then
+    cp "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" .env
     print_success "Restored .env from backup"
 elif [ ! -f ".env" ]; then
     if [ -f "env" ]; then
         cp env .env
         print_warning ".env file created from template. Please update with production values!"
+    elif [ -f ".env.example" ]; then
+        cp .env.example .env
+        print_warning ".env file created from .env.example. Please update with production values!"
     else
         print_error ".env file not found. Please create one manually."
         exit 1
@@ -285,11 +329,18 @@ print_success "Environment set to: $ENVIRONMENT"
 print_header "Setting File Permissions"
 
 # Set ownership (adjust user:group as needed)
+# For Hostinger VPS, typically www-data or deploy user
 WEB_USER="www-data"
 WEB_GROUP="www-data"
+# If using deploy user, uncomment below:
+# WEB_USER="deploy"
+# WEB_GROUP="deploy"
 
 print_info "Setting ownership to $WEB_USER:$WEB_GROUP..."
-chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH" || print_warning "Could not set ownership. May need sudo."
+# Try with sudo first, then without
+sudo chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH" 2>/dev/null || \
+chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH" 2>/dev/null || \
+print_warning "Could not set ownership. You may need to run: sudo chown -R $WEB_USER:$WEB_GROUP $DEPLOY_PATH"
 
 # Set directory permissions
 print_info "Setting directory permissions..."
@@ -410,9 +461,16 @@ print_success "Application optimized"
 
 print_header "Restarting Services"
 
-# Restart PHP-FPM (adjust service name based on your PHP version)
+# Restart PHP-FPM (PHP 8.4)
 print_info "Restarting PHP-FPM..."
-systemctl restart php8.1-fpm 2>/dev/null || systemctl restart php-fpm 2>/dev/null || print_warning "Could not restart PHP-FPM. May need sudo."
+# Try PHP 8.4 first, then fallback to auto-detected version
+PHP_MAJOR_MINOR=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
+systemctl restart php8.4-fpm 2>/dev/null || \
+systemctl restart php${PHP_MAJOR_MINOR}-fpm 2>/dev/null || \
+systemctl restart php8.3-fpm 2>/dev/null || \
+systemctl restart php8.2-fpm 2>/dev/null || \
+systemctl restart php-fpm 2>/dev/null || \
+print_warning "Could not restart PHP-FPM. May need sudo. Try: sudo systemctl restart php8.4-fpm"
 
 # Reload Nginx/Apache
 print_info "Reloading web server..."
