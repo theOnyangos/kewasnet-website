@@ -79,6 +79,16 @@ check_command() {
     fi
 }
 
+# Helper function to run commands with sudo fallback
+run_with_sudo() {
+    local cmd="$1"
+    # Try with sudo first, then without
+    sudo bash -c "$cmd" 2>/dev/null || bash -c "$cmd" 2>/dev/null || {
+        print_warning "Command failed: $cmd"
+        return 1
+    }
+}
+
 ###############################################################################
 # Pre-Deployment Checks
 ###############################################################################
@@ -152,22 +162,25 @@ print_success "All required PHP extensions are installed"
 if [ -d "$DEPLOY_PATH" ]; then
     print_header "Creating Backup"
     
-    mkdir -p "$DEPLOY_PATH/$BACKUP_DIR"
+    sudo mkdir -p "$DEPLOY_PATH/$BACKUP_DIR" 2>/dev/null || mkdir -p "$DEPLOY_PATH/$BACKUP_DIR"
     
     # Backup .env file
     if [ -f "$DEPLOY_PATH/.env" ]; then
+        sudo cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" 2>/dev/null || \
         cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/$BACKUP_DIR/.env.backup"
         print_success "Backed up .env file"
     fi
     
     # Backup writable directory
     if [ -d "$DEPLOY_PATH/writable" ]; then
+        sudo tar -czf "$DEPLOY_PATH/$BACKUP_DIR/writable_backup.tar.gz" -C "$DEPLOY_PATH" writable/ 2>/dev/null || \
         tar -czf "$DEPLOY_PATH/$BACKUP_DIR/writable_backup.tar.gz" -C "$DEPLOY_PATH" writable/
         print_success "Backed up writable directory"
     fi
     
     # Backup uploads
     if [ -d "$DEPLOY_PATH/public/uploads" ]; then
+        sudo tar -czf "$DEPLOY_PATH/$BACKUP_DIR/uploads_backup.tar.gz" -C "$DEPLOY_PATH/public" uploads/ 2>/dev/null || \
         tar -czf "$DEPLOY_PATH/$BACKUP_DIR/uploads_backup.tar.gz" -C "$DEPLOY_PATH/public" uploads/
         print_success "Backed up uploads directory"
     fi
@@ -187,6 +200,7 @@ if [ -d "$DEPLOY_PATH" ]; then
             }
             unset MYSQL_PWD
             if [ -f "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" ] && [ -s "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" ]; then
+                sudo gzip "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql" 2>/dev/null || \
                 gzip "$DEPLOY_PATH/$BACKUP_DIR/database_backup.sql"
                 print_success "Database backed up successfully"
             fi
@@ -204,7 +218,7 @@ print_header "Enabling Maintenance Mode"
 
 if [ -d "$DEPLOY_PATH" ]; then
     # Create maintenance flag file
-    cat > "$DEPLOY_PATH/public/maintenance.html" << 'EOF'
+    sudo tee "$DEPLOY_PATH/public/maintenance.html" > /dev/null << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -229,6 +243,34 @@ if [ -d "$DEPLOY_PATH" ]; then
 </body>
 </html>
 EOF
+    # If sudo tee failed, try without sudo
+    if [ ! -f "$DEPLOY_PATH/public/maintenance.html" ]; then
+        cat > "$DEPLOY_PATH/public/maintenance.html" << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Mode - KEWASNET</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; }
+        p { color: #666; line-height: 1.6; }
+        .logo { width: 150px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Maintenance in Progress</h1>
+        <p>We're currently performing scheduled maintenance to improve your experience.</p>
+        <p>We'll be back shortly. Thank you for your patience!</p>
+        <p><strong>KEWASNET Team</strong></p>
+    </div>
+</body>
+</html>
+EOF
+    fi
     
     # Redirect to maintenance page (optional - requires .htaccess modification)
     print_success "Maintenance mode enabled"
@@ -246,7 +288,7 @@ print_header "Pulling Latest Code"
 if [ ! -d "$DEPLOY_PATH" ]; then
     print_error "Deployment directory does not exist: $DEPLOY_PATH"
     print_info "Creating deployment directory..."
-    mkdir -p "$DEPLOY_PATH"
+    sudo mkdir -p "$DEPLOY_PATH" 2>/dev/null || mkdir -p "$DEPLOY_PATH"
     if [ ! -d "$DEPLOY_PATH" ]; then
         print_error "Failed to create deployment directory. Check permissions."
         exit 1
@@ -303,14 +345,15 @@ print_header "Configuring Environment"
 
 # Restore .env if exists in backup, otherwise prompt to create
 if [ -f "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" ]; then
+    sudo cp "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" .env 2>/dev/null || \
     cp "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" .env
     print_success "Restored .env from backup"
 elif [ ! -f ".env" ]; then
     if [ -f "env" ]; then
-        cp env .env
+        sudo cp env .env 2>/dev/null || cp env .env
         print_warning ".env file created from template. Please update with production values!"
     elif [ -f ".env.example" ]; then
-        cp .env.example .env
+        sudo cp .env.example .env 2>/dev/null || cp .env.example .env
         print_warning ".env file created from .env.example. Please update with production values!"
     else
         print_error ".env file not found. Please create one manually."
@@ -319,6 +362,7 @@ elif [ ! -f ".env" ]; then
 fi
 
 # Set correct environment
+sudo sed -i "s/CI_ENVIRONMENT = .*/CI_ENVIRONMENT = $ENVIRONMENT/" .env 2>/dev/null || \
 sed -i "s/CI_ENVIRONMENT = .*/CI_ENVIRONMENT = $ENVIRONMENT/" .env
 print_success "Environment set to: $ENVIRONMENT"
 
@@ -344,18 +388,26 @@ print_warning "Could not set ownership. You may need to run: sudo chown -R $WEB_
 
 # Set directory permissions
 print_info "Setting directory permissions..."
+sudo find "$DEPLOY_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || \
 find "$DEPLOY_PATH" -type d -exec chmod 755 {} \;
 
 # Set file permissions
 print_info "Setting file permissions..."
+sudo find "$DEPLOY_PATH" -type f -exec chmod 644 {} \; 2>/dev/null || \
 find "$DEPLOY_PATH" -type f -exec chmod 644 {} \;
 
 # Writable directories need special permissions
 print_info "Setting writable directory permissions..."
+sudo chmod -R 775 "$DEPLOY_PATH/writable" 2>/dev/null || \
 chmod -R 775 "$DEPLOY_PATH/writable"
-chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || mkdir -p "$DEPLOY_PATH/public/uploads" && chmod -R 775 "$DEPLOY_PATH/public/uploads"
+
+sudo chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || \
+chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || \
+(sudo mkdir -p "$DEPLOY_PATH/public/uploads" 2>/dev/null || mkdir -p "$DEPLOY_PATH/public/uploads") && \
+(sudo chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || chmod -R 775 "$DEPLOY_PATH/public/uploads")
 
 # Make spark executable
+sudo chmod +x "$DEPLOY_PATH/spark" 2>/dev/null || \
 chmod +x "$DEPLOY_PATH/spark"
 
 print_success "File permissions set correctly"
@@ -424,11 +476,11 @@ php spark cache:clear || print_warning "Cache clear command not available"
 
 # Clear route cache
 print_info "Clearing route cache..."
-rm -rf writable/cache/* 2>/dev/null || true
+sudo rm -rf writable/cache/* 2>/dev/null || rm -rf writable/cache/* 2>/dev/null || true
 
 # Clear view cache
 print_info "Clearing view cache..."
-rm -rf writable/debugbar/* 2>/dev/null || true
+sudo rm -rf writable/debugbar/* 2>/dev/null || rm -rf writable/debugbar/* 2>/dev/null || true
 
 # Clear session files (optional - be careful in production)
 # rm -rf writable/session/* 2>/dev/null || true
@@ -465,16 +517,25 @@ print_header "Restarting Services"
 print_info "Restarting PHP-FPM..."
 # Try PHP 8.4 first, then fallback to auto-detected version
 PHP_MAJOR_MINOR=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
+sudo systemctl restart php8.4-fpm 2>/dev/null || \
+sudo systemctl restart php${PHP_MAJOR_MINOR}-fpm 2>/dev/null || \
+sudo systemctl restart php8.3-fpm 2>/dev/null || \
+sudo systemctl restart php8.2-fpm 2>/dev/null || \
+sudo systemctl restart php-fpm 2>/dev/null || \
 systemctl restart php8.4-fpm 2>/dev/null || \
 systemctl restart php${PHP_MAJOR_MINOR}-fpm 2>/dev/null || \
 systemctl restart php8.3-fpm 2>/dev/null || \
 systemctl restart php8.2-fpm 2>/dev/null || \
 systemctl restart php-fpm 2>/dev/null || \
-print_warning "Could not restart PHP-FPM. May need sudo. Try: sudo systemctl restart php8.4-fpm"
+print_warning "Could not restart PHP-FPM. Try: sudo systemctl restart php8.4-fpm"
 
 # Reload Nginx/Apache
 print_info "Reloading web server..."
-systemctl reload nginx 2>/dev/null || systemctl reload apache2 2>/dev/null || print_warning "Could not reload web server. May need sudo."
+sudo systemctl reload nginx 2>/dev/null || \
+sudo systemctl reload apache2 2>/dev/null || \
+systemctl reload nginx 2>/dev/null || \
+systemctl reload apache2 2>/dev/null || \
+print_warning "Could not reload web server. Try: sudo systemctl reload nginx"
 
 # Restart queue workers (if using queues)
 # systemctl restart kewasnet-worker 2>/dev/null || print_info "No queue workers to restart"
@@ -485,7 +546,9 @@ php spark email:process || print_info "No emails to process"
 
 # Restart WebSocket server (if using Ratchet)
 print_info "Restarting WebSocket server..."
-systemctl restart kewasnet-websocket 2>/dev/null || print_info "WebSocket service not configured"
+sudo systemctl restart kewasnet-websocket 2>/dev/null || \
+systemctl restart kewasnet-websocket 2>/dev/null || \
+print_info "WebSocket service not configured"
 
 print_success "Services restarted"
 
@@ -495,7 +558,8 @@ print_success "Services restarted"
 
 print_header "Disabling Maintenance Mode"
 
-rm -f "$DEPLOY_PATH/public/maintenance.html"
+rm -f "$DEPLOY_PATH/public/maintenance.html" 2>/dev/null || \
+sudo rm -f "$DEPLOY_PATH/public/maintenance.html" 2>/dev/null || true
 print_success "Maintenance mode disabled"
 
 ###############################################################################
@@ -516,6 +580,7 @@ fi
 
 # Clean old backups (keep only last 5)
 print_info "Cleaning old backups..."
+cd "$DEPLOY_PATH/backups" 2>/dev/null && ls -t | tail -n +6 | xargs sudo rm -rf 2>/dev/null || \
 cd "$DEPLOY_PATH/backups" 2>/dev/null && ls -t | tail -n +6 | xargs rm -rf 2>/dev/null || true
 print_success "Old backups cleaned"
 
