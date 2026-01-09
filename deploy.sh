@@ -380,31 +380,64 @@ WEB_GROUP="www-data"
 # WEB_USER="deploy"
 # WEB_GROUP="deploy"
 
-print_info "Setting ownership to $WEB_USER:$WEB_GROUP..."
-# Try with sudo first, then without
+# First, ensure writable directory structure exists
+print_info "Creating writable directory structure..."
+sudo mkdir -p "$DEPLOY_PATH/writable/cache" 2>/dev/null || mkdir -p "$DEPLOY_PATH/writable/cache"
+sudo mkdir -p "$DEPLOY_PATH/writable/logs" 2>/dev/null || mkdir -p "$DEPLOY_PATH/writable/logs"
+sudo mkdir -p "$DEPLOY_PATH/writable/session" 2>/dev/null || mkdir -p "$DEPLOY_PATH/writable/session"
+sudo mkdir -p "$DEPLOY_PATH/writable/debugbar" 2>/dev/null || mkdir -p "$DEPLOY_PATH/writable/debugbar"
+sudo mkdir -p "$DEPLOY_PATH/writable/uploads" 2>/dev/null || mkdir -p "$DEPLOY_PATH/writable/uploads"
+sudo mkdir -p "$DEPLOY_PATH/public/uploads" 2>/dev/null || mkdir -p "$DEPLOY_PATH/public/uploads"
+
+# Set ownership on writable directories first (before general chmod)
+print_info "Setting ownership on writable directories to $WEB_USER:$WEB_GROUP..."
+sudo chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH/writable" 2>/dev/null || \
+chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH/writable" 2>/dev/null || \
+print_warning "Could not set ownership on writable directory. You may need to run: sudo chown -R $WEB_USER:$WEB_GROUP $DEPLOY_PATH/writable"
+
+# Set ownership on uploads directory
+sudo chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH/public/uploads" 2>/dev/null || \
+chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH/public/uploads" 2>/dev/null || \
+print_warning "Could not set ownership on uploads directory"
+
+# Set ownership on entire deployment directory
+print_info "Setting ownership on deployment directory to $WEB_USER:$WEB_GROUP..."
 sudo chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH" 2>/dev/null || \
 chown -R $WEB_USER:$WEB_GROUP "$DEPLOY_PATH" 2>/dev/null || \
 print_warning "Could not set ownership. You may need to run: sudo chown -R $WEB_USER:$WEB_GROUP $DEPLOY_PATH"
 
-# Set directory permissions
-print_info "Setting directory permissions..."
-sudo find "$DEPLOY_PATH" -type d -exec chmod 755 {} \; 2>/dev/null || \
-find "$DEPLOY_PATH" -type d -exec chmod 755 {} \;
+# Set general directory permissions (we'll fix writable separately after)
+print_info "Setting general directory permissions..."
+# Use a simpler approach - set permissions on common directories first
+sudo chmod 755 "$DEPLOY_PATH" 2>/dev/null || chmod 755 "$DEPLOY_PATH"
+sudo find "$DEPLOY_PATH/app" -type d -exec chmod 755 {} \; 2>/dev/null || \
+find "$DEPLOY_PATH/app" -type d -exec chmod 755 {} \; 2>/dev/null || true
+sudo find "$DEPLOY_PATH/public" -type d -exec chmod 755 {} \; 2>/dev/null || \
+find "$DEPLOY_PATH/public" -type d -exec chmod 755 {} \; 2>/dev/null || true
+sudo find "$DEPLOY_PATH/vendor" -type d -exec chmod 755 {} \; 2>/dev/null || \
+find "$DEPLOY_PATH/vendor" -type d -exec chmod 755 {} \; 2>/dev/null || true
 
-# Set file permissions
-print_info "Setting file permissions..."
-sudo find "$DEPLOY_PATH" -type f -exec chmod 644 {} \; 2>/dev/null || \
-find "$DEPLOY_PATH" -type f -exec chmod 644 {} \;
+# Set general file permissions
+print_info "Setting general file permissions..."
+sudo find "$DEPLOY_PATH/app" -type f -exec chmod 644 {} \; 2>/dev/null || \
+find "$DEPLOY_PATH/app" -type f -exec chmod 644 {} \; 2>/dev/null || true
+sudo find "$DEPLOY_PATH/public" -type f -exec chmod 644 {} \; 2>/dev/null || \
+find "$DEPLOY_PATH/public" -type f -exec chmod 644 {} \; 2>/dev/null || true
 
-# Writable directories need special permissions
+# Writable directories need special permissions (775 = rwxrwxr-x)
 print_info "Setting writable directory permissions..."
 sudo chmod -R 775 "$DEPLOY_PATH/writable" 2>/dev/null || \
 chmod -R 775 "$DEPLOY_PATH/writable"
 
+# Ensure cache directory has correct permissions (explicitly)
+print_info "Ensuring cache directory permissions..."
+sudo chmod 775 "$DEPLOY_PATH/writable/cache" 2>/dev/null || chmod 775 "$DEPLOY_PATH/writable/cache"
+sudo chown $WEB_USER:$WEB_GROUP "$DEPLOY_PATH/writable/cache" 2>/dev/null || \
+chown $WEB_USER:$WEB_GROUP "$DEPLOY_PATH/writable/cache" 2>/dev/null || true
+
+# Uploads directory permissions
 sudo chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || \
-chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || \
-(sudo mkdir -p "$DEPLOY_PATH/public/uploads" 2>/dev/null || mkdir -p "$DEPLOY_PATH/public/uploads") && \
-(sudo chmod -R 775 "$DEPLOY_PATH/public/uploads" 2>/dev/null || chmod -R 775 "$DEPLOY_PATH/public/uploads")
+chmod -R 775 "$DEPLOY_PATH/public/uploads"
 
 # Make spark executable
 sudo chmod +x "$DEPLOY_PATH/spark" 2>/dev/null || \
