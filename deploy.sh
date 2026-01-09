@@ -115,7 +115,7 @@ PHP_MAJOR_MINOR=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 print_info "PHP Version: $PHP_VERSION"
 
 # Check if PHP 8.4 or higher
-if php -r "exit(version_compare(PHP_VERSION, '8.4.0', '<') ? 1 : 0);"; then
+if php -r "exit(version_compare(PHP_VERSION, '8.4.0', '<') ? 0 : 1);"; then
     print_error "PHP 8.4 or higher is required. Current version: $PHP_VERSION"
     print_info "Please install PHP 8.4 before continuing."
     exit 1

@@ -110,3 +110,55 @@ After running the script, verify:
 - [ ] Permissions are correct: `ls -la /var/www/html/kewasnet-website/writable`
 - [ ] Database connection works: `php spark db:table`
 - [ ] Email queue cron is set: `crontab -l | grep email:process`
+
+ ## For MySQL 5.7+ and MariaDB:
+
+```bash
+   sudo systemctl stop mysql
+   # or for MariaDB
+   sudo systemctl stop mariadb
+```
+
+2. Start MySQL in safe mode without password checking:
+
+```bash
+   sudo mysqld_safe --skip-grant-tables --skip-networking &
+```
+
+3. Connect to MySQL without password:
+
+```bash
+   mysql -u root
+```
+
+4. In MySQL prompt, reset password:
+
+```bash
+   -- For MySQL 5.7.6+
+   ALTER USER 'root'@'localhost' IDENTIFIED BY 'your_new_password';
+
+   -- For MySQL 5.7.5 and earlier
+   SET PASSWORD FOR 'root'@'localhost' = PASSWORD('your_new_password');
+
+   -- For MariaDB
+   SET PASSWORD FOR 'root'@'localhost' = PASSWORD('your_new_password');
+```
+
+5. If ALTER USER doesn't work, try:
+
+```bash
+   FLUSH PRIVILEGES;
+   USE mysql;
+   UPDATE user SET authentication_string = PASSWORD('your_new_password') WHERE user = 'root';
+   -- or for newer MySQL
+   UPDATE user SET plugin='mysql_native_password' WHERE user='root';
+   FLUSH PRIVILEGES;
+   EXIT;
+```
+
+6. Stop safe mode and restart MySQL:
+
+```bash
+   sudo mysqladmin -u root shutdown
+   sudo systemctl start mysql
+```
