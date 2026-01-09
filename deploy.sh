@@ -284,6 +284,10 @@ fi
 
 print_header "Pulling Latest Code"
 
+# Fix Git ownership issue
+print_info "Configuring Git safe directory..."
+git config --global --add safe.directory "$DEPLOY_PATH" 2>/dev/null || true
+
 # Ensure we're in the deployment directory
 if [ ! -d "$DEPLOY_PATH" ]; then
     print_error "Deployment directory does not exist: $DEPLOY_PATH"
@@ -305,6 +309,16 @@ if [ ! -d ".git" ]; then
     print_info "Initializing git repository..."
     git init
     git remote add origin https://github.com/theOnyangos/$APP_NAME.git
+fi
+
+# Ensure proper git ownership
+CURRENT_USER=$(whoami)
+if [ -d ".git" ]; then
+    GIT_OWNER=$(stat -c '%U' .git 2>/dev/null || echo "")
+    if [ "$GIT_OWNER" != "$CURRENT_USER" ] && [ "$GIT_OWNER" != "" ]; then
+        print_warning "Git directory owned by $GIT_OWNER, fixing to $CURRENT_USER..."
+        sudo chown -R $CURRENT_USER:$CURRENT_USER .git 2>/dev/null || true
+    fi
 fi
 
 # Fetch and pull latest changes
