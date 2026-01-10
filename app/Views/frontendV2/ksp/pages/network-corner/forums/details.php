@@ -24,33 +24,46 @@
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
     <div class="bg-light relative">
+
+        <!-- Page Header -->
+        <section class="relative py-16 bg-gradient-to-r from-primary to-secondary">
+            <div class="container mx-auto px-4 text-center text-white">
+                <div class="max-w-4xl mx-auto">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4"><?= esc($forum->name ?? 'Forum') ?></h1>
+                    <p class="text-xl md:text-xl leading-relaxed">
+                        <?= esc($forum->description ?? 'Explore discussions and connect with the community.') ?>
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <!-- Breadcrumb -->
-        <div class="bg-white border-b borderColor">
+        <div class="sticky top-[110px] z-40 bg-white border-b borderColor shadow-sm">
             <div class="container mx-auto px-4 py-3">
                 <nav class="flex" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                        <li class="inline-flex items-center">
-                            <a href="/" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
-                                <i data-lucide="home" class="w-4 h-4 mr-2"></i>
-                                Home
+                    <ol class="flex flex-wrap items-center gap-1 sm:gap-2 md:space-x-1 md:space-x-3 text-xs sm:text-sm">
+                        <li class="inline-flex items-center flex-shrink-0">
+                            <a href="/" class="inline-flex items-center font-medium text-slate-600 hover:text-primary whitespace-nowrap">
+                                <i data-lucide="home" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"></i>
+                                <span>Home</span>
                             </a>
                         </li>
-                        <li>
+                        <li class="flex-shrink-0">
                             <div class="flex items-center">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                                <a href="<?= base_url('ksp/networking-corner') ?>" class="ml-1 text-sm cursor-pointer font-medium text-slate-600 hover:text-secondary md:ml-2">Networking Corner</a>
+                                <i data-lucide="chevron-right" class="w-3 h-3 sm:w-4 sm:h-4 text-slate-400"></i>
+                                <a href="<?= base_url('ksp/networking-corner') ?>" class="ml-1 cursor-pointer font-medium text-slate-600 hover:text-secondary md:ml-2 whitespace-nowrap">Networking Corner</a>
                             </div>
                         </li>
-                        <li>
+                        <li class="flex-shrink-0">
                             <div class="flex items-center">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                                <a href="<?= base_url('ksp/networking-corner/forums') ?>" class="ml-1 text-sm cursor-pointer font-medium text-slate-600 hover:text-secondary md:ml-2">Forums</a>
+                                <i data-lucide="chevron-right" class="w-3 h-3 sm:w-4 sm:h-4 text-slate-400"></i>
+                                <a href="<?= base_url('ksp/networking-corner/forums') ?>" class="ml-1 cursor-pointer font-medium text-slate-600 hover:text-secondary md:ml-2 whitespace-nowrap">Forums</a>
                             </div>
                         </li>
-                        <li aria-current="page">
+                        <li aria-current="page" class="min-w-0 flex-1 sm:flex-initial flex-shrink-0">
                             <div class="flex items-center">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                                <span class="ml-1 text-sm font-medium text-primary cursor-pointer md:ml-2"><?= esc($forum->name) ?></span>
+                                <i data-lucide="chevron-right" class="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0"></i>
+                                <span class="ml-1 font-medium text-primary cursor-pointer md:ml-2 truncate block" title="<?= esc($forum->name) ?>"><?= esc($forum->name) ?></span>
                             </div>
                         </li>
                     </ol>
@@ -69,7 +82,7 @@
                                 <i data-lucide="<?= esc($forum->icon) ?>" class="w-6 h-6 text-secondary"></i>
                             </div>
                             <div class="max-w-[80%]">
-                                <h1 class="text-2xl md:text-3xl font-bold text-primary"><?= esc($forum->name) ?></h1>
+                                <h2 class="text-2xl md:text-3xl font-bold text-primary"><?= esc($forum->name) ?></h2>
                                 <p class="text-slate-600"><?= esc($forum->description) ?></p>
                             </div>
                         </div>
@@ -360,67 +373,69 @@
                 log_message('error', 'Forum object not set in view for contact modal');
             }
         ?>
-        <div id="contact-modal" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-2 sm:p-4">
-            <!-- Background overlay -->
-            <div class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"></div>
-            
-            <!-- Modal container -->
-            <div class="relative z-50 bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-2xl max-h-[calc(100vh-2rem)] flex flex-col">
-                <!-- Modal Header -->
-                <div class="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
-                    <div class="flex justify-between items-start w-full">
-                        <h3 class="text-2xl font-bold text-gray-900">Contact Forum Moderators</h3>
-                        <button onclick="closeContactModal()" type="button" class="text-slate-400 hover:text-slate-500 p-1">
-                            <i data-lucide="x" class="w-6 h-6"></i>
-                        </button>
-                    </div>
-                </div>
+            <div id="contact-modal" class="hidden fixed inset-0" style="z-index: 9999 !important;">
+                <!-- Background overlay -->
+                <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300" style="z-index: 1;"></div>
                 
-                <!-- Modal Body -->
-                <form id="contact-form" data-forum-id="<?= isset($forum->id) ? esc($forum->id) : (isset($forum) && is_object($forum) && property_exists($forum, 'id') ? esc($forum->id) : '') ?>" class="flex-1 overflow-y-auto px-6 py-4">
-                    <div class="space-y-4 sm:space-y-6">
-                        <div>
-                            <label for="contact-subject" class="block text-sm font-medium text-slate-700 mb-1">Subject <span class="text-red-500">*</span></label>
-                            <input 
-                                type="text" 
-                                id="contact-subject" 
-                                required 
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
-                                placeholder="Enter subject">
-                            <p class="mt-1 text-xs text-slate-500">Brief summary of your message</p>
+                <!-- Modal container -->
+                <div class="fixed inset-0 flex items-center justify-center overflow-y-auto p-2 sm:p-4" style="z-index: 2; pointer-events: none;">
+                    <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-2xl max-h-[calc(100vh-2rem)] flex flex-col" style="pointer-events: auto;">
+                    <!-- Modal Header -->
+                    <div class="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                        <div class="flex justify-between items-start w-full">
+                            <h3 class="text-2xl font-bold text-gray-900">Contact Forum Moderators</h3>
+                            <button onclick="closeContactModal()" type="button" class="text-slate-400 hover:text-slate-500 p-1">
+                                <i data-lucide="x" class="w-6 h-6"></i>
+                            </button>
                         </div>
-                        <div>
-                            <label for="contact-message" class="block text-sm font-medium text-slate-700 mb-1">Message <span class="text-red-500">*</span></label>
-                            <textarea 
-                                id="contact-message" 
-                                required 
-                                rows="6" 
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px] transition-all duration-200 resize-none" 
-                                placeholder="Type your message..."></textarea>
-                            <p class="mt-1 text-xs text-slate-500">Your message will be sent to all forum moderators</p>
-                        </div>
-                        <input type="hidden" id="moderator-emails" value='<?= isset($moderatorEmails) ? json_encode($moderatorEmails) : '[]' ?>'>
-                        <input type="hidden" id="forum-id" value="<?= isset($forum) && is_object($forum) && property_exists($forum, 'id') ? esc($forum->id) : '' ?>">
                     </div>
                     
-                    <!-- Modal Footer -->
-                    <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-                        <button 
-                            type="button" 
-                            onclick="closeContactModal()"
-                            class="px-6 py-3 border border-gray-300 rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition-colors">
-                            Cancel
-                        </button>
-                        <button 
-                            type="submit"
-                            class="gradient-btn px-6 py-3 rounded-lg text-white font-medium flex items-center">
-                            <i data-lucide="send" class="w-4 h-4 mr-2"></i>
-                            Send Message
-                        </button>
+                    <!-- Modal Body -->
+                    <form id="contact-form" data-forum-id="<?= isset($forum->id) ? esc($forum->id) : (isset($forum) && is_object($forum) && property_exists($forum, 'id') ? esc($forum->id) : '') ?>" class="flex-1 overflow-y-auto px-6 py-4">
+                        <div class="space-y-4 sm:space-y-6">
+                            <div>
+                                <label for="contact-subject" class="block text-sm font-medium text-slate-700 mb-1">Subject <span class="text-red-500">*</span></label>
+                                <input 
+                                    type="text" 
+                                    id="contact-subject" 
+                                    required 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" 
+                                    placeholder="Enter subject">
+                                <p class="mt-1 text-xs text-slate-500">Brief summary of your message</p>
+                            </div>
+                            <div>
+                                <label for="contact-message" class="block text-sm font-medium text-slate-700 mb-1">Message <span class="text-red-500">*</span></label>
+                                <textarea 
+                                    id="contact-message" 
+                                    required 
+                                    rows="6" 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-h-[150px] transition-all duration-200 resize-none" 
+                                    placeholder="Type your message..."></textarea>
+                                <p class="mt-1 text-xs text-slate-500">Your message will be sent to all forum moderators</p>
+                            </div>
+                            <input type="hidden" id="moderator-emails" value='<?= isset($moderatorEmails) ? json_encode($moderatorEmails) : '[]' ?>'>
+                            <input type="hidden" id="forum-id" value="<?= isset($forum) && is_object($forum) && property_exists($forum, 'id') ? esc($forum->id) : '' ?>">
+                        </div>
+                        
+                        <!-- Modal Footer -->
+                        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+                            <button 
+                                type="button" 
+                                onclick="closeContactModal()"
+                                class="px-6 py-3 border border-gray-300 rounded-lg text-slate-600 hover:bg-slate-50 font-medium transition-colors">
+                                Cancel
+                            </button>
+                            <button 
+                                type="submit"
+                                class="gradient-btn px-6 py-3 rounded-lg text-white font-medium flex items-center">
+                                <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                                Send Message
+                            </button>
+                        </div>
+                    </form>
                     </div>
-                </form>
+                </div>
             </div>
-        </div>
         <?php endif; ?>
 
         <!-- Add Discussion Modal (place this just before the closing </body> tag) -->
@@ -613,6 +628,7 @@
 
 <!--  Section Scripts Block  -->
 <?= $this->section('scripts') ?>
+
 <style>
     /* Error input styling */
     .is-invalid {
@@ -1114,6 +1130,24 @@
         const csrfName = '<?= csrf_token() ?>';
         const csrfHash = '<?= csrf_hash() ?>';
         
+        // Find the button and show loading state
+        const buttons = document.querySelectorAll('.like-discussion-btn');
+        let targetButton = null;
+        buttons.forEach(button => {
+            const onclick = button.getAttribute('onclick');
+            const match = onclick.match(/likeDiscussion\(['"](.+?)['"]\)/);
+            if (match && match[1] === discussionId) {
+                targetButton = button;
+                button.disabled = true;
+                const icon = button.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'loader');
+                    icon.classList.add('animate-spin');
+                    lucide.createIcons();
+                }
+            }
+        });
+        
         fetch('<?= base_url('ksp/discussion/like-discussion') ?>', {
             method: 'POST',
             headers: {
@@ -1125,32 +1159,80 @@
                 [csrfName]: csrfHash
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.success) {
+            // Restore button state first
+            if (targetButton) {
+                targetButton.disabled = false;
+                const icon = targetButton.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'thumbs-up');
+                    icon.classList.remove('animate-spin');
+                    lucide.createIcons();
+                }
+            }
+            
+            // Always show notification based on response
+            // Check if data exists and success is explicitly true
+            if (data && data.hasOwnProperty('success') && data.success === true) {
                 // Find the button that was clicked using the discussion ID
-                const buttons = document.querySelectorAll('.like-discussion-btn');
                 buttons.forEach(button => {
                     const onclick = button.getAttribute('onclick');
                     const match = onclick.match(/likeDiscussion\(['"](.+?)['"]\)/);
                     if (match && match[1] === discussionId) {
                         const countSpan = button.querySelector('.like-count');
                         if (countSpan) {
-                            const currentCount = parseInt(countSpan.textContent) || 0;
+                            const currentCount = parseInt(countSpan.textContent.replace(/,/g, '')) || 0;
                             countSpan.textContent = currentCount + 1;
                         }
                         button.classList.add('text-primary');
                         button.disabled = true;
                     }
                 });
-                showNotification('success', data.message || 'Discussion liked successfully!');
+                // Show success message - always show the message from server
+                const successMessage = (data.message && typeof data.message === 'string' && data.message.trim()) ? data.message : 'Discussion liked successfully!';
+                showNotification('success', successMessage);
             } else {
-                showNotification('error', data.message || 'Failed to like discussion');
+                // Handle failure case - always show the message
+                // This covers: success: false, success: undefined, or data is null/undefined
+                let message = 'Failed to like discussion';
+                if (data && data.message && typeof data.message === 'string' && data.message.trim()) {
+                    message = data.message;
+                }
+                // Check if it's an "already liked" message or similar, use warning instead of error
+                const notificationType = message.toLowerCase().includes('already') ? 'warning' : 'error';
+                showNotification(notificationType, message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showNotification('error', 'An error occurred while liking the discussion');
+            if (targetButton) {
+                targetButton.disabled = false;
+                const icon = targetButton.querySelector('i');
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'thumbs-up');
+                    icon.classList.remove('animate-spin');
+                    lucide.createIcons();
+                }
+            }
+            // Try to extract error message from response if available
+            let errorMessage = 'An error occurred while liking the discussion';
+            if (error.response) {
+                try {
+                    const errorData = error.response.json ? error.response.json() : null;
+                    if (errorData && errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (e) {
+                    // If parsing fails, use default message
+                }
+            }
+            showNotification('error', errorMessage);
         });
     };
 
@@ -1162,8 +1244,16 @@
         const button = document.getElementById(`bookmark-btn-${discussionId}`);
         const icon = document.getElementById(`bookmark-icon-${discussionId}`);
         
-        // Disable button during request
-        if (button) button.disabled = true;
+        // Disable button and show loading state
+        if (button) {
+            button.disabled = true;
+            if (icon) {
+                const originalIcon = icon.getAttribute('data-lucide');
+                icon.setAttribute('data-lucide', 'loader');
+                icon.classList.add('animate-spin');
+                lucide.createIcons();
+            }
+        }
         
         fetch('<?= base_url('ksp/discussion/toggle-bookmark') ?>', {
             method: 'POST',
@@ -1181,6 +1271,8 @@
             if (data.success) {
                 // Update icon based on bookmark status
                 if (icon) {
+                    icon.setAttribute('data-lucide', 'bookmark');
+                    icon.classList.remove('animate-spin');
                     if (data.bookmarked) {
                         icon.classList.add('fill-secondary', 'text-secondary');
                         button.title = 'Remove bookmark';
@@ -1194,11 +1286,23 @@
                 showNotification('success', data.message || 'Bookmark updated successfully!');
             } else {
                 showNotification('error', data.message || 'Failed to update bookmark');
+                // Restore icon on error
+                if (icon) {
+                    icon.setAttribute('data-lucide', 'bookmark');
+                    icon.classList.remove('animate-spin');
+                    lucide.createIcons();
+                }
             }
         })
         .catch(error => {
             console.error('Error:', error);
             showNotification('error', 'An error occurred while updating bookmark');
+            // Restore icon on error
+            if (icon) {
+                icon.setAttribute('data-lucide', 'bookmark');
+                icon.classList.remove('animate-spin');
+                lucide.createIcons();
+            }
         })
         .finally(() => {
             // Re-enable button
@@ -1234,13 +1338,14 @@
     // Join forum
     window.joinForum = function() {
         if (!currentForumId) {
-            alert('No forum selected!');
+            showNotification('error', 'No forum selected!');
             return;
         }
         var $joinBtn = $('#joinForumBtn');
         var originalText = $joinBtn.html();
         $joinBtn.html('<span class="flex items-center"><i data-lucide="loader" class="w-4 h-4 animate-spin mr-2"></i> Joining...</span>');
         $joinBtn.prop('disabled', true);
+        lucide.createIcons();
         var formData = new FormData();
         formData.append('forum_id', currentForumId);
         formData.append('csrf_test_name', '<?= csrf_hash() ?>');
@@ -1256,20 +1361,24 @@
                     showNotification('success', data.message);
                     $joinBtn.html(originalText);
                     $joinBtn.prop('disabled', false);
+                    lucide.createIcons();
+                    closeJoinForumModal();
                     setTimeout(function() {
                         window.location.reload();
-                        closeJoinForumModal();
-                    }, 2000);
+                    }, 1500);
                 } else {
                     showNotification('error', data.message || 'Failed to join forum. Please try again.');
                     $joinBtn.html(originalText);
                     $joinBtn.prop('disabled', false);
+                    lucide.createIcons();
                 }
             },
-            error: function() {
-                showNotification('error', 'An error occurred. Please try again.');
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
+                showNotification('error', errorMsg);
                 $joinBtn.html(originalText);
                 $joinBtn.prop('disabled', false);
+                lucide.createIcons();
             }
         });
     };
@@ -1277,13 +1386,14 @@
     // Leave forum
     window.leaveForum = function() {
         if (!currentForumId) {
-            alert('No forum selected!');
+            showNotification('error', 'No forum selected!');
             return;
         }
         var $leaveBtn = $('#leaveForumBtn');
         var originalText = $leaveBtn.html();
         $leaveBtn.html('<span class="flex items-center"><i data-lucide="loader" class="w-4 h-4 animate-spin mr-2"></i> Leaving...</span>');
         $leaveBtn.prop('disabled', true);
+        lucide.createIcons();
         var formData = new FormData();
         formData.append('forum_id', currentForumId);
         formData.append('csrf_test_name', '<?= csrf_hash() ?>');
@@ -1299,20 +1409,24 @@
                     showNotification('success', data.message);
                     $leaveBtn.html(originalText);
                     $leaveBtn.prop('disabled', false);
+                    lucide.createIcons();
+                    closeLeaveForumModal();
                     setTimeout(function() {
                         window.location.href = '<?= base_url('ksp/networking-corner') ?>';
-                        closeLeaveForumModal();
-                    }, 2000);
+                    }, 1500);
                 } else {
                     showNotification('error', data.message || 'Failed to leave forum. Please try again.');
                     $leaveBtn.html(originalText);
                     $leaveBtn.prop('disabled', false);
+                    lucide.createIcons();
                 }
             },
-            error: function() {
-                showNotification('error', 'An error occurred. Please try again.');
+            error: function(xhr) {
+                const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
+                showNotification('error', errorMsg);
                 $leaveBtn.html(originalText);
                 $leaveBtn.prop('disabled', false);
+                lucide.createIcons();
             }
         });
     };

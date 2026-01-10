@@ -2,6 +2,7 @@
 <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<!-- SweetAlert2 is already loaded in header-scripts.php, but keep this as backup -->
 
 <script>
     // Initialize Lucide icons when DOM is ready
@@ -9,54 +10,74 @@
         lucide.createIcons();
     }
 
-    // Custom Notifications Function
-    function showNotification(type, message) {
-    // Create notification element
-    const notification = document.createElement("div");
-    notification.className = `fixed top-4 right-4 z-50 max-w-sm w-full bg-white border-l-4 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
-        type === "success" ? "border-green-500" : "border-red-500"
-    }`;
-
-    notification.innerHTML = `
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <i data-lucide="${
-                    type === "success" ? "check-circle" : "x-circle"
-                    }" class="w-5 h-5 ${
-        type === "success" ? "text-green-500" : "text-red-500"
-    }"></i>
-                </div>
-                <div class="ml-3 flex-1">
-                    <p class="text-sm font-medium text-gray-900">${message}</p>
-                </div>
-                <div class="ml-4 flex-shrink-0">
-                    <button type="button" class="inline-flex text-gray-400 hover:text-gray-600" onclick="this.closest('.fixed').remove()">
-                        <i data-lucide="x" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-
-    document.body.appendChild(notification);
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-
-    // Animate in
-    setTimeout(() => {
-        notification.classList.remove("translate-x-full");
-    }, 100);
-
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        notification.classList.add("translate-x-full");
-        setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
+    // Custom Notifications Function - Using SweetAlert2 Toast
+    // Override any existing showNotification function and make it globally available
+    // Wait for DOM to be ready before defining to ensure Swal is loaded
+    (function() {
+        // Define function immediately but make it wait for Swal
+        window.showNotification = function(type, message, retryCount) {
+            retryCount = retryCount || 0;
+            const maxRetries = 15; // More retries for slower connections
+            
+            // Ensure message is a string
+            if (!message || typeof message !== 'string') {
+                message = type === 'success' ? 'Operation completed successfully!' : 'An error occurred!';
+            }
+            
+            // Check if SweetAlert2 is available - wait for it if loading
+            if (typeof Swal === 'undefined' || typeof Swal.fire !== 'function') {
+                if (retryCount < maxRetries) {
+                    // Wait and try again
+                    setTimeout(function() {
+                        window.showNotification(type, message, retryCount + 1);
+                    }, 200);
+                    return;
+                } else {
+                    // After max retries, use alert fallback - at least show the message
+                    alert(`[${type.toUpperCase()}] ${message}`);
+                    return;
+                }
+            }
+            
+            // SweetAlert2 is available - show toast
+            const iconMap = {
+                'success': 'success',
+                'error': 'error',
+                'warning': 'warning',
+                'info': 'info'
+            };
+            const icon = iconMap[type] || 'info';
+            
+            try {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: icon,
+                    title: message,
+                    showConfirmButton: false,
+                    timer: type === 'error' ? 5000 : 3000,
+                    timerProgressBar: true,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                    }
+                });
+            } catch (error) {
+                // Fallback to alert - must show message to user
+                alert(`[${type.toUpperCase()}] ${message}`);
+            }
+        };
+        
+        // Also define as regular function for backward compatibility
+        if (typeof showNotification === 'undefined') {
+            var showNotification = function(type, message) {
+                window.showNotification(type, message);
+            };
+        } else {
+            // Override existing showNotification
+            showNotification = window.showNotification;
         }
-        }, 300);
-    }, 5000);
-    }
+    })();
 
     $(document).ready(function() {
         $('.select2').select2({
@@ -101,54 +122,7 @@
             `;
     }
 
-    // Custom Notifications Function
-    function showNotification(type, message) {
-        // Create notification element
-        const notification = document.createElement("div");
-        notification.className = `fixed top-4 right-4 z-50 max-w-sm w-full bg-white border-l-4 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full ${
-            type === "success" ? "border-green-400" : "border-red-500"
-        }`;
-
-        notification.innerHTML = `
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <i data-lucide="${
-                        type === "success" ? "check-circle" : "x-circle"
-                        }" class="w-5 h-5 ${
-            type === "success" ? "text-green-400" : "text-red-500"
-        }"></i>
-                    </div>
-                    <div class="ml-3 flex-1">
-                        <p class="text-sm font-medium text-gray-900">${message}</p>
-                    </div>
-                    <div class="ml-4 flex-shrink-0">
-                        <button type="button" class="inline-flex text-gray-400 hover:text-gray-600" onclick="this.closest('.fixed').remove()">
-                            <i data-lucide="x" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-
-        document.body.appendChild(notification);
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-
-        // Animate in
-        setTimeout(() => {
-            notification.classList.remove("translate-x-full");
-        }, 100);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            notification.classList.add("translate-x-full");
-            setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-            }, 300);
-        }, 5000);
-    }
+    // showNotification function is already defined above using SweetAlert2
 
     function generateReference(userPhoneNumber) {
         const date = new Date();

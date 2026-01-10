@@ -1225,6 +1225,14 @@ input[type="range"]::-ms-fill-lower {
   top: 90px;
 }
 
+.top-\[150px\] {
+  top: 150px;
+}
+
+.top-\[110px\] {
+  top: 110px;
+}
+
 .isolate {
   isolation: isolate;
 }
@@ -1267,6 +1275,14 @@ input[type="range"]::-ms-fill-lower {
 
 .z-\[9999\] {
   z-index: 9999;
+}
+
+.z-\[100\] {
+  z-index: 100;
+}
+
+.z-\[110\] {
+  z-index: 110;
 }
 
 .col-span-2 {
@@ -6601,6 +6617,10 @@ ul .menu-item {
     margin-top: 3rem;
   }
 
+  .sm\:mr-2 {
+    margin-right: 0.5rem;
+  }
+
   .sm\:block {
     display: block;
   }
@@ -6641,6 +6661,10 @@ ul .menu-item {
     height: 10rem;
   }
 
+  .sm\:h-4 {
+    height: 1rem;
+  }
+
   .sm\:max-h-16 {
     max-height: 4rem;
   }
@@ -6659,6 +6683,10 @@ ul .menu-item {
 
   .sm\:w-12 {
     width: 3rem;
+  }
+
+  .sm\:w-4 {
+    width: 1rem;
   }
 
   .sm\:max-w-2xl {
@@ -7037,6 +7065,12 @@ ul .menu-item {
     --tw-space-x-reverse: 0;
     margin-right: calc(1.5rem * var(--tw-space-x-reverse));
     margin-left: calc(1.5rem * calc(1 - var(--tw-space-x-reverse)));
+  }
+
+  .md\:space-x-1 > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 0;
+    margin-right: calc(0.25rem * var(--tw-space-x-reverse));
+    margin-left: calc(0.25rem * calc(1 - var(--tw-space-x-reverse)));
   }
 
   .md\:p-12 {

@@ -12,32 +12,45 @@
 
 <?= $this->section('content') ?>
 <div class="bg-light relative">
-    <!-- Breadcrumb -->
-    <div class="bg-white border-b borderColor">
+    <!-- Page Header -->
+    <section class="relative py-16 bg-gradient-to-r from-primary to-secondary">
+        <div class="container mx-auto px-4 text-center text-white">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4"><?= esc($discussion->title) ?></h1>
+                <p class="text-xl md:text-2xl leading-relaxed">
+                    <?= !empty($discussion->excerpt) ? esc($discussion->excerpt) : 'Join the conversation and share your thoughts.' ?>
+                </p>
+            </div>
+        </div>
+    </section>
+
+        <!-- Breadcrumb -->
+    <div class="sticky top-[110px] z-40 bg-white border-b borderColor shadow-sm">
         <div class="container mx-auto px-4 py-3">
             <nav class="flex" aria-label="Breadcrumb">
-                <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                    <li class="inline-flex items-center">
-                        <a href="<?= base_url('ksp') ?>" class="inline-flex items-center text-sm font-medium text-slate-600 hover:text-primary">
-                            <i data-lucide="home" class="w-4 h-4 mr-2"></i> Home
+                <ol class="flex flex-wrap items-center gap-1 sm:gap-2 md:space-x-1 md:space-x-3 text-xs sm:text-sm">
+                    <li class="inline-flex items-center flex-shrink-0">
+                        <a href="<?= base_url('ksp') ?>" class="inline-flex items-center font-medium text-slate-600 hover:text-primary whitespace-nowrap">
+                            <i data-lucide="home" class="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2"></i>
+                            <span>Home</span>
                         </a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <div class="flex items-center">
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                            <a href="<?= base_url('ksp/networking-corner') ?>" class="ml-1 text-sm cursor-pointer font-medium text-slate-600 hover:text-primary md:ml-2">Networking Corner</a>
+                            <i data-lucide="chevron-right" class="w-3 h-3 sm:w-4 sm:h-4 text-slate-400"></i>
+                            <a href="<?= base_url('ksp/networking-corner') ?>" class="ml-1 cursor-pointer font-medium text-slate-600 hover:text-primary md:ml-2 whitespace-nowrap">Networking Corner</a>
                         </div>
                     </li>
-                    <li>
+                    <li class="min-w-0 flex-1 sm:flex-initial flex-shrink-0">
                         <div class="flex items-center">
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                            <a href="<?= base_url('ksp/networking-corner-forum-discussion/' . $forumSlug) ?>" class="ml-1 text-sm cursor-pointer font-medium text-slate-600 hover:text-primary md:ml-2"><?= esc($forumName) ?></a>
+                            <i data-lucide="chevron-right" class="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0"></i>
+                            <a href="<?= base_url('ksp/networking-corner-forum-discussion/' . $forumSlug) ?>" class="ml-1 cursor-pointer font-medium text-slate-600 hover:text-primary md:ml-2 truncate block" title="<?= esc($forumName) ?>"><?= esc($forumName) ?></a>
                         </div>
                     </li>
-                    <li aria-current="page">
+                    <li aria-current="page" class="min-w-0 flex-1 sm:flex-initial flex-shrink-0">
                         <div class="flex items-center">
-                            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-                            <span class="ml-1 text-sm font-medium text-primary cursor-pointer md:ml-2"><?= esc($discussion->title) ?></span>
+                            <i data-lucide="chevron-right" class="w-3 h-3 sm:w-4 sm:h-4 text-slate-400 flex-shrink-0"></i>
+                            <span class="ml-1 font-medium text-primary cursor-pointer md:ml-2 truncate block" title="<?= esc($discussion->title) ?>"><?= esc($discussion->title) ?></span>
                         </div>
                     </li>
                 </ol>
@@ -82,7 +95,7 @@
                                 <i data-lucide="messages-square" class="w-5 h-5"></i>
                             </div>
                             <div class="flex-1">
-                                <h1 class="text-2xl md:text-3xl font-bold text-primary"><?= esc($discussion->title) ?></h1>
+                                <h2 class="text-2xl md:text-3xl font-bold text-primary"><?= esc($discussion->title) ?></h2>
                                 <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
                                     <span>Posted by <?= esc($author->first_name . ' ' . $author->last_name) ?></span>
                                     <span>•</span>
@@ -622,12 +635,13 @@
     
     <!-- Contact Moderators Modal -->
     <?php if (!empty($moderators)): ?>
-    <div id="moderator-contact-modal" class="hidden fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-2 sm:p-4">
+    <div id="moderator-contact-modal" class="hidden fixed inset-0" style="z-index: 9999 !important;">
         <!-- Background overlay -->
-        <div class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"></div>
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300" style="z-index: 1;"></div>
         
         <!-- Modal container -->
-        <div class="relative z-50 bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-2xl max-h-[calc(100vh-2rem)] flex flex-col">
+        <div class="fixed inset-0 flex items-center justify-center overflow-y-auto p-2 sm:p-4" style="z-index: 2; pointer-events: none;">
+            <div class="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all w-full max-w-2xl max-h-[calc(100vh-2rem)] flex flex-col" style="pointer-events: auto;">
             <!-- Modal Header -->
             <div class="bg-white px-6 py-4 border-b border-gray-200 flex-shrink-0">
                 <div class="flex justify-between items-start w-full">
@@ -682,6 +696,7 @@
                     </button>
                 </div>
             </form>
+            </div>
         </div>
     </div>
     <?php endif; ?>
@@ -846,6 +861,7 @@ $('#reply-form').on('submit', function(e) {
     
     submitBtn.html('<i data-lucide="loader" class="w-4 h-4 animate-spin mr-2"></i> Posting...');
     submitBtn.prop('disabled', true);
+    lucide.createIcons();
     
     $.ajax({
         url: '<?= base_url('ksp/discussion/add-reply') ?>',
@@ -873,6 +889,7 @@ $('#reply-form').on('submit', function(e) {
                 showNotification('error', response.message);
                 submitBtn.html(originalText);
                 submitBtn.prop('disabled', false);
+                lucide.createIcons();
             }
         },
         error: function(xhr) {
@@ -880,6 +897,7 @@ $('#reply-form').on('submit', function(e) {
             showNotification('error', errorMsg);
             submitBtn.html(originalText);
             submitBtn.prop('disabled', false);
+            lucide.createIcons();
         }
     });
 });
@@ -903,6 +921,7 @@ function resetForm() {
     const submitBtn = $('#reply-form').find('button[type="submit"]');
     submitBtn.html('<i data-lucide="send" class="w-4 h-4 mr-2"></i> Post Reply');
     submitBtn.prop('disabled', false);
+    lucide.createIcons();
 }
 
 // Real-time character count
@@ -956,6 +975,17 @@ $(document).on('keydown', function(e) {
 
 // Like reply function
 function likeReply(replyId) {
+    const likeBtn = $(`button[onclick="likeReply('${replyId}')"]`);
+    const icon = likeBtn.find('i[data-lucide]');
+    const originalIcon = icon.attr('data-lucide') || 'thumbs-up';
+    
+    // Show loading state
+    likeBtn.prop('disabled', true);
+    if (icon.length) {
+        icon.attr('data-lucide', 'loader').addClass('animate-spin');
+        lucide.createIcons();
+    }
+    
     $.ajax({
         url: '<?= base_url('ksp/discussion/like-reply') ?>',
         type: 'POST',
@@ -963,71 +993,109 @@ function likeReply(replyId) {
             reply_id: replyId,
             '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
         },
-        beforeSend: function() {
-            // Show loading state
-            const likeBtn = $(`button[onclick="likeReply('${replyId}')"]`);
-            likeBtn.prop('disabled', true).addClass('opacity-50');
-        },
         success: function(response) {
             if (response.success) {
                 showNotification('success', response.message);
                 
                 // Update like count visually
-                const likeBtn = $(`button[onclick="likeReply('${replyId}')"]`);
                 const likeCountSpan = likeBtn.find('.like-count');
-                const currentLikes = parseInt(likeCountSpan.text()) || 0;
+                const currentLikes = parseInt(likeCountSpan.text().replace(/,/g, '')) || 0;
                 likeCountSpan.text(currentLikes + 1);
                 
                 // Change button style to indicate liked
                 likeBtn.addClass('text-primary').removeClass('text-slate-600');
                 
+                // Restore icon
+                if (icon.length) {
+                    icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                    lucide.createIcons();
+                }
             } else {
                 showNotification('error', response.message);
+                // Restore icon on error
+                if (icon.length) {
+                    icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                    lucide.createIcons();
+                }
             }
         },
         error: function(xhr) {
             const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
             showNotification('error', errorMsg);
+            // Restore icon on error
+            if (icon.length) {
+                icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                lucide.createIcons();
+            }
         },
         complete: function() {
             // Re-enable button
-            const likeBtn = $(`button[onclick="likeReply('${replyId}')"]`);
-            likeBtn.prop('disabled', false).removeClass('opacity-50');
+            likeBtn.prop('disabled', false);
         }
     });
 }
 
 // Mark as best answer function
 function markBestAnswer(replyId) {
-    if (!confirm('Are you sure you want to mark this as the best answer?')) {
-        return;
-    }
-    
-    $.ajax({
-        url: '<?= base_url('ksp/discussion/mark-best-answer') ?>',
-        type: 'POST',
-        data: {
-            reply_id: replyId,
-            discussion_id: <?= json_encode($discussion->id) ?>,
-            '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
-        },
-        beforeSend: function() {
-            showNotification('info', 'Marking as best answer...');
-        },
-        success: function(response) {
-            if (response.success) {
-                showNotification('success', response.message);
-                // Reload to see the changes
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            } else {
-                showNotification('error', response.message);
+    Swal.fire({
+        title: 'Mark as Best Answer?',
+        text: 'Are you sure you want to mark this as the best answer?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, mark it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const bestAnswerBtn = $(`button[onclick="markBestAnswer('${replyId}')"]`);
+            const originalText = bestAnswerBtn.html();
+            const icon = bestAnswerBtn.find('i');
+            const originalIcon = icon.attr('data-lucide') || 'award';
+            
+            // Show loading state
+            bestAnswerBtn.prop('disabled', true);
+            if (icon.length) {
+                icon.attr('data-lucide', 'loader').addClass('animate-spin');
+                lucide.createIcons();
             }
-        },
-        error: function(xhr) {
-            const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
-            showNotification('error', errorMsg);
+            
+            $.ajax({
+                url: '<?= base_url('ksp/discussion/mark-best-answer') ?>',
+                type: 'POST',
+                data: {
+                    reply_id: replyId,
+                    discussion_id: <?= json_encode($discussion->id) ?>,
+                    '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('success', response.message);
+                        // Reload to see the changes
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showNotification('error', response.message);
+                        // Restore button on error
+                        bestAnswerBtn.prop('disabled', false);
+                        if (icon.length) {
+                            icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                            lucide.createIcons();
+                        }
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
+                    showNotification('error', errorMsg);
+                    // Restore button on error
+                    bestAnswerBtn.prop('disabled', false);
+                    if (icon.length) {
+                        icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                        lucide.createIcons();
+                    }
+                }
+            });
         }
     });
 }
@@ -1081,6 +1149,17 @@ function highlightMentions() {
 
 // Like discussion function
 function likeDiscussion(discussionId) {
+    const likeBtn = $(`button[onclick="likeDiscussion('${discussionId}')"]`);
+    const icon = likeBtn.find('i[data-lucide]');
+    const originalIcon = icon.attr('data-lucide') || 'thumbs-up';
+    
+    // Show loading state
+    likeBtn.prop('disabled', true);
+    if (icon.length) {
+        icon.attr('data-lucide', 'loader').addClass('animate-spin');
+        lucide.createIcons();
+    }
+    
     $.ajax({
         url: '<?= base_url('ksp/discussion/like-discussion') ?>',
         type: 'POST',
@@ -1088,41 +1167,72 @@ function likeDiscussion(discussionId) {
             discussion_id: discussionId,
             '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
         },
-        beforeSend: function() {
-            // Show loading state
-            const likeBtn = $(`button[onclick="likeDiscussion('${discussionId}')"]`);
-            likeBtn.prop('disabled', true).addClass('opacity-50');
-        },
         success: function(response) {
-            if (response.success) {
-                showNotification('success', response.message);
+            // Check if response exists and success is explicitly true
+            if (response && response.hasOwnProperty('success') && response.success === true) {
+                // Show success message - always show the message from server
+                const successMessage = (response.message && typeof response.message === 'string' && response.message.trim()) ? response.message : 'Discussion liked successfully!';
+                showNotification('success', successMessage);
                 
                 // Update like count visually
-                const likeBtn = $(`button[onclick="likeDiscussion('${discussionId}')"]`);
-                const likeCountSpan = likeBtn.find('span');
-                const currentLikes = parseInt(likeCountSpan.text()) || 0;
+                const likeCountSpan = likeBtn.find('.discussion-like-count');
+                const currentLikes = parseInt(likeCountSpan.text().replace(/,/g, '')) || 0;
                 likeCountSpan.text(currentLikes + 1);
                 
                 // Change button style to indicate liked
                 likeBtn.addClass('text-primary').removeClass('text-slate-600');
                 
+                // Restore icon
+                if (icon.length) {
+                    icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                    lucide.createIcons();
+                }
             } else {
-                showNotification('error', response.message);
+                // Handle failure case - always show the message
+                // This covers: success: false, success: undefined, or response is null/undefined
+                let message = 'Failed to like discussion';
+                if (response && response.message && typeof response.message === 'string' && response.message.trim()) {
+                    message = response.message;
+                }
+                // Check if it's an "already liked" message or similar, use warning instead of error
+                const notificationType = message.toLowerCase().includes('already') ? 'warning' : 'error';
+                showNotification(notificationType, message);
+                // Restore icon on error/warning
+                if (icon.length) {
+                    icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                    lucide.createIcons();
+                }
             }
         },
         error: function(xhr) {
             const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
             showNotification('error', errorMsg);
+            // Restore icon on error
+            if (icon.length) {
+                icon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                lucide.createIcons();
+            }
         },
         complete: function() {
             // Re-enable button
-            const likeBtn = $(`button[onclick="likeDiscussion('${discussionId}')"]`);
-            likeBtn.prop('disabled', false).removeClass('opacity-50');
+            likeBtn.prop('disabled', false);
         }
     });
 }
 
 function toggleBookmark(discussionId) {
+    const bookmarkBtn = $('#bookmark-btn');
+    const bookmarkIcon = $('#bookmark-icon');
+    const bookmarkText = $('#bookmark-text');
+    const originalIcon = bookmarkIcon.attr('data-lucide') || 'bookmark';
+    
+    // Show loading state
+    bookmarkBtn.prop('disabled', true);
+    if (bookmarkIcon.length) {
+        bookmarkIcon.attr('data-lucide', 'loader').addClass('animate-spin');
+        lucide.createIcons();
+    }
+    
     $.ajax({
         url: '<?= base_url('ksp/discussion/toggle-bookmark') ?>',
         type: 'POST',
@@ -1130,36 +1240,43 @@ function toggleBookmark(discussionId) {
             discussion_id: discussionId,
             '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
         },
-        beforeSend: function() {
-            $('#bookmark-btn').prop('disabled', true).addClass('opacity-50');
-        },
         success: function(response) {
             if (response.success) {
                 showNotification('success', response.message);
                 
                 // Update bookmark state
-                const bookmarkIcon = $('#bookmark-icon');
-                const bookmarkText = $('#bookmark-text');
-                
-                if (response.bookmarked) {
-                    bookmarkIcon.addClass('fill-secondary text-secondary');
-                    bookmarkText.text('Bookmarked');
-                } else {
-                    bookmarkIcon.removeClass('fill-secondary text-secondary');
-                    bookmarkText.text('Bookmark');
+                if (bookmarkIcon.length) {
+                    bookmarkIcon.attr('data-lucide', 'bookmark').removeClass('animate-spin');
+                    if (response.bookmarked) {
+                        bookmarkIcon.addClass('fill-secondary text-secondary');
+                        bookmarkText.text('Bookmarked');
+                    } else {
+                        bookmarkIcon.removeClass('fill-secondary text-secondary');
+                        bookmarkText.text('Bookmark');
+                    }
                 }
                 
                 lucide.createIcons();
             } else {
                 showNotification('error', response.message);
+                // Restore icon on error
+                if (bookmarkIcon.length) {
+                    bookmarkIcon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                    lucide.createIcons();
+                }
             }
         },
         error: function(xhr) {
             const errorMsg = xhr.responseJSON?.message || 'An error occurred. Please try again.';
             showNotification('error', errorMsg);
+            // Restore icon on error
+            if (bookmarkIcon.length) {
+                bookmarkIcon.attr('data-lucide', originalIcon).removeClass('animate-spin');
+                lucide.createIcons();
+            }
         },
         complete: function() {
-            $('#bookmark-btn').prop('disabled', false).removeClass('opacity-50');
+            bookmarkBtn.prop('disabled', false);
         }
     });
 }
@@ -1244,6 +1361,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 inline mr-2 animate-spin"></i> Sending...';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
             
             // Send via fetch
             fetch('<?= base_url('ksp/discussion/contact-moderators') ?>', {
@@ -1264,6 +1384,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
                 
                 if (data.success) {
                     showNotification('success', 'Your message has been sent to the moderators');
@@ -1275,6 +1398,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
                 showNotification('error', 'An error occurred while sending your message');
             });
         });

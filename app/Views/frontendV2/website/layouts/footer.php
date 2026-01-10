@@ -8,11 +8,11 @@
     $segments       = $uri->getSegments();
 
     // Safely get social links with fallback to empty string if null or key doesn't exist
-    $facebook       = (!empty($socialLinks) && isset($socialLinks['facebook'])) ? $socialLinks['facebook'] : '';
-    $twitter        = (!empty($socialLinks) && isset($socialLinks['twitter'])) ? $socialLinks['twitter'] : '';
-    $instagram      = (!empty($socialLinks) && isset($socialLinks['instagram'])) ? $socialLinks['instagram'] : '';
-    $linkedin       = (!empty($socialLinks) && isset($socialLinks['linkedin'])) ? $socialLinks['linkedin'] : '';
-    $youtube        = (!empty($socialLinks) && isset($socialLinks['youtube'])) ? $socialLinks['youtube'] : '';
+    $facebook  = (!empty($socialLinks) && isset($socialLinks['facebook'])) ? $socialLinks['facebook'] : '';
+    $twitter   = (!empty($socialLinks) && isset($socialLinks['twitter'])) ? $socialLinks['twitter'] : '';
+    $instagram = (!empty($socialLinks) && isset($socialLinks['instagram'])) ? $socialLinks['instagram'] : '';
+    $linkedin  = (!empty($socialLinks) && isset($socialLinks['linkedin'])) ? $socialLinks['linkedin'] : '';
+    $youtube   = (!empty($socialLinks) && isset($socialLinks['youtube'])) ? $socialLinks['youtube'] : '';
 ?>
 
 <!-- Footer -->

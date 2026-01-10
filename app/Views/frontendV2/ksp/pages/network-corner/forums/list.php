@@ -59,7 +59,7 @@
             </div>
         </div>
 
-        <div class="container mx-auto px-4">
+        <div class="container mx-auto px-4 py-12">
                 <!-- Filters and Search -->
                 <div class="bg-white rounded-lg shadow-sm border borderColor p-6 mb-8 shadow-md hover:shadow-2xl transition-shadow z-10 relative">
                     <form method="GET" action="<?= base_url('ksp/networking-corner/forums') ?>" class="grid grid-cols-1 md:grid-cols-3 gap-4">
