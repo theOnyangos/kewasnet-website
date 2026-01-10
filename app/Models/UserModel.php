@@ -69,12 +69,6 @@ class UserModel extends Model
         return true;
     }
 
-    // Get all admin users from the database
-    public function getAdminUsers()
-    {
-        return $this->findAll();
-    }
-
     // This method creates a new user
     public function createUser($data)
     {
@@ -614,9 +608,99 @@ class UserModel extends Model
     }
 
     // Count all users
-    public function countAllUsers()
+    /**
+     * @param string|null $search Optional search parameter (for filtered count, kept for compatibility with DataTableService)
+     */
+    public function countAllUsers($search = null)
     {
-        return $this->where('deleted_at', null)->countAllResults();
+        $builder = $this->where('deleted_at', null);
+        
+        // Apply search if provided (for filtered count)
+        if ($search) {
+            $builder->groupStart()
+                    ->like('first_name', $search)
+                    ->orLike('last_name', $search)
+                    ->orLike('email', $search)
+                    ->orLike('phone', $search)
+                    ->groupEnd();
+        }
+        
+        return $builder->countAllResults();
+    }
+
+    /**
+     * Get admin users for DataTable (role_id = 1)
+     */
+    public function getAdminUsers($start, $length, $search = null, $orderBy = 'id', $orderDir = 'DESC')
+    {
+        // Map DataTable column names to actual database columns for ordering
+        $orderColumnMap = [
+            'id' => 'system_users.id',
+            'name' => 'system_users.first_name', // Order by first_name for name sorting
+            'email' => 'system_users.email',
+            'phone' => 'system_users.phone',
+            'role' => 'roles.role_name',
+            'status' => 'system_users.status',
+            'account_status' => 'system_users.account_status',
+            'created_at' => 'system_users.created_at',
+            'last_login' => 'system_users.updated_at',
+        ];
+        
+        $actualOrderBy = $orderColumnMap[$orderBy] ?? 'system_users.id';
+
+        // Use database connection for complex queries with joins
+        $db = \Config\Database::connect();
+        $builder = $db->table('system_users')
+                    ->select("system_users.id, CONCAT(system_users.first_name, ' ', system_users.last_name) as name, system_users.email, system_users.phone, system_users.status, system_users.account_status, system_users.updated_at as last_login, system_users.created_at as joined, roles.role_name as role, system_users.updated_at as updated_date")
+                    ->join('roles', 'roles.role_id = system_users.role_id', 'left')
+                    ->where('system_users.role_id', 1) // Admin role
+                    ->where('system_users.deleted_at', null);
+
+        // Apply search if provided
+        if ($search) {
+            $builder->groupStart()
+                    ->like('system_users.first_name', $search)
+                    ->orLike('system_users.last_name', $search)
+                    ->orLike('system_users.email', $search)
+                    ->orLike('system_users.phone', $search)
+                    ->groupEnd();
+        }
+
+        // Apply ordering (after search)
+        $builder->orderBy($actualOrderBy, $orderDir);
+
+        // Get the results with limit and offset
+        $results = $builder->limit($length, $start)->get()->getResultArray();
+
+        // Format dates for human readability
+        foreach ($results as &$row) {
+            $row['last_login'] = $this->formatDateTime($row['last_login'] ?? null);
+            $row['joined'] = $this->formatDateTime($row['joined'] ?? null);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Count all admin users (role_id = 1)
+     * @param string|null $search Optional search parameter (not used in count, kept for compatibility with DataTableService)
+     */
+    public function countAdminUsers($search = null)
+    {
+        $builder = $this->where('role_id', 1)
+                    ->where('deleted_at', null);
+        
+        // Apply search if provided (for filtered count)
+        if ($search) {
+            $builder->groupStart()
+                    ->like('first_name', $search)
+                    ->orLike('last_name', $search)
+                    ->orLike('email', $search)
+                    ->orLike('phone', $search)
+                    ->groupEnd();
+        }
+        
+        return $builder->countAllResults();
     }
 
     // Create new user

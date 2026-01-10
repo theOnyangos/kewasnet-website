@@ -64,14 +64,18 @@ class DataTableService
                 $data = array_map($dataFormatter, $data);
             }
 
-            // For count method, we typically need fewer parameters
-            $countArgs = !empty($additionalParams) ? $additionalParams : [$params['search']];
-            $totalRecords = call_user_func_array([$model, $countMethod], $countArgs);
+            // Calculate total records (without search)
+            $totalArgs = !empty($additionalParams) ? $additionalParams : [null];
+            $totalRecords = call_user_func_array([$model, $countMethod], $totalArgs);
+
+            // Calculate filtered records (with search)
+            $filteredArgs = !empty($additionalParams) ? $additionalParams : [$params['search']];
+            $filteredRecords = call_user_func_array([$model, $countMethod], $filteredArgs);
 
             return $this->buildResponse(
                 $params['draw'],
                 $totalRecords,
-                $totalRecords,
+                $filteredRecords,
                 $data
             );
 

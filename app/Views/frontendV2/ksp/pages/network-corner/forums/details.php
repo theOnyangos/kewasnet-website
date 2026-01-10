@@ -681,6 +681,7 @@
         50% { opacity: 0.5; }
     }
 </style>
+
 <script>
     // Main document ready function
     document.addEventListener('DOMContentLoaded', () => {

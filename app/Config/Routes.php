@@ -286,6 +286,54 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->delete('faq/delete/(:segment)', 'BackendV2\SettingsController::deleteFaq/$1');
     });
 
+    // Profile Routes (own profile only)
+    $routes->group('profile', static function ($routes) {
+        $routes->get('', 'BackendV2\ProfileController::index');
+        $routes->get('edit', 'BackendV2\ProfileController::edit');
+        $routes->post('update', 'BackendV2\ProfileController::update');
+    });
+
+    // Account Management Routes (manage all admins)
+    $routes->group('account', static function ($routes) {
+        $routes->get('', 'BackendV2\AccountController::index');
+        $routes->post('get', 'BackendV2\AccountController::getAccountsData');
+        $routes->get('view/(:segment)', 'BackendV2\AccountController::view/$1');
+        $routes->get('edit/(:segment)', 'BackendV2\AccountController::edit/$1');
+        $routes->post('update/(:segment)', 'BackendV2\AccountController::update/$1');
+        $routes->delete('delete/(:segment)', 'BackendV2\AccountController::delete/$1');
+    });
+
+    // Leadership Management Routes (full CRUD)
+    $routes->group('leadership', static function ($routes) {
+        $routes->get('', 'BackendV2\LeadershipController::index');
+        $routes->post('get', 'BackendV2\LeadershipController::getLeadershipData');
+        $routes->get('create', 'BackendV2\LeadershipController::create');
+        $routes->post('store', 'BackendV2\LeadershipController::store');
+        $routes->get('edit/(:segment)', 'BackendV2\LeadershipController::edit/$1');
+        $routes->post('update/(:segment)', 'BackendV2\LeadershipController::update/$1');
+        $routes->post('reorder', 'BackendV2\LeadershipController::reorder');
+        $routes->delete('delete/(:segment)', 'BackendV2\LeadershipController::delete/$1');
+    });
+
+    // Preferences Routes
+    $routes->group('preferences', static function ($routes) {
+        $routes->get('', 'BackendV2\PreferencesController::index');
+        $routes->post('update', 'BackendV2\PreferencesController::update');
+    });
+
+    // Security Routes
+    $routes->group('security', static function ($routes) {
+        $routes->get('', 'BackendV2\SecurityController::index');
+        $routes->get('change-password/(:segment)', 'BackendV2\SecurityController::changePassword/$1');
+        $routes->post('update-password/(:segment)', 'BackendV2\SecurityController::updatePassword/$1');
+        $routes->post('toggle-2fa/(:segment)', 'BackendV2\SecurityController::updateTwoFactor/$1');
+        $routes->get('login-history/(:segment)', 'BackendV2\SecurityController::viewLoginHistory/$1');
+    });
+
+    // Help & About Routes (static pages)
+    $routes->get('help', 'BackendV2\HelpController::index');
+    $routes->get('about', 'BackendV2\AboutController::index');
+
     // System Settings Email, Payments, SMS, Google
     $routes->group('settings', static function ($routes) {
         $routes->get('email', 'BackendV2\SystemSettingsController::email');

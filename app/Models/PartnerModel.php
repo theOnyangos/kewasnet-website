@@ -74,8 +74,21 @@ class PartnerModel extends Model
     }
 
     // Count All Partners
-    public function countAllPartners()
+    /**
+     * @param string|null $search Optional search parameter (for filtered count, kept for compatibility with DataTableService)
+     */
+    public function countAllPartners($search = null)
     {
-        return $this->countAllResults();
+        $builder = $this->where('deleted_at', null);
+        
+        // Apply search if provided (for filtered count)
+        if ($search) {
+            $builder->groupStart()
+                    ->like('partner_name', $search)
+                    ->orLike('partner_url', $search)
+                    ->groupEnd();
+        }
+        
+        return $builder->countAllResults();
     }
 }
