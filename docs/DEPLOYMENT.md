@@ -101,8 +101,8 @@ Update these critical values:
 CI_ENVIRONMENT = production
 app.baseURL = 'https://kewasnet.co.ke/'
 database.default.database = kewasnet
-database.default.username = kewasnet_user
-database.default.password = your_database_password
+database.default.username = deploy_kewasnet
+database.default.password = Deploy@kewasnet2026
 encryption.key = your_32_character_key_here
 ```
 

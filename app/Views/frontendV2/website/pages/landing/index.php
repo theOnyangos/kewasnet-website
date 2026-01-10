@@ -16,6 +16,22 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
+    <style>
+        /* Ensure hero stats shows 2 columns on mobile */
+        @media (max-width: 767px) {
+            .hero-stats {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 1.5rem !important;
+            }
+        }
+        @media (min-width: 768px) {
+            .hero-stats {
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 2rem !important;
+            }
+        }
+    </style>
     <!-- Hero Section -->
     <section class="hero-section">
         <!-- Water wave animation background -->
@@ -106,69 +122,99 @@
             </div>
 
             <div class="card-grid">
-                <!-- Card 1 -->
+                <!-- Card 1: Pillars -->
                 <div class="card">
                     <div class="card-image-container">
                         <img src="<?= base_url('assets/new/pillars.jpg') ?>" class="card-image" alt="Pillars">
                         <div class="card-overlay"></div>
                         <div class="card-badge">
                             <i data-lucide="book-open"></i>
-                            <div><?= $stats['total_resources'] ?? 0 ?>+ Documents</div>
+                            <div><?= number_format($stats['total_resources'] ?? 0) ?>+ Documents</div>
                         </div>
                     </div>
                     <div class="card-content">
                         <h3 class="card-title">Pillars</h3>
                         <p class="card-description">
                             Access comprehensive resources on WASH, Governance, Climate Change, Nexus and IWRM. 
-                            Find policy briefs, learning reports, and strategy documents.
+                            Find policy briefs, learning reports, and strategy documents. Explore <?= number_format($stats['total_resources'] ?? 0) ?>+ published articles with <?= number_format($stats['total_downloads'] ?? 0) ?>+ total downloads.
                         </p>
-                        <button type="button" onClick="location.href='<?= base_url('ksp/pillars') ?>'" class="card-button">
+                        <div class="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_resources'] ?? 0) ?> Articles</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_downloads'] ?? 0) ?> Downloads</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick="location.href='<?= base_url('ksp/pillars') ?>'" class="card-button mt-4">
                             Explore Pillars
                             <i data-lucide="arrow-right"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Card 2 -->
+                <!-- Card 2: Learning Hub -->
                 <div class="card">
                     <div class="card-image-container">
                         <img src="<?= base_url('assets/new/learning.jpg') ?>" class="card-image" alt="Learning Hub">
                         <div class="card-overlay"></div>
                         <div class="card-badge">
-                            <i data-lucide="users-2"></i>
-                            <div><?= $stats['total_learning_hub'] ?? 0 ?>+ Resources</div>
+                            <i data-lucide="graduation-cap"></i>
+                            <div><?= number_format($stats['total_learning_hub'] ?? 0) ?>+ Courses</div>
                         </div>
                     </div>
                     <div class="card-content">
                         <h3 class="card-title">Learning Hub</h3>
                         <p class="card-description">
                             Discover training materials, best practices, and innovative solutions from across 
-                            Kenya's WASH sector. Learn from real field experiences.
+                            Kenya's WASH sector. Learn from real field experiences through our comprehensive course library with <?= number_format($stats['total_learning_hub'] ?? 0) ?>+ published courses covering various skill levels and topics.
                         </p>
-                        <button type="button" onClick="location.href='<?= base_url('ksp/learning-hub') ?>'" class="card-button">
+                        <div class="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="book" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_learning_hub'] ?? 0) ?> Courses</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="play-circle" class="w-4 h-4"></i>
+                                <span>Interactive Learning</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick="location.href='<?= base_url('ksp/learning-hub') ?>'" class="card-button mt-4">
                             Explore Learning Hub
                             <i data-lucide="arrow-right"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Card 3 -->
+                <!-- Card 3: Networking Corner -->
                 <div class="card">
                     <div class="card-image-container">
                         <img src="<?= base_url('assets/new/Networking.JPG') ?>" class="card-image" alt="Networking">
                         <div class="card-overlay"></div>
                         <div class="card-badge">
-                            <i data-lucide="network"></i>
-                            <div><?= $stats['total_members'] ?? 0 ?>+ Members</div>
+                            <i data-lucide="users"></i>
+                            <div><?= number_format($stats['total_members'] ?? 0) ?>+ Members</div>
                         </div>
                     </div>
                     <div class="card-content">
                         <h3 class="card-title">Networking Corner</h3>
                         <p class="card-description">
                             Connect with WASH professionals, share experiences, and collaborate on sector 
-                            challenges. Build meaningful partnerships.
+                            challenges. Build meaningful partnerships. Join <?= number_format($stats['total_members'] ?? 0) ?>+ members across <?= number_format($stats['total_forums'] ?? 0) ?>+ active forums with <?= number_format($stats['total_discussions'] ?? 0) ?>+ ongoing discussions.
                         </p>
-                        <button type="button" onClick="location.href='<?= base_url('ksp/networking-corner') ?>'" class="card-button">
+                        <div class="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_members'] ?? 0) ?> Members</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="message-square" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_discussions'] ?? 0) ?> Discussions</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick="location.href='<?= base_url('ksp/networking-corner') ?>'" class="card-button mt-4">
                             Explore Networking Corner
                             <i data-lucide="arrow-right"></i>
                         </button>
@@ -476,6 +522,26 @@
 
     <!-- Partners Section -->
     <?php if($partners): ?>
+        <style>
+            /* Ensure partners grid shows 2 columns on mobile */
+            @media (max-width: 767px) {
+                .partners-grid {
+                    display: grid !important;
+                    grid-template-columns: repeat(2, 1fr) !important;
+                    gap: 1rem !important;
+                }
+            }
+            @media (min-width: 768px) and (max-width: 1023px) {
+                .partners-grid {
+                    grid-template-columns: repeat(3, 1fr) !important;
+                }
+            }
+            @media (min-width: 1024px) {
+                .partners-grid {
+                    grid-template-columns: repeat(5, 1fr) !important;
+                }
+            }
+        </style>
         <section class="relative py-20 bg-slate-50" id="partners-section">
             <!-- Dotted background overlay -->
             <div class="radial-pattern-container">
@@ -493,11 +559,11 @@
                 </div>
 
                 <!-- Partners Grid -->
-                <div class="partners-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 max-w-5xl mx-auto z-10 relative">
+                <div class="partners-grid grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8 max-w-5xl mx-auto z-10 relative">
                     <!-- Partner 1 -->
                         <?php foreach($partners as $partner): ?>
-                        <button type="button" onclick="window.open('<?= $partner['partner_url'] ?>', '_blank')" class="partner-card bg-white p-6 rounded-xl shadow-md flex items-center justify-center h-32 opacity-0">
-                            <img src="<?= $partner['partner_logo'] ?>" alt="<?= $partner['partner_name'] ?>" class="max-h-16 object-contain">
+                        <button type="button" onclick="window.open('<?= $partner['partner_url'] ?>', '_blank')" class="partner-card bg-white p-4 sm:p-6 rounded-xl shadow-md flex items-center justify-center h-28 sm:h-32 opacity-0">
+                            <img src="<?= $partner['partner_logo'] ?>" alt="<?= $partner['partner_name'] ?>" class="max-h-12 sm:max-h-16 object-contain w-full h-auto">
                         </button>
                     <?php endforeach; ?>
                 </div>

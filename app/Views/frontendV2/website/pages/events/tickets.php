@@ -22,27 +22,27 @@
         <div class="container mx-auto px-4 max-w-6xl">
             <!-- Breadcrumbs -->
             <nav class="mb-8" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-2 text-sm">
+                <ol class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                     <li>
-                        <a href="<?= base_url() ?>" class="text-slate-600 hover:text-primary transition-colors">Home</a>
+                        <a href="<?= base_url() ?>" class="text-slate-600 hover:text-primary transition-colors whitespace-nowrap">Home</a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
                     <li>
-                        <a href="<?= base_url('events') ?>" class="text-slate-600 hover:text-primary transition-colors">Events</a>
+                        <a href="<?= base_url('events') ?>" class="text-slate-600 hover:text-primary transition-colors whitespace-nowrap">Events</a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
-                    <li>
-                        <a href="<?= base_url('events/' . esc($event['slug'])) ?>" class="text-slate-600 hover:text-primary transition-colors"><?= esc($event['title']) ?></a>
+                    <li class="min-w-0 flex-1 sm:flex-initial">
+                        <a href="<?= base_url('events/' . esc($event['slug'])) ?>" class="text-slate-600 hover:text-primary transition-colors truncate block" title="<?= esc($event['title']) ?>"><?= esc($event['title']) ?></a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
-                    <li class="text-primary" aria-current="page">
-                        <span>My Tickets</span>
+                    <li class="text-primary flex-shrink-0" aria-current="page">
+                        <span class="whitespace-nowrap">My Tickets</span>
                     </li>
                 </ol>
             </nav>

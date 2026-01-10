@@ -23,27 +23,27 @@
         <div class="container mx-auto px-4 max-w-6xl">
             <!-- Breadcrumbs -->
             <nav class="mb-8" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-2 text-sm">
+                <ol class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                     <li>
-                        <a href="<?= base_url() ?>" class="text-slate-600 hover:text-primary transition-colors">Home</a>
+                        <a href="<?= base_url() ?>" class="text-slate-600 hover:text-primary transition-colors whitespace-nowrap">Home</a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
                     <li>
-                        <a href="<?= base_url('events') ?>" class="text-slate-600 hover:text-primary transition-colors">Events</a>
+                        <a href="<?= base_url('events') ?>" class="text-slate-600 hover:text-primary transition-colors whitespace-nowrap">Events</a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
-                    <li>
-                        <a href="<?= base_url('events/' . esc($event['slug'])) ?>" class="text-slate-600 hover:text-primary transition-colors"><?= esc($event['title']) ?></a>
+                    <li class="min-w-0 flex-1">
+                        <a href="<?= base_url('events/' . esc($event['slug'])) ?>" class="text-slate-600 hover:text-primary transition-colors truncate block" title="<?= esc($event['title']) ?>"><?= esc($event['title']) ?></a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
-                    <li class="text-primary" aria-current="page">
-                        <span>Book Tickets</span>
+                    <li class="text-primary flex-shrink-0" aria-current="page">
+                        <span class="whitespace-nowrap">Book Tickets</span>
                     </li>
                 </ol>
             </nav>
@@ -115,13 +115,13 @@
                                     <div class="space-y-4">
                                         <?php foreach ($event['ticket_types'] as $ticketType): ?>
                                             <div class="border border-slate-200 rounded-lg p-4 hover:border-secondary transition-colors">
-                                                <div class="flex justify-between items-start mb-3">
-                                                    <div class="flex-1">
+                                                <div class="flex flex-col md:flex-row md:justify-between md:items-start mb-3 md:mb-0">
+                                                    <div class="flex-1 mb-3 md:mb-0">
                                                         <h4 class="font-semibold text-slate-800 mb-1"><?= esc($ticketType['name']) ?></h4>
                                                         <?php if (!empty($ticketType['description'])): ?>
                                                             <p class="text-sm text-slate-600 mb-2"><?= esc($ticketType['description']) ?></p>
                                                         <?php endif; ?>
-                                                        <div class="flex items-center space-x-4 text-sm">
+                                                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                                                             <span class="text-slate-600">
                                                                 Price: <span class="font-semibold text-slate-800">KES <?= number_format($ticketType['price'], 2) ?></span>
                                                             </span>
@@ -134,26 +134,51 @@
                                                             <?php endif; ?>
                                                         </div>
                                                     </div>
-                                                    <div class="ml-4">
-                                                        <div class="flex items-center space-x-2">
-                                                            <button type="button" class="ticket-decrease w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50" 
-                                                                    data-ticket-type="<?= esc($ticketType['id']) ?>">
-                                                                <i data-lucide="minus" class="icon-xs"></i>
-                                                            </button>
-                                                            <input type="number" 
-                                                                   name="ticket_quantity[<?= esc($ticketType['id']) ?>]" 
-                                                                   id="ticket_<?= esc($ticketType['id']) ?>"
-                                                                   class="ticket-quantity w-16 text-center border border-slate-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-secondary"
-                                                                   value="0" 
-                                                                   min="0" 
-                                                                   max="<?= $ticketType['quantity'] ?? 999 ?>"
-                                                                   data-price="<?= $ticketType['price'] ?>"
-                                                                   data-ticket-type="<?= esc($ticketType['id']) ?>">
-                                                            <button type="button" class="ticket-increase w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50" 
-                                                                    data-ticket-type="<?= esc($ticketType['id']) ?>">
-                                                                <i data-lucide="plus" class="icon-xs"></i>
-                                                            </button>
-                                                        </div>
+
+                                                    <!-- Ticket Quantity Desktop - Shown on side for larger screens -->
+                                                    <div class="ml-0 md:ml-4 hidden md:flex items-center space-x-2">
+                                                        <button type="button" class="ticket-decrease w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50" 
+                                                                data-ticket-type="<?= esc($ticketType['id']) ?>">
+                                                            <i data-lucide="minus" class="icon-xs"></i>
+                                                        </button>
+                                                        <input type="number" 
+                                                               name="ticket_quantity[<?= esc($ticketType['id']) ?>]" 
+                                                               id="ticket_<?= esc($ticketType['id']) ?>"
+                                                               class="ticket-quantity w-16 text-center border border-slate-300 rounded-lg py-1 focus:outline-none focus:ring-2 focus:ring-secondary"
+                                                               value="0" 
+                                                               min="0" 
+                                                               max="<?= $ticketType['quantity'] ?? 999 ?>"
+                                                               data-price="<?= $ticketType['price'] ?>"
+                                                               data-ticket-type="<?= esc($ticketType['id']) ?>">
+                                                        <button type="button" class="ticket-increase w-8 h-8 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50" 
+                                                                data-ticket-type="<?= esc($ticketType['id']) ?>">
+                                                            <i data-lucide="plus" class="icon-xs"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Ticket Quantity Mobile - Shown at bottom on small screens -->
+                                                <div class="mt-3 pt-3 border-t border-slate-200 md:hidden">
+                                                    <label class="block text-sm font-medium text-slate-700 mb-2">Quantity:</label>
+                                                    <div class="flex items-center space-x-2">
+                                                        <button type="button" class="ticket-decrease w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50 flex-shrink-0" 
+                                                                data-ticket-type="<?= esc($ticketType['id']) ?>">
+                                                            <i data-lucide="minus" class="icon-xs"></i>
+                                                        </button>
+                                                        <input type="number" 
+                                                               name="ticket_quantity[<?= esc($ticketType['id']) ?>]" 
+                                                               id="ticket_<?= esc($ticketType['id']) ?>_mobile"
+                                                               class="ticket-quantity-mobile flex-1 text-center border border-slate-300 rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-secondary"
+                                                               value="0" 
+                                                               min="0" 
+                                                               max="<?= $ticketType['quantity'] ?? 999 ?>"
+                                                               data-price="<?= $ticketType['price'] ?>"
+                                                               data-ticket-type="<?= esc($ticketType['id']) ?>"
+                                                               disabled>
+                                                        <button type="button" class="ticket-increase w-10 h-10 rounded-full border border-slate-300 flex items-center justify-center hover:bg-slate-50 flex-shrink-0" 
+                                                                data-ticket-type="<?= esc($ticketType['id']) ?>">
+                                                            <i data-lucide="plus" class="icon-xs"></i>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -221,14 +246,14 @@
                             </div>
 
                             <!-- Submit Button -->
-                            <div class="flex justify-end space-x-4">
+                            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:space-x-4 mt-8">
                                 <a href="<?= base_url('events/' . esc($event['slug'])) ?>" 
-                                   class="px-6 py-3 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors">
+                                   class="w-full sm:w-auto px-6 py-3 border border-slate-300 rounded-full text-slate-700 hover:bg-slate-50 transition-colors text-center">
                                     Cancel
                                 </a>
                                 <button type="submit" 
                                         id="submitBtn"
-                                        class="gradient-btn px-8 py-3 rounded-[50px] text-white flex items-center">
+                                        class="w-full sm:w-auto gradient-btn px-8 py-3 rounded-[50px] text-white flex items-center justify-center">
                                     <span id="submitText"><?= $event['event_type'] === 'paid' ? 'Proceed to Payment' : 'Complete Registration' ?></span>
                                     <i data-lucide="arrow-right" class="ml-2 icon z-10"></i>
                                 </button>
@@ -254,10 +279,24 @@ $(document).ready(function() {
     // Calculate total amount
     function calculateTotal() {
         totalAmount = 0;
-        $('.ticket-quantity').each(function() {
+        // Check both desktop and mobile inputs, use desktop if visible, otherwise mobile
+        $('.ticket-quantity, .ticket-quantity-mobile').each(function() {
+            const ticketTypeId = $(this).data('ticket-type');
+            // Only count each ticket type once - prefer desktop, fallback to mobile
+            if ($(this).hasClass('ticket-quantity-mobile')) {
+                // Skip mobile if desktop version exists and is visible
+                if ($(`#ticket_${ticketTypeId}`).length && $(`#ticket_${ticketTypeId}`).is(':visible')) {
+                    return; // Skip mobile version
+                }
+            } else {
+                // Skip desktop if it's hidden (mobile version exists)
+                if (!$(this).is(':visible')) {
+                    return; // Skip desktop version
+                }
+            }
+            
             const quantity = parseInt($(this).val()) || 0;
             const price = parseFloat($(this).data('price')) || 0;
-            const ticketTypeId = $(this).data('ticket-type');
             
             ticketQuantities[ticketTypeId] = quantity;
             totalAmount += quantity * price;
@@ -318,27 +357,105 @@ $(document).ready(function() {
         }
     }
     
+    // Sync ticket quantity inputs (desktop and mobile)
+    function syncTicketInputs(ticketTypeId, value) {
+        const desktopInput = $(`#ticket_${ticketTypeId}`);
+        const mobileInput = $(`#ticket_${ticketTypeId}_mobile`);
+        
+        desktopInput.val(value);
+        mobileInput.val(value);
+        
+        // Enable/disable based on screen size - only visible one is submitted
+        if (window.innerWidth >= 768) {
+            // Desktop view
+            desktopInput.prop('disabled', false);
+            mobileInput.prop('disabled', true);
+        } else {
+            // Mobile view
+            desktopInput.prop('disabled', true);
+            mobileInput.prop('disabled', false);
+        }
+    }
+    
+    // Initialize sync on page load and window resize
+    function initializeTicketSync() {
+        $('.ticket-quantity').each(function() {
+            const ticketTypeId = $(this).data('ticket-type');
+            const desktopInput = $(`#ticket_${ticketTypeId}`);
+            const mobileInput = $(`#ticket_${ticketTypeId}_mobile`);
+            const value = desktopInput.val() || 0;
+            
+            // Sync values
+            desktopInput.val(value);
+            mobileInput.val(value);
+            
+            // Enable/disable based on visibility
+            if (window.innerWidth >= 768) {
+                // Desktop: enable desktop input, disable mobile
+                desktopInput.prop('disabled', false);
+                mobileInput.prop('disabled', true);
+            } else {
+                // Mobile: enable mobile input, disable desktop
+                desktopInput.prop('disabled', true);
+                mobileInput.prop('disabled', false);
+            }
+        });
+    }
+    
+    // Call on load and resize
+    initializeTicketSync();
+    $(window).on('resize', function() {
+        initializeTicketSync();
+        calculateTotal(); // Recalculate after resize
+    });
+    
     // Ticket quantity controls
     $('.ticket-increase').on('click', function() {
         const ticketTypeId = $(this).data('ticket-type');
-        const input = $(`#ticket_${ticketTypeId}`);
-        const currentVal = parseInt(input.val()) || 0;
-        const maxVal = parseInt(input.attr('max')) || 999;
+        const desktopInput = $(`#ticket_${ticketTypeId}`);
+        const mobileInput = $(`#ticket_${ticketTypeId}_mobile`);
+        
+        // Use the enabled input (which is the visible one)
+        const activeInput = desktopInput.prop('disabled') ? mobileInput : desktopInput;
+        
+        const currentVal = parseInt(activeInput.val()) || 0;
+        const maxVal = parseInt(activeInput.attr('max')) || 999;
         if (currentVal < maxVal) {
-            input.val(currentVal + 1).trigger('change');
+            const newVal = currentVal + 1;
+            syncTicketInputs(ticketTypeId, newVal);
+            activeInput.trigger('change');
         }
     });
     
     $('.ticket-decrease').on('click', function() {
         const ticketTypeId = $(this).data('ticket-type');
-        const input = $(`#ticket_${ticketTypeId}`);
-        const currentVal = parseInt(input.val()) || 0;
+        const desktopInput = $(`#ticket_${ticketTypeId}`);
+        const mobileInput = $(`#ticket_${ticketTypeId}_mobile`);
+        
+        // Use the enabled input (which is the visible one)
+        const activeInput = desktopInput.prop('disabled') ? mobileInput : desktopInput;
+        
+        const currentVal = parseInt(activeInput.val()) || 0;
         if (currentVal > 0) {
-            input.val(currentVal - 1).trigger('change');
+            const newVal = currentVal - 1;
+            syncTicketInputs(ticketTypeId, newVal);
+            activeInput.trigger('change');
         }
     });
     
+    // Handle changes from desktop input
     $('.ticket-quantity').on('change input', function() {
+        const ticketTypeId = $(this).data('ticket-type');
+        const value = $(this).val();
+        syncTicketInputs(ticketTypeId, value);
+        calculateTotal();
+    });
+    
+    // Handle changes from mobile input
+    $('.ticket-quantity-mobile').on('change input', function() {
+        const ticketTypeId = $(this).data('ticket-type');
+        const value = $(this).val();
+        syncTicketInputs(ticketTypeId, value);
         calculateTotal();
     });
     

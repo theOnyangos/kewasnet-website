@@ -315,8 +315,8 @@ app.forceGlobalSecureRequests = true
 #--------------------------------------------------------------------
 database.default.hostname = localhost
 database.default.database = kewasnet
-database.default.username = kewasnet_user
-database.default.password = your_strong_database_password
+database.default.username = deploy_kewasnet
+database.default.password = Deploy@kewasnet2026
 database.default.DBDriver = MySQLi
 database.default.port = 3306
 

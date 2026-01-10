@@ -133,8 +133,8 @@ app.indexPage = ''
 #--------------------------------------------------------------------
 database.default.hostname = localhost
 database.default.database = kewasnet
-database.default.username = root
-database.default.password = 
+database.default.username = deploy_kewasnet
+database.default.password = Deploy@kewasnet2026
 database.default.DBDriver = MySQLi
 database.default.DBPrefix = 
 database.default.port = 3306

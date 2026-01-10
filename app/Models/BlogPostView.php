@@ -15,7 +15,7 @@ class BlogPostView extends Model
     protected $allowedFields = ['id', 'post_id', 'ip_address', 'user_agent'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
-    protected $updatedField = 'updated_at';
+    protected $updatedField = null; // Table doesn't have updated_at column
     protected $beforeInsert = ['generateUUID'];
 
     protected function generateUUID(array $data)

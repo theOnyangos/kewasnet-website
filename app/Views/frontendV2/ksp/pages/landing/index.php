@@ -123,7 +123,7 @@
                         <div class="ksp-card-image-overlay"></div>
                         <div class="ksp-card-stats">
                             <i data-lucide="book-open" class="ksp-card-icon"></i>
-                            <div class="ksp-card-stat-text"><?= $stats['total_resources'] ?? 0 ?>+ Documents</div>
+                            <div class="ksp-card-stat-text"><?= number_format($stats['total_resources'] ?? 0) ?>+ Documents</div>
                         </div>
                     </div>
                     
@@ -132,9 +132,19 @@
                             Pillars
                         </h3>
                         <p class="ksp-card-text">
-                            Access comprehensive resources on WASH, Governance, Climate Change, Nexus and IWRM. Find policy briefs, learning reports, and strategy documents.
+                            Access comprehensive resources on WASH, Governance, Climate Change, Nexus and IWRM. Find policy briefs, learning reports, and strategy documents. Explore <?= number_format($stats['total_resources'] ?? 0) ?>+ published articles with <?= number_format($stats['total_downloads'] ?? 0) ?>+ total downloads.
                         </p>
-                        <button type="button" onClick="location.href='<?= base_url('ksp/pillars') ?>'" class="ksp-card-btn">
+                        <div class="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_resources'] ?? 0) ?> Articles</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_downloads'] ?? 0) ?> Downloads</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick="location.href='<?= base_url('ksp/pillars') ?>'" class="ksp-card-btn mt-4">
                             <span>Explore Pillars</span>
                             <i data-lucide="arrow-right" class="ksp-btn-icon z-10"></i>
                         </button>
@@ -147,8 +157,8 @@
                         <div class="ksp-card-image" style="background-image: url('https://images.unsplash.com/photo-1518495973542-4542c06a5843?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')"></div>
                         <div class="ksp-card-image-overlay"></div>
                         <div class="ksp-card-stats">
-                            <i data-lucide="users-2" class="ksp-card-icon"></i>
-                            <div class="ksp-card-stat-text"><?= $stats['total_learning_hub'] ?? 0 ?>+ Resources</div>
+                            <i data-lucide="graduation-cap" class="ksp-card-icon"></i>
+                            <div class="ksp-card-stat-text"><?= number_format($stats['total_learning_hub'] ?? 0) ?>+ Courses</div>
                         </div>
                     </div>
                     
@@ -157,9 +167,19 @@
                             Learning Hub
                         </h3>
                         <p class="ksp-card-text">
-                            Discover training materials, best practices, and innovative solutions from across Kenya's WASH sector. Learn from real field experiences.
+                            Discover training materials, best practices, and innovative solutions from across Kenya's WASH sector. Learn from real field experiences through our comprehensive course library with <?= number_format($stats['total_learning_hub'] ?? 0) ?>+ published courses covering various skill levels and topics.
                         </p>
-                        <button type="button" onClick="location.href='<?= base_url('ksp/learning-hub') ?>'" class="ksp-card-btn">
+                        <div class="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="book" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_learning_hub'] ?? 0) ?> Courses</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="play-circle" class="w-4 h-4"></i>
+                                <span>Interactive Learning</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick="location.href='<?= base_url('ksp/learning-hub') ?>'" class="ksp-card-btn mt-4">
                             <span>Explore Learning Hub</span>
                             <i data-lucide="arrow-right" class="ksp-btn-icon z-10"></i>
                         </button>
@@ -172,8 +192,8 @@
                         <div class="ksp-card-image" style="background-image: url('https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80')"></div>
                         <div class="ksp-card-image-overlay"></div>
                         <div class="ksp-card-stats">
-                            <i data-lucide="network" class="ksp-card-icon"></i>
-                            <div class="ksp-card-stat-text"><?= $stats['total_members'] ?? 0 ?>+ Members</div>
+                            <i data-lucide="users" class="ksp-card-icon"></i>
+                            <div class="ksp-card-stat-text"><?= number_format($stats['total_members'] ?? 0) ?>+ Members</div>
                         </div>
                     </div>
                     
@@ -182,9 +202,19 @@
                             Networking Corner
                         </h3>
                         <p class="ksp-card-text">
-                            Connect with WASH professionals, share experiences, and collaborate on sector challenges. Build meaningful partnerships.
+                            Connect with WASH professionals, share experiences, and collaborate on sector challenges. Build meaningful partnerships. Join <?= number_format($stats['total_members'] ?? 0) ?>+ members across <?= number_format($stats['total_forums'] ?? 0) ?>+ active forums with <?= number_format($stats['total_discussions'] ?? 0) ?>+ ongoing discussions.
                         </p>
-                        <button type="button" onClick="location.href='<?= base_url('ksp/networking-corner') ?>'" class="ksp-card-btn">
+                        <div class="mt-4 flex items-center gap-4 text-sm text-slate-600">
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="users" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_members'] ?? 0) ?> Members</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <i data-lucide="message-square" class="w-4 h-4"></i>
+                                <span><?= number_format($stats['total_discussions'] ?? 0) ?> Discussions</span>
+                            </div>
+                        </div>
+                        <button type="button" onClick="location.href='<?= base_url('ksp/networking-corner') ?>'" class="ksp-card-btn mt-4">
                             <span>Explore Networking Corner</span>
                             <i data-lucide="arrow-right" class="ksp-btn-icon z-10"></i>
                         </button>
