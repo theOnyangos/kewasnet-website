@@ -124,17 +124,15 @@ class SecurityController extends BaseController
             // Verify current password if changing own password
             if ($isOwnPassword) {
                 $currentPassword = $this->request->getPost('current_password');
-                $hash = new Hash();
                 
-                if (!$hash::check($currentPassword, $user['password'])) {
+                if (!Hash::verify($currentPassword, $user['password'])) {
                     return $this->ajaxErrorResponse('Current password is incorrect', 400);
                 }
             }
 
             // Hash new password
             $newPassword = $this->request->getPost('new_password');
-            $hash = new Hash();
-            $hashedPassword = $hash::make($newPassword);
+            $hashedPassword = Hash::make($newPassword);
 
             // Update password
             $this->userModel->update($id, ['password' => $hashedPassword]);
