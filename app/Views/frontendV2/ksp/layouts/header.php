@@ -24,6 +24,14 @@
                 <?php if($isLoggedIn): ?>
                     <!-- Logged In User Menu -->
                     <div class="flex items-center space-x-3 md:space-x-5">
+                        <!-- Notifications Dropdown -->
+                        <div id="notificationDropdownContainer" class="relative">
+                            <button id="notificationButton" class="relative p-2 rounded-full hover:bg-primaryShades-200 transition-colors">
+                                <i data-lucide="bell" class="w-5 h-5 text-slate-500"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                            </button>
+                        </div>
+                        
                         <!-- User Profile Dropdown -->
                         <div class="relative user-menu-wrapper">
                             <button class="user-menu-trigger flex items-center gap-3 focus:outline-none bg-gradient-to-r from-slate-50 to-slate-100 px-3 py-2 md:px-4 md:py-2.5 rounded-xl hover:shadow-md hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 border border-slate-200 min-w-[180px] md:min-w-[220px]">
@@ -439,3 +447,7 @@
         }
     });
 </script>
+
+<?php if($isLoggedIn): ?>
+    <?= $this->include('frontendV2/ksp/partials/notifications_dropdown') ?>
+<?php endif; ?>

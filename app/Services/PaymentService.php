@@ -209,32 +209,31 @@ class PaymentService
         );
 
         if ($enrolled) {
-            // Notify admins about new course enrollment
+            // Send notifications after successful payment and enrollment
             try {
                 $course = $this->courseModel->find($order['course_id']);
                 $userModel = model('UserModel');
-                $student = $userModel->find($order['user_id']);
+                $user = $userModel->find($order['user_id']);
                 
-                if ($course && $student) {
+                if ($course && $user) {
                     $courseName = $course['title'] ?? 'Unknown Course';
-                    $studentName = ($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? '');
+                    $userName = ($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '');
+                    $amount = number_format($order['amount'] ?? 0, 2);
                     
-                    // Get all admin users
-                    $adminUsers = $userModel->getAdministrators();
-                    
-                    // Send notification to each admin
                     $notificationService = new \App\Services\NotificationService();
-                    foreach ($adminUsers as $admin) {
-                        $notificationService->notifyNewCourseEnrollment(
-                            $admin['id'],
-                            $courseName,
-                            trim($studentName),
-                            $order['course_id']
-                        );
+                    
+                    // Notify user about payment success and enrollment
+                    $notificationService->notifyPaymentSuccess($order['user_id'], $amount, $courseName, $order['course_id']);
+                    
+                    // Notify admins about new payment received
+                    $adminUsers = $userModel->getAdministrators();
+                    if (!empty($adminUsers)) {
+                        $adminIds = array_column($adminUsers, 'id');
+                        $notificationService->notifyAdminPaymentReceived($adminIds, $amount, $courseName, trim($userName), $orderId);
                     }
                 }
             } catch (\Exception $notificationError) {
-                log_message('error', "Error sending admin notification for course enrollment: " . $notificationError->getMessage());
+                log_message('error', "Error sending payment success notifications: " . $notificationError->getMessage());
                 // Don't fail enrollment if notification fails
             }
             
@@ -380,6 +379,37 @@ class PaymentService
             log_message('info', "Event payment transaction saved: Transaction ID {$transactionId} for booking #{$bookingId}");
         } else {
             log_message('error', "Failed to save event payment transaction for booking #{$bookingId}");
+        }
+
+        // Send notifications after successful event payment
+        try {
+            $eventModel = new \App\Models\EventModel();
+            $event = $eventModel->find($booking['event_id']);
+            $eventTitle = $event ? $event['title'] : 'Event';
+
+            $bookingNumber = $booking['booking_number'] ?? '';
+            $amount = number_format($booking['total_amount'] ?? 0, 2);
+
+            $notificationService = new \App\Services\NotificationService();
+
+            // Notify user about payment success (if logged in)
+            if (!empty($booking['user_id'])) {
+                $notificationService->notifyEventPaymentSuccess($booking['user_id'], $eventTitle, $amount, $bookingId);
+            }
+
+            // Notify admins about event payment received
+            $userModel = model('UserModel');
+            $user = $booking['user_id'] ? $userModel->find($booking['user_id']) : null;
+            $userName = $user ? ($user['first_name'] . ' ' . $user['last_name']) : ($booking['email'] ?? 'Guest');
+
+            $adminUsers = $userModel->getAdministrators();
+            if (!empty($adminUsers)) {
+                $adminIds = array_column($adminUsers, 'id');
+                $notificationService->notifyAdminEventPayment($adminIds, $amount, $eventTitle, $bookingNumber, $bookingId);
+            }
+        } catch (\Exception $notificationError) {
+            log_message('error', "Error sending event payment notifications: " . $notificationError->getMessage());
+            // Don't fail payment if notification fails
         }
 
         return [

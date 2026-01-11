@@ -20,6 +20,7 @@ class LeadershipModel extends Model
         'image',
         'linkedin',
         'experience',
+        'social_media',
         'order_index',
         'status'
     ];

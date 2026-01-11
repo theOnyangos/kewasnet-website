@@ -33,6 +33,11 @@
         <!-- Notification Dropdown (Outside header stacking context) -->
         <?= $this->include('backendV2/partials/notifications_dropdown') ?>
 
+        <!-- Notification Sound -->
+        <audio id="notification-sound" preload="auto">
+            <source src="<?= base_url("assets/new/water-drip.mp3") ?>" type="audio/mpeg">
+        </audio>
+
         <!-- Main Scripts -->
         <?= $this->include('backendV2/constants/footer-scripts') ?>
 

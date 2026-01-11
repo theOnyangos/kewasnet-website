@@ -9,6 +9,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 use App\Models\PartnerModel as Partner;
 use App\Models\DocumentResource;
 use App\Models\EventModel;
+use App\Models\LeadershipModel;
 
 class Home extends BaseController
 {
@@ -17,6 +18,7 @@ class Home extends BaseController
     protected $homeService;
     protected $documentResourceModel;
     protected $eventModel;
+    protected $leadershipModel;
 
     public function __construct()
     {
@@ -25,6 +27,7 @@ class Home extends BaseController
         $this->homeService   = new HomeService();
         $this->documentResourceModel = new DocumentResource();
         $this->eventModel = new EventModel();
+        $this->leadershipModel = new LeadershipModel();
     }
 
     // Index method to load the landing page
@@ -110,9 +113,58 @@ class Home extends BaseController
         $title          = "About Us - KEWASNET";
         $description    = "Learn about KEWASNET, our mission, vision, and values.";
 
+        // Get active leadership members from database
+        $leadershipMembers = $this->leadershipModel->getActiveLeadership();
+
+        // Format leadership data for view
+        foreach ($leadershipMembers as &$member) {
+            // Convert to array if object
+            if (is_object($member)) {
+                $member = (array) $member;
+            }
+
+            // Format image URL
+            if (!empty($member['image'])) {
+                $imagePath = trim($member['image']);
+                if (strpos($imagePath, 'http') === 0) {
+                    $parsedUrl = parse_url($imagePath);
+                    if (isset($parsedUrl['path'])) {
+                        $imagePath = ltrim($parsedUrl['path'], '/');
+                    }
+                }
+                $imagePath = ltrim($imagePath, '/');
+                $member['image'] = base_url($imagePath);
+            } else {
+                $member['image'] = null;
+            }
+
+            // Decode HTML entities in description and experience (they're stored with htmlspecialchars)
+            if (!empty($member['description'])) {
+                $member['description'] = html_entity_decode($member['description'], ENT_QUOTES, 'UTF-8');
+            }
+            if (!empty($member['experience'])) {
+                $member['experience'] = html_entity_decode($member['experience'], ENT_QUOTES, 'UTF-8');
+            }
+
+            // Parse social media JSON
+            $socialMedia = [];
+            if (!empty($member['social_media'])) {
+                if (is_string($member['social_media'])) {
+                    $decoded = json_decode($member['social_media'], true);
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                        $socialMedia = $decoded;
+                    }
+                } elseif (is_array($member['social_media'])) {
+                    $socialMedia = $member['social_media'];
+                }
+            }
+            $member['social_media'] = $socialMedia;
+        }
+
         $data = [
-            'title'         => $title,
-            'description'   => $description
+            'title'             => $title,
+            'description'       => $description,
+            'leadershipMembers' => $leadershipMembers
         ];
 
         return view('frontendV2/website/pages/about/index', $data);

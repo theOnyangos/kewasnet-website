@@ -478,6 +478,41 @@ class PillarController extends BaseController
 
         $result = $this->commentService->addComment($resourceId, $content, $parentId);
         
+        // Send notifications after successful comment
+        if (isset($result['success']) && $result['success'] === true) {
+            try {
+                $resource = $this->resourceModel->find($resourceId);
+                if ($resource) {
+                    $notificationService = new \App\Services\NotificationService();
+                    $userModel = model('UserModel');
+                    $userId = session()->get('id') ?? session()->get('user_id');
+                    $commenterUser = $userModel->find($userId);
+                    $commenterName = $commenterUser ? ($commenterUser['first_name'] . ' ' . $commenterUser['last_name']) : 'Someone';
+
+                    $articleTitle = $resource['title'] ?? 'Article';
+                    $articleSlug = $resource['slug'] ?? '';
+
+                    // Notify resource author if it's not the user commenting on their own article
+                    if ($resource['created_by'] != $userId) {
+                        $notificationService->notifyResourceComment($resource['created_by'], $articleTitle, $commenterName, $articleSlug);
+                    }
+
+                    // If this is a reply to a comment, notify the parent comment author
+                    if (!empty($parentId)) {
+                        $commentModel = model('ResourceComment');
+                        $parentComment = $commentModel->find($parentId);
+                        if ($parentComment && $parentComment['user_id'] != $userId && $parentComment['user_id'] != $resource['created_by']) {
+                            // Only notify if it's not the resource author and not the commenter themselves
+                            $notificationService->notifyResourceCommentReply($parentComment['user_id'], $commenterName, $articleSlug);
+                        }
+                    }
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending resource comment notifications: " . $notificationError->getMessage());
+                // Don't fail comment if notification fails
+            }
+        }
+        
         return $this->response->setJSON($result);
     }
 
@@ -500,6 +535,32 @@ class PillarController extends BaseController
         }
 
         $result = $this->commentService->voteResourceHelpful($resourceId);
+        
+        // Send notification after successful vote
+        if (isset($result['success']) && $result['success'] === true) {
+            try {
+                $resource = $this->resourceModel->find($resourceId);
+                if ($resource) {
+                    $userId = session()->get('id') ?? session()->get('user_id');
+                    
+                    // Notify resource author if it's not the user voting on their own article
+                    if ($resource['created_by'] != $userId) {
+                        $notificationService = new \App\Services\NotificationService();
+                        $userModel = model('UserModel');
+                        $voterUser = $userModel->find($userId);
+                        $voterName = $voterUser ? ($voterUser['first_name'] . ' ' . $voterUser['last_name']) : 'Someone';
+
+                        $articleTitle = $resource['title'] ?? 'Article';
+                        $articleSlug = $resource['slug'] ?? '';
+
+                        $notificationService->notifyResourceHelpful($resource['created_by'], $articleTitle, $voterName, $articleSlug);
+                    }
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending resource helpful notification: " . $notificationError->getMessage());
+                // Don't fail vote if notification fails
+            }
+        }
         
         return $this->response->setJSON($result);
     }

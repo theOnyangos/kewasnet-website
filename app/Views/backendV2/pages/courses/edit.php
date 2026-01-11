@@ -31,10 +31,10 @@
                             Course Details
                         </button>
                         
-                        <button onclick="switchTab('curriculum')" id="tab-curriculum" class="tab-button py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                        <a href="<?= site_url('auth/courses/curriculum/' . $course['id']) ?>" id="tab-curriculum" class="tab-button py-4 px-6 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300">
                             <i data-lucide="layers" class="w-4 h-4 inline mr-2"></i>
                             Curriculum
-                        </button>
+                        </a>
                     </nav>
                 </div>
 
@@ -61,8 +61,6 @@
                     </form>
                 </div>
 
-                <!-- Curriculum Tab -->
-                <?= $this->include('backendV2/pages/courses/partials/curriculum_tab') ?>
             </div>
         </div>
 
@@ -75,7 +73,15 @@
                 <div class="flex flex-col items-center">
                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
                     <h3 class="text-lg font-medium text-gray-900 mb-1">Updating Course</h3>
-                    <p class="text-sm text-gray-500">Please wait...</p>
+                    <p class="text-sm text-gray-500 mb-4">Please wait while we update your course...</p>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                        <div id="uploadProgress" class="bg-primary h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    
+                    <p class="text-sm font-medium text-gray-700">
+                        <span id="progressPercent">0</span>% complete
+                    </p>
                 </div>
             </div>
         </div>
@@ -151,15 +157,63 @@
                 $('#price').removeAttr('required');
             }
         });
+
+        // Image preview
+        $('#image').on('change', function(e) {
+            const file = e.target.files[0];
+            const previewContainer = $('#image-preview');
+            previewContainer.empty();
+            
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.html(`
+                        <img src="${e.target.result}" class="max-w-48 max-h-32 rounded-lg border-2 border-gray-200">
+                    `);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
 
     // Setup all form handlers
     function setupFormHandlers() {
+        // Remove image button handler
+        $('#removeImageBtn').on('click', function() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will remove the current course image. You can upload a new image below.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, remove it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#removeImageFlag').val('1');
+                    $('#currentImage').closest('.mb-4').find('img').fadeOut(300, function() {
+                        $(this).closest('.mb-4').find('> div').fadeOut(300);
+                    });
+                    $('#removeImageBtn').fadeOut(300);
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Image marked for removal',
+                        text: 'The image will be removed when you save the form.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        });
+
         // Course edit form
         $('#editCourseForm').on('submit', function(e) {
             e.preventDefault();
 
             const formData = new FormData(this);
+            const $progressBar = $('#uploadProgress');
+            const $progressPercent = $('#progressPercent');
+            const $progressModal = $('#progressModal');
 
             // Handle is_paid - set price to 0 if free course
             if ($('input[name="is_paid"]:checked').val() === '0') {
@@ -167,7 +221,10 @@
                 formData.set('discount_price', '0');
             }
 
-            $('#progressModal').removeClass('hidden');
+            // Reset progress bar
+            $progressBar.css('width', '0%');
+            $progressPercent.text('0');
+            $progressModal.removeClass('hidden');
 
             $.ajax({
                 url: '<?= site_url('auth/courses/edit/') ?>' + courseId,
@@ -175,14 +232,46 @@
                 data: formData,
                 processData: false,
                 contentType: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 90); // Cap at 90% until complete
+                            $progressBar.css('width', percent + '%');
+                            $progressPercent.text(percent);
+                        }
+                    }, false);
+                    
+                    return xhr;
+                },
                 success: function(response) {
-                    $('#progressModal').addClass('hidden');
-                    if (response.status === 'success') {
-                        location.reload();
-                    }
+                    $progressBar.css('width', '100%');
+                    $progressPercent.text('100');
+                    
+                    setTimeout(() => {
+                        $progressModal.addClass('hidden');
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: 'Course updated successfully!',
+                                timer: 2000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                location.reload();
+                            });
+                        }
+                    }, 500);
                 },
                 error: function(xhr) {
-                    $('#progressModal').addClass('hidden');
+                    $progressModal.addClass('hidden');
+                    const errorMsg = xhr.responseJSON?.message || 'Failed to update course';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg
+                    });
                     console.error('Failed to update course:', xhr.responseJSON?.message);
                 }
             });
@@ -252,6 +341,127 @@
         $('#content-' + tab).removeClass('hidden');
         lucide.createIcons();
     };
+    
+    // Re-initialize icons after image removal
+    $(document).ready(function() {
+        lucide.createIcons();
+    });
+    
+    // Learning Goals Management
+    <?php
+    // Parse existing goals for JavaScript
+    $existingGoalsForJs = [];
+    if (!empty($course['goals'])) {
+        if (is_array($course['goals'])) {
+            $existingGoalsForJs = $course['goals'];
+        } elseif (is_string($course['goals'])) {
+            $decoded = json_decode($course['goals'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $existingGoalsForJs = $decoded;
+            } else {
+                $existingGoalsForJs = array_filter(array_map('trim', explode("\n", $course['goals'])));
+            }
+        }
+    }
+    if (empty($existingGoalsForJs)) {
+        $existingGoalsForJs = [''];
+    }
+    ?>
+    let goalCount = <?= count($existingGoalsForJs) ?>;
+    
+    // Add new goal field
+    $('#addGoalBtn').on('click', function() {
+        const goalHtml = `
+            <div class="goal-item flex gap-2 items-start" data-index="${goalCount}">
+                <div class="flex-1">
+                    <input type="text" name="goals[]" value="" placeholder="Enter a learning goal (e.g., Understand the fundamentals of X)" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                </div>
+                <button type="button" class="remove-goal-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" title="Remove this goal">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `;
+        $('#goalsContainer').append(goalHtml);
+        goalCount++;
+        
+        // Show all remove buttons if more than one goal
+        if ($('#goalsContainer .goal-item').length > 1) {
+            $('.remove-goal-btn').show();
+        }
+        
+        lucide.createIcons();
+    });
+    
+    // Remove goal field
+    $(document).on('click', '.remove-goal-btn', function() {
+        const $goalItem = $(this).closest('.goal-item');
+        $goalItem.fadeOut(300, function() {
+            $(this).remove();
+            
+            // Hide all remove buttons if only one goal remains
+            if ($('#goalsContainer .goal-item').length <= 1) {
+                $('.remove-goal-btn').hide();
+            }
+        });
+    });
+    
+    // Resources/Requirements Management
+    <?php
+    // Parse existing resources for JavaScript
+    $existingResourcesForJs = [];
+    if (!empty($course['resources'])) {
+        if (is_array($course['resources'])) {
+            $existingResourcesForJs = $course['resources'];
+        } elseif (is_string($course['resources'])) {
+            $decoded = json_decode($course['resources'], true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $existingResourcesForJs = $decoded;
+            } else {
+                $existingResourcesForJs = array_filter(array_map('trim', preg_split('/[\n,]+/', $course['resources'])));
+            }
+        }
+    }
+    if (empty($existingResourcesForJs)) {
+        $existingResourcesForJs = [''];
+    }
+    ?>
+    let resourceCount = <?= count($existingResourcesForJs) ?>;
+    
+    // Add new resource field
+    $('#addResourceBtn').on('click', function() {
+        const resourceHtml = `
+            <div class="resource-item flex gap-2 items-start" data-index="${resourceCount}">
+                <div class="flex-1">
+                    <input type="text" name="resources[]" value="" placeholder="Enter a resource or requirement (e.g., Internet connection, Laptop with X software)" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                </div>
+                <button type="button" class="remove-resource-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" title="Remove this resource">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        `;
+        $('#resourcesContainer').append(resourceHtml);
+        resourceCount++;
+        
+        // Show all remove buttons if more than one resource
+        if ($('#resourcesContainer .resource-item').length > 1) {
+            $('.remove-resource-btn').show();
+        }
+        
+        lucide.createIcons();
+    });
+    
+    // Remove resource field
+    $(document).on('click', '.remove-resource-btn', function() {
+        const $resourceItem = $(this).closest('.resource-item');
+        $resourceItem.fadeOut(300, function() {
+            $(this).remove();
+            
+            // Hide all remove buttons if only one resource remains
+            if ($('#resourcesContainer .resource-item').length <= 1) {
+                $('.remove-resource-btn').hide();
+            }
+        });
+    });
 
     // Section modal functions
     window.showAddSectionModal = function() {

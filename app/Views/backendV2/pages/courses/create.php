@@ -169,11 +169,25 @@
                 <!-- Learning Goals Section -->
                 <div class="border-b pb-6">
                     <h3 class="text-lg font-medium text-dark mb-4">Learning Goals</h3>
-
                     <div>
-                        <label for="goals" class="block text-sm font-medium text-dark mb-1">What will students learn?</label>
-                        <textarea id="goals" name="goals" rows="5" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none" placeholder="Enter learning goals (one per line)"></textarea>
-                        <p class="mt-1 text-xs text-gray-500">List key learning outcomes, one per line</p>
+                        <label class="block text-sm font-medium text-dark mb-1">What will students learn?</label>
+                        <p class="mb-4 text-xs text-gray-500">Add key learning outcomes that students will achieve by taking this course. Click "Add Goal" to add more items.</p>
+                        
+                        <div id="goalsContainer" class="space-y-3 mb-4">
+                            <div class="goal-item flex gap-2 items-start" data-index="0">
+                                <div class="flex-1">
+                                    <input type="text" name="goals[]" value="" placeholder="Enter a learning goal (e.g., Understand the fundamentals of X)" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                </div>
+                                <button type="button" class="remove-goal-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" style="display: none;" title="Remove this goal">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button type="button" id="addGoalBtn" class="px-4 py-2 bg-secondary/10 border border-secondary rounded-lg text-secondary hover:bg-secondary/20 transition-colors text-sm font-medium inline-flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Add Goal
+                        </button>
                     </div>
                 </div>
 
@@ -188,8 +202,24 @@
                         </div>
 
                         <div>
-                            <label for="resources" class="block text-sm font-medium text-dark mb-1">Resources/Requirements</label>
-                            <textarea id="resources" name="resources" rows="3" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent resize-none" placeholder="List any required materials or prerequisites"></textarea>
+                            <label class="block text-sm font-medium text-dark mb-1">Resources/Requirements</label>
+                            <p class="mb-4 text-xs text-gray-500">Add any required materials, software, tools, or prerequisites students need before taking this course. Click "Add Resource" to add more items.</p>
+                            
+                            <div id="resourcesContainer" class="space-y-3 mb-4">
+                                <div class="resource-item flex gap-2 items-start" data-index="0">
+                                    <div class="flex-1">
+                                        <input type="text" name="resources[]" value="" placeholder="Enter a resource or requirement (e.g., Internet connection, Laptop with X software)" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                    </div>
+                                    <button type="button" class="remove-resource-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" style="display: none;" title="Remove this resource">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button type="button" id="addResourceBtn" class="px-4 py-2 bg-secondary/10 border border-secondary rounded-lg text-secondary hover:bg-secondary/20 transition-colors text-sm font-medium inline-flex items-center gap-2">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                Add Resource
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -321,6 +351,84 @@
                 };
                 reader.readAsDataURL(file);
             }
+        });
+
+        // Learning Goals Management
+        let goalCount = 1;
+        
+        // Add new goal field
+        $('#addGoalBtn').on('click', function() {
+            const goalHtml = `
+                <div class="goal-item flex gap-2 items-start" data-index="${goalCount}">
+                    <div class="flex-1">
+                        <input type="text" name="goals[]" value="" placeholder="Enter a learning goal (e.g., Understand the fundamentals of X)" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    </div>
+                    <button type="button" class="remove-goal-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" title="Remove this goal">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            $('#goalsContainer').append(goalHtml);
+            goalCount++;
+            
+            // Show all remove buttons if more than one goal
+            if ($('#goalsContainer .goal-item').length > 1) {
+                $('.remove-goal-btn').show();
+            }
+            
+            lucide.createIcons();
+        });
+        
+        // Remove goal field
+        $(document).on('click', '.remove-goal-btn', function() {
+            const $goalItem = $(this).closest('.goal-item');
+            $goalItem.fadeOut(300, function() {
+                $(this).remove();
+                
+                // Hide all remove buttons if only one goal remains
+                if ($('#goalsContainer .goal-item').length <= 1) {
+                    $('.remove-goal-btn').hide();
+                }
+            });
+        });
+        
+        // Resources/Requirements Management
+        let resourceCount = 1;
+        
+        // Add new resource field
+        $('#addResourceBtn').on('click', function() {
+            const resourceHtml = `
+                <div class="resource-item flex gap-2 items-start" data-index="${resourceCount}">
+                    <div class="flex-1">
+                        <input type="text" name="resources[]" value="" placeholder="Enter a resource or requirement (e.g., Internet connection, Laptop with X software)" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                    </div>
+                    <button type="button" class="remove-resource-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" title="Remove this resource">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            $('#resourcesContainer').append(resourceHtml);
+            resourceCount++;
+            
+            // Show all remove buttons if more than one resource
+            if ($('#resourcesContainer .resource-item').length > 1) {
+                $('.remove-resource-btn').show();
+            }
+            
+            lucide.createIcons();
+        });
+        
+        // Remove resource field
+        $(document).on('click', '.remove-resource-btn', function() {
+            const $resourceItem = $(this).closest('.resource-item');
+            $resourceItem.fadeOut(300, function() {
+                $(this).remove();
+                
+                // Hide all remove buttons if only one resource remains
+                if ($('#resourcesContainer .resource-item').length <= 1) {
+                    $('.remove-resource-btn').hide();
+                }
+            });
         });
 
         // Form submission

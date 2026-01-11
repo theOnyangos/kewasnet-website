@@ -405,8 +405,11 @@ class KspController extends BaseController
                                 $adminIds = array_column($adminUsers, 'id');
                                 $notificationService->notifyNewUserRegistration($adminIds, $userName, $insertId);
                             }
+                            
+                            // Notify user with welcome message
+                            $notificationService->notifyUserWelcome($insertId, $userName);
                         } catch (\Exception $notificationError) {
-                            log_message('error', "Error sending admin notification for new user registration: " . $notificationError->getMessage());
+                            log_message('error', "Error sending notification for new user registration: " . $notificationError->getMessage());
                             // Don't fail registration if notification fails
                         }
                         
@@ -429,8 +432,11 @@ class KspController extends BaseController
                                 $adminIds = array_column($adminUsers, 'id');
                                 $notificationService->notifyNewUserRegistration($adminIds, $userName, $insertId);
                             }
+                            
+                            // Notify user with welcome message
+                            $notificationService->notifyUserWelcome($insertId, $userName);
                         } catch (\Exception $notificationError) {
-                            log_message('error', "Error sending admin notification for new user registration: " . $notificationError->getMessage());
+                            log_message('error', "Error sending notification for new user registration: " . $notificationError->getMessage());
                         }
                         
                         return $this->ajaxSuccessResponse(

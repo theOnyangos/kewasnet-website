@@ -297,6 +297,39 @@ class EventsController extends BaseController
                 return $this->response->setJSON($result)->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
 
+            // Send notifications after successful booking
+            try {
+                $eventModel = new \App\Models\EventModel();
+                $event = $eventModel->find($eventId);
+                $eventTitle = $event ? $event['title'] : 'Event';
+                
+                $userModel = model('UserModel');
+                $user = $userId ? $userModel->find($userId) : null;
+                $userName = $user ? ($user['first_name'] . ' ' . $user['last_name']) : ($email ?? 'Guest');
+
+                $bookingNumber = $result['booking_number'] ?? '';
+                $bookingId = $result['booking_id'];
+                $paymentStatus = $result['payment_status'] ?? ($totalAmount > 0 ? 'pending' : 'paid');
+                $paymentStatusText = $paymentStatus === 'paid' ? 'Payment completed' : 'Payment pending';
+
+                $notificationService = new \App\Services\NotificationService();
+                
+                // Notify user about booking (if logged in)
+                if ($userId) {
+                    $notificationService->notifyEventBooking($userId, $eventTitle, $bookingNumber, $bookingId, $paymentStatusText);
+                }
+
+                // Notify admins about new booking
+                $adminUsers = $userModel->getAdministrators();
+                if (!empty($adminUsers)) {
+                    $adminIds = array_column($adminUsers, 'id');
+                    $notificationService->notifyAdminEventBooking($adminIds, $bookingNumber, $eventTitle, $userName, $bookingId);
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending event booking notifications: " . $notificationError->getMessage());
+                // Don't fail booking if notification fails
+            }
+
             // If free event, generate tickets and send email
             if ($totalAmount == 0) {
                 $this->ticketService->sendTicketsByEmail($result['booking_id']);

@@ -219,6 +219,26 @@ class CoursesController extends BaseController
 
             $course = $this->courseService->createCourse($courseData, $files);
 
+            // Send notification after successful creation
+            try {
+                $courseTitle = $course['title'] ?? $courseData['title'] ?? 'Course';
+                $courseId = $course['id'] ?? '';
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $details = [];
+                if (isset($courseData['status'])) {
+                    $details['status'] = $courseData['status'];
+                }
+                if (isset($courseData['level'])) {
+                    $details['level'] = ucfirst($courseData['level']);
+                }
+                $notificationService->notifyAdminAction($adminId, 'created', 'course', $courseTitle, $courseId, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending course creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
+
             $response = [
                 'status' => 'success',
                 'message' => 'Course created successfully!',
@@ -280,19 +300,37 @@ class CoursesController extends BaseController
             }
         }
 
+        log_message('debug', 'Categories loaded: ' . count($uniqueCategories));
+
+        return view('backendV2/pages/courses/edit', [
+            'title' => self::EDIT_COURSE_PAGE_TITLE,
+            'dashboardTitle' => self::EDIT_COURSE_DASH_TITLE,
+            'course' => $course,
+            'categories' => $uniqueCategories
+        ]);
+    }
+
+    /**
+     * Show curriculum page
+     */
+    public function curriculum($courseId)
+    {
+        $course = $this->courseModel->find($courseId);
+
+        if (!$course) {
+            return redirect()->to('auth/courses')->with('error', 'Course not found.');
+        }
+
         $sections = $this->sectionModel
             ->where('course_id', $courseId)
             ->where('deleted_at', null)
             ->orderBy('created_at', 'ASC')
             ->findAll();
 
-        log_message('debug', 'Sections loaded: ' . json_encode($sections));
-
-        return view('backendV2/pages/courses/edit', [
-            'title' => self::EDIT_COURSE_PAGE_TITLE,
-            'dashboardTitle' => self::EDIT_COURSE_DASH_TITLE,
+        return view('backendV2/pages/courses/curriculum', [
+            'title' => 'Course Curriculum - KEWASNET',
+            'dashboardTitle' => 'Course Curriculum',
             'course' => $course,
-            'categories' => $uniqueCategories,
             'sections' => $sections
         ]);
     }
@@ -318,6 +356,25 @@ class CoursesController extends BaseController
             $files = $this->request->getFiles();
 
             $updatedCourse = $this->courseService->updateCourse($courseId, $courseData, $files);
+
+            // Send notification after successful update
+            try {
+                $courseTitle = $updatedCourse['title'] ?? $course['title'] ?? $courseData['title'] ?? 'Course';
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $details = [];
+                if (isset($courseData['status']) && ($courseData['status'] != ($course['status'] ?? ''))) {
+                    $details['status'] = 'Changed to ' . $courseData['status'];
+                }
+                if (isset($courseData['level']) && ($courseData['level'] != ($course['level'] ?? ''))) {
+                    $details['level'] = 'Changed to ' . ucfirst($courseData['level']);
+                }
+                $notificationService->notifyAdminAction($adminId, 'updated', 'course', $courseTitle, $courseId, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending course update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
 
             $response = [
                 'status' => 'success',
@@ -368,6 +425,18 @@ class CoursesController extends BaseController
             }
 
             $this->courseModel->delete($courseId);
+
+            // Send notification after successful deletion
+            try {
+                $courseTitle = $course['title'] ?? 'Course';
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'course', $courseTitle, $courseId);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending course deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
 
             return $this->response->setJSON([
                 'status' => 'success',
@@ -444,6 +513,19 @@ class CoursesController extends BaseController
             // Get the inserted ID
             $sectionId = $this->sectionModel->getInsertID();
 
+            // Send notification after successful creation
+            try {
+                $adminId = session()->get('id');
+                $sectionTitle = $sectionData['title'];
+                $courseId = $sectionData['course_id'];
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'created', 'section', $sectionTitle, $sectionId, ['course_id' => $courseId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending section creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Section created successfully',
@@ -488,6 +570,22 @@ class CoursesController extends BaseController
                 throw new \Exception('Failed to update section');
             }
 
+            // Send notification after successful update
+            try {
+                $adminId = session()->get('id');
+                $sectionTitle = $updateData['title'];
+                $details = [];
+                if (isset($data['status']) && ($data['status'] != ($section['status'] ?? ''))) {
+                    $details['status'] = 'Changed to ' . $data['status'];
+                }
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'updated', 'section', $sectionTitle, $sectionId, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending section update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Section updated successfully'
@@ -518,7 +616,21 @@ class CoursesController extends BaseController
             }
 
             // Delete section and its lectures (soft delete will handle it)
+            $sectionTitle = $section['title'] ?? 'Section';
+            $courseId = $section['course_id'] ?? null;
+            
             $this->sectionModel->delete($sectionId);
+
+            // Send notification after successful deletion
+            try {
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'section', $sectionTitle, $sectionId, ['course_id' => $courseId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending section deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
 
             return $this->response->setJSON([
                 'success' => true,
@@ -659,6 +771,19 @@ class CoursesController extends BaseController
 
             $lectureId = $this->lectureModel->getInsertID();
 
+            // Send notification after successful creation
+            try {
+                $adminId = session()->get('id');
+                $lectureTitle = $lectureData['title'];
+                $sectionId = $lectureData['section_id'];
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'created', 'lecture', $lectureTitle, $lectureId, ['section_id' => $sectionId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending lecture creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Lecture created successfully',
@@ -747,6 +872,22 @@ class CoursesController extends BaseController
                 throw new \Exception('Failed to update lecture');
             }
 
+            // Send notification after successful update
+            try {
+                $adminId = session()->get('id');
+                $lectureTitle = $updateData['title'];
+                $details = [];
+                if (isset($data['status']) && ($data['status'] != ($lecture['status'] ?? ''))) {
+                    $details['status'] = 'Changed to ' . $data['status'];
+                }
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'updated', 'lecture', $lectureTitle, $lectureId, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending lecture update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Lecture updated successfully'
@@ -776,7 +917,21 @@ class CoursesController extends BaseController
                 ])->setStatusCode(ResponseInterface::HTTP_NOT_FOUND);
             }
 
+            $lectureTitle = $lecture['title'] ?? 'Lecture';
+            $sectionId = $lecture['section_id'] ?? null;
+            
             $this->lectureModel->delete($lectureId);
+
+            // Send notification after successful deletion
+            try {
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'lecture', $lectureTitle, $lectureId, ['section_id' => $sectionId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending lecture deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
 
             return $this->response->setJSON([
                 'success' => true,
@@ -1390,6 +1545,18 @@ class CoursesController extends BaseController
                 throw new \Exception($errors ? implode(', ', $errors) : 'Failed to create quiz');
             }
 
+            // Send notification after successful creation
+            try {
+                $adminId = session()->get('id');
+                $quizTitle = $quizData['title'];
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'created', 'quiz', $quizTitle, $quizId);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending quiz creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Quiz created successfully',
@@ -1445,6 +1612,22 @@ class CoursesController extends BaseController
             ];
 
             $quizModel->update($quizId, $updateData);
+
+            // Send notification after successful update
+            try {
+                $adminId = session()->get('id');
+                $quizTitle = $updateData['title'];
+                $details = [];
+                if (isset($updateData['status']) && ($updateData['status'] != ($quiz['status'] ?? ''))) {
+                    $details['status'] = 'Changed to ' . $updateData['status'];
+                }
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'updated', 'quiz', $quizTitle, $quizId, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending quiz update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
 
             return $this->response->setJSON([
                 'success' => true,
@@ -1544,6 +1727,18 @@ class CoursesController extends BaseController
                 }
             }
 
+            // Send notification after successful question creation
+            try {
+                $adminId = session()->get('id');
+                $questionText = substr($questionText, 0, 100); // Truncate for display
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'created', 'quiz_question', $questionText, $questionId, ['quiz_id' => $quizId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending quiz question creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Question added successfully',
@@ -1605,6 +1800,22 @@ class CoursesController extends BaseController
                 }
             }
 
+            // Get the question to get quiz_id for notification (after all updates are complete)
+            $question = $questionModel->find($questionId);
+            $quizId = $question['quiz_id'] ?? null;
+
+            // Send notification after successful update
+            try {
+                $adminId = session()->get('id');
+                $questionTextForNotification = substr($questionText, 0, 100); // Truncate for display
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'updated', 'quiz_question', $questionTextForNotification, $questionId, ['quiz_id' => $quizId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending quiz question update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Question updated successfully'
@@ -1623,7 +1834,30 @@ class CoursesController extends BaseController
     {
         try {
             $questionModel = new \App\Models\QuizQuestionModel();
+            $question = $questionModel->find($questionId);
+            
+            if (!$question) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Question not found'
+                ])->setStatusCode(ResponseInterface::HTTP_NOT_FOUND);
+            }
+            
+            $questionText = substr($question['question_text'] ?? 'Question', 0, 100);
+            $quizId = $question['quiz_id'] ?? null;
+            
             $questionModel->delete($questionId);
+
+            // Send notification after successful deletion
+            try {
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'quiz_question', $questionText, $questionId, ['quiz_id' => $quizId]);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending quiz question deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
 
             return $this->response->setJSON([
                 'success' => true,

@@ -280,6 +280,28 @@ class NetworkCornerController extends BaseController
             // Join the forum
             $this->networkCornerService->joinForum($forumId, $userId);
 
+            // Send notifications
+            try {
+                $notificationService = new \App\Services\NotificationService();
+                $userModel = model('UserModel');
+                $user = $userModel->find($userId);
+                $userName = $user ? ($user['first_name'] . ' ' . $user['last_name']) : 'User';
+
+                // Notify user about joining
+                $notificationService->notifyForumJoin($userId, $forum->name, $forumId);
+
+                // Notify forum moderators about new member
+                $forumModeratorModel = new \App\Models\ForumModerator();
+                $moderators = $forumModeratorModel->getModeratorsByForumId($forumId);
+                if (!empty($moderators)) {
+                    $moderatorIds = array_column($moderators, 'user_id');
+                    $notificationService->notifyForumNewMember($moderatorIds, $userName, $forum->name, $forumId);
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending forum join notifications: " . $notificationError->getMessage());
+                // Don't fail join if notification fails
+            }
+
             return $this->generateJsonResponse('success', ResponseInterface::HTTP_OK, 'Successfully joined forum: ' . esc($forum->name), []);
         } catch (\Exception $e) {
             return $this->generateJsonResponse('error', ResponseInterface::HTTP_INTERNAL_SERVER_ERROR, $e->getMessage(), [], $e);
@@ -308,6 +330,15 @@ class NetworkCornerController extends BaseController
 
             // Leave the forum
             $this->networkCornerService->leaveForum($forumId, $userId);
+
+            // Send notification to user
+            try {
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyForumLeave($userId, $forum->name);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending forum leave notification: " . $notificationError->getMessage());
+                // Don't fail leave if notification fails
+            }
 
             return $this->generateJsonResponse('success', ResponseInterface::HTTP_OK, 'Successfully left forum: ' . esc($forum->name), []);
         } catch (\Exception $e) {
@@ -574,12 +605,41 @@ class NetworkCornerController extends BaseController
 
         if ($queued) {
             log_message('info', 'Email queued successfully for moderators (BCC): ' . implode(', ', $recipientsList));
+
+            // Send notifications after successful email queuing
+            try {
+                $forumId = $input['forum_id'] ?? null;
+                if ($forumId) {
+                    $notificationService = new \App\Services\NotificationService();
+                    $userName = $user['first_name'] . ' ' . $user['last_name'];
+
+                    // Get forum name
+                    $forumModel = model('Forum');
+                    $forum = $forumModel->find($forumId);
+                    $forumName = $forum ? $forum->name : 'Forum';
+
+                    // Notify user about confirmation
+                    $notificationService->notifyModeratorContactConfirmation($userId, $forumName);
+
+                    // Notify moderators about contact
+                    $forumModeratorModel = new \App\Models\ForumModerator();
+                    $moderators = $forumModeratorModel->getModeratorsByForumId($forumId);
+                    if (!empty($moderators)) {
+                        $moderatorIds = array_column($moderators, 'user_id');
+                        $notificationService->notifyModeratorsContact($moderatorIds, $userName, $forumName, $forumId);
+                    }
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending moderator contact notifications: " . $notificationError->getMessage());
+                // Don't fail email queuing if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Your message has been sent to the moderators'
             ]);
         } else {
-            log_message('error', 'Failed to send moderator contact email: ' . $email->printDebugger(['headers']));
+            log_message('error', 'Failed to queue moderator contact email');
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Failed to send message. Please try again later.'

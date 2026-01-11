@@ -188,6 +188,37 @@ class DiscussionController extends BaseController
 
         $result = $this->discussionService->addReply($discussionId, $content, $parentId, $files);
 
+        // Send notifications after successful reply
+        if (isset($result['success']) && $result['success'] === true) {
+            try {
+                $notificationService = new \App\Services\NotificationService();
+                $userModel = model('UserModel');
+                $replierUser = $userModel->find($userId);
+                $replierName = $replierUser ? ($replierUser['first_name'] . ' ' . $replierUser['last_name']) : 'Someone';
+
+                // Truncate content for preview (first 100 characters)
+                $replyPreview = !empty($content) ? substr(strip_tags($content), 0, 100) . (strlen($content) > 100 ? '...' : '') : '';
+
+                // Notify discussion author if it's not the user replying to their own discussion
+                if ($discussion->user_id != $userId) {
+                    $notificationService->notifyDiscussionReply($discussion->user_id, $discussion->title, $replierName, $discussionId, $replyPreview);
+                }
+
+                // If this is a reply to a reply, notify the parent reply author
+                if (!empty($parentId)) {
+                    $replyModel = model('Reply');
+                    $parentReply = $replyModel->find($parentId);
+                    if ($parentReply && $parentReply->user_id != $userId && $parentReply->user_id != $discussion->user_id) {
+                        // Only notify if it's not the discussion author and not the replier themselves
+                        $notificationService->notifyReplyReply($parentReply->user_id, $replierName, $discussionId);
+                    }
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending discussion reply notifications: " . $notificationError->getMessage());
+                // Don't fail reply if notification fails
+            }
+        }
+
         return $this->response->setJSON($result);
     }
 
@@ -588,6 +619,26 @@ class DiscussionController extends BaseController
         $discussionModel->set('like_count', 'like_count + 1', false)
                         ->where('id', $discussionId)
                         ->update();
+
+        // Send notification to discussion author (if it's not the user liking their own discussion)
+        try {
+            if ($discussion->user_id != $userId) {
+                $notificationService = new \App\Services\NotificationService();
+                $userModel = model('UserModel');
+                $likerUser = $userModel->find($userId);
+                $likerName = $likerUser ? ($likerUser['first_name'] . ' ' . $likerUser['last_name']) : 'Someone';
+
+                // Get forum name for notification
+                $forumModel = model('Forum');
+                $forum = $forumModel->find($discussion->forum_id);
+                $forumName = $forum ? $forum->name : '';
+
+                $notificationService->notifyDiscussionLiked($discussion->user_id, $discussion->title, $likerName, $discussionId, $forumName);
+            }
+        } catch (\Exception $notificationError) {
+            log_message('error', "Error sending discussion like notification: " . $notificationError->getMessage());
+            // Don't fail like if notification fails
+        }
         
         return $this->response->setJSON([
             'success' => true,
@@ -714,6 +765,38 @@ class DiscussionController extends BaseController
 
         // Queue email with BCC to all moderators
         if ($emailQueueModel->queueEmail($fromEmail, $subject, $emailBody, $recipientsList, $fromEmail, $fromName)) {
+            // Send notifications after successful email queuing
+            try {
+                // Get forum ID from discussion
+                $discussionModel = model('Discussion');
+                $discussion = $discussionModel->find($input['discussion_id']);
+                $forumId = $discussion ? $discussion->forum_id : null;
+
+                if ($forumId) {
+                    $notificationService = new \App\Services\NotificationService();
+                    $userName = $user['first_name'] . ' ' . $user['last_name'];
+
+                    // Get forum name
+                    $forumModel = model('Forum');
+                    $forum = $forumModel->find($forumId);
+                    $forumName = $forum ? $forum->name : 'Forum';
+
+                    // Notify user about confirmation
+                    $notificationService->notifyModeratorContactConfirmation($userId, $forumName);
+
+                    // Notify moderators about contact
+                    $forumModeratorModel = new \App\Models\ForumModerator();
+                    $moderators = $forumModeratorModel->getModeratorsByForumId($forumId);
+                    if (!empty($moderators)) {
+                        $moderatorIds = array_column($moderators, 'user_id');
+                        $notificationService->notifyModeratorsContact($moderatorIds, $userName, $forumName, $forumId);
+                    }
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending moderator contact notifications: " . $notificationError->getMessage());
+                // Don't fail email queuing if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Your message has been queued and will be sent to the moderators'

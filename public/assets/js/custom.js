@@ -166,18 +166,26 @@ function clearFormErrors() {
 }
 
 $(document).ready(function () {
-  $(".select2").select2({
-    theme: "bootstrap-5",
-    width: $(this).data("width")
-      ? $(this).data("width")
-      : $(this).hasClass("w-100")
-      ? "100%"
-      : "style",
-    placeholder: $(this).data("placeholder"),
-    minimumResultsForSearch: Infinity,
-  });
+  // Initialize Select2 only if the library is loaded
+  if (typeof $.fn.select2 !== 'undefined') {
+    $(".select2").each(function() {
+      $(this).select2({
+        theme: "bootstrap-5",
+        width: $(this).data("width")
+          ? $(this).data("width")
+          : $(this).hasClass("w-100")
+          ? "100%"
+          : "style",
+        placeholder: $(this).data("placeholder"),
+        minimumResultsForSearch: Infinity,
+      });
+    });
+  }
 
-  $(function () {
-    $("#datepicker").datepicker();
-  });
+  // Initialize datepicker if jQuery UI is loaded
+  if (typeof $.fn.datepicker !== 'undefined') {
+    $(function () {
+      $("#datepicker").datepicker();
+    });
+  }
 });

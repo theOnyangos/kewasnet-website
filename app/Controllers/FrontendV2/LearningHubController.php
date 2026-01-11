@@ -417,6 +417,32 @@ class LearningHubController extends BaseController
         $result = $this->courseService->enrollUser($userId, $courseId);
 
         if ($result['status'] === 'success') {
+            // Send notifications after successful enrollment
+            try {
+                $courseModel = new \App\Models\CourseModel();
+                $course = $courseModel->find($courseId);
+                $courseName = $course ? $course['title'] : 'Course';
+
+                $notificationService = new \App\Services\NotificationService();
+                
+                // Notify user about enrollment
+                $notificationService->notifyUserCourseEnrollment($userId, $courseName, $courseId);
+
+                // Notify admins about new enrollment
+                $userModel = model('UserModel');
+                $user = $userModel->find($userId);
+                $userName = $user ? ($user['first_name'] . ' ' . $user['last_name']) : 'User';
+                
+                $adminUsers = $userModel->getAdministrators();
+                if (!empty($adminUsers)) {
+                    $adminIds = array_column($adminUsers, 'id');
+                    $notificationService->notifyNewCourseEnrollment($adminIds, $courseName, $userName, $courseId);
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending course enrollment notifications: " . $notificationError->getMessage());
+                // Don't fail enrollment if notification fails
+            }
+
             $result['redirect'] = base_url('ksp/learning-hub/learn/' . $courseId);
         } elseif (isset($result['requires_payment']) && $result['requires_payment']) {
             $result['redirect'] = base_url('ksp/payment/initiate');
@@ -607,10 +633,39 @@ class LearningHubController extends BaseController
             // Calculate new progress percentage
             $percentage = $progressModel->getCourseCompletionPercentage($userId, $courseId);
             
+            // Check if course is now completed
+            if ($percentage >= 100) {
+                try {
+                    $courseModel = new CourseModel();
+                    $course = $courseModel->find($courseId);
+                    $courseName = $course ? $course['title'] : 'Course';
+
+                    $notificationService = new \App\Services\NotificationService();
+                    
+                    // Notify user about course completion
+                    $notificationService->notifyUserCourseCompletion($userId, $courseName, $courseId);
+
+                    // Notify admins about course completion
+                    $userModel = model('UserModel');
+                    $user = $userModel->find($userId);
+                    $userName = $user ? ($user['first_name'] . ' ' . $user['last_name']) : 'User';
+                    
+                    $adminUsers = $userModel->getAdministrators();
+                    if (!empty($adminUsers)) {
+                        $adminIds = array_column($adminUsers, 'id');
+                        $notificationService->notifyNewCourseEnrollment($adminIds, $courseName, $userName, $courseId);
+                    }
+                } catch (\Exception $notificationError) {
+                    log_message('error', "Error sending course completion notifications: " . $notificationError->getMessage());
+                    // Don't fail progress update if notification fails
+                }
+            }
+            
             return $this->response->setJSON([
                 'success' => true,
                 'message' => 'Lecture marked as completed',
-                'progress_percentage' => $percentage
+                'progress_percentage' => $percentage,
+                'course_completed' => $percentage >= 100
             ]);
         } catch (\Exception $e) {
             return $this->response->setJSON([
@@ -955,6 +1010,18 @@ class LearningHubController extends BaseController
 
             // Get the newly created certificate
             $certificate = $certificateModel->find($result['certificate_id']);
+
+            // Send notification about certificate generation
+            try {
+                $courseName = $course['title'] ?? 'Course';
+                $certificateId = $certificate['id'] ?? $result['certificate_id'] ?? $courseId;
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyCertificateGenerated($userId, $courseName, $certificateId);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending certificate generation notification: " . $notificationError->getMessage());
+                // Don't fail certificate generation if notification fails
+            }
         }
 
         // Get user data

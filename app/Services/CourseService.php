@@ -53,6 +53,22 @@ class CourseService
             unset($courseData['category']);
         }
 
+        // Process goals array
+        if (isset($courseData['goals']) && is_array($courseData['goals'])) {
+            $goals = array_filter($courseData['goals'], function($goal) {
+                return !empty(trim($goal));
+            });
+            $courseData['goals'] = !empty($goals) ? json_encode(array_values($goals)) : null;
+        }
+
+        // Process resources array
+        if (isset($courseData['resources']) && is_array($courseData['resources'])) {
+            $resources = array_filter($courseData['resources'], function($resource) {
+                return !empty(trim($resource));
+            });
+            $courseData['resources'] = !empty($resources) ? json_encode(array_values($resources)) : null;
+        }
+
         // Set defaults
         $courseData['user_id'] = session()->get('id') ?? null;
         $courseData['is_paid'] = isset($courseData['is_paid']) ? 1 : 0;
@@ -83,6 +99,19 @@ class CourseService
             throw new \Exception('Course not found');
         }
 
+        // Handle image removal
+        if (isset($courseData['remove_image']) && $courseData['remove_image'] == '1') {
+            // Delete old image if exists
+            if (!empty($course['image_url'])) {
+                $imagePath = WRITEPATH . '../public/' . $course['image_url'];
+                if (file_exists($imagePath)) {
+                    @unlink($imagePath);
+                }
+                $courseData['image_url'] = null;
+            }
+            unset($courseData['remove_image']);
+        }
+
         // Handle file upload for course image
         if (isset($files['image']) && $files['image']->isValid()) {
             // Delete old image if exists
@@ -100,6 +129,22 @@ class CourseService
         if (isset($courseData['category'])) {
             $courseData['category_id'] = $courseData['category'];
             unset($courseData['category']);
+        }
+
+        // Process goals array
+        if (isset($courseData['goals']) && is_array($courseData['goals'])) {
+            $goals = array_filter($courseData['goals'], function($goal) {
+                return !empty(trim($goal));
+            });
+            $courseData['goals'] = !empty($goals) ? json_encode(array_values($goals)) : null;
+        }
+
+        // Process resources array
+        if (isset($courseData['resources']) && is_array($courseData['resources'])) {
+            $resources = array_filter($courseData['resources'], function($resource) {
+                return !empty(trim($resource));
+            });
+            $courseData['resources'] = !empty($resources) ? json_encode(array_values($resources)) : null;
         }
 
         // Update boolean fields

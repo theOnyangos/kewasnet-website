@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Controllers\BackendV2;
+namespace App\Controllers\FrontendV2;
 
 use App\Controllers\BaseController;
 use App\Services\NotificationService;
+use App\Libraries\ClientAuth;
 
 class NotificationController extends BaseController
 {
@@ -19,11 +20,16 @@ class NotificationController extends BaseController
      */
     public function index()
     {
+        if (!ClientAuth::isLoggedIn()) {
+            return redirect()->to('ksp/login');
+        }
+
         $data = [
             'title' => 'Notifications | KEWASNET',
+            'dashboardTitle' => 'My Notifications',
         ];
 
-        return view('backendV2/pages/notifications/index', $data);
+        return view('frontendV2/ksp/pages/notifications/index', $data);
     }
 
     /**
@@ -38,13 +44,14 @@ class NotificationController extends BaseController
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'User not authenticated',
             ]);
         }
+
+        $userId = ClientAuth::getId();
 
         // Get request parameters
         $draw = $this->request->getPost('draw');
@@ -105,14 +112,14 @@ class NotificationController extends BaseController
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'User not authenticated',
             ]);
         }
 
+        $userId = ClientAuth::getId();
         $limit = $this->request->getGet('limit') ?? 10;
         $notifications = $this->notificationService->getUnread($userId, $limit);
 
@@ -123,27 +130,25 @@ class NotificationController extends BaseController
     }
 
     /**
-     * Get unread count (AJAX/Polling)
+     * Get unread count (AJAX)
      */
     public function getUnreadCount()
     {
-        // Allow AJAX requests or requests with X-Requested-With header (for fetch API)
-        $xRequestedWith = $this->request->getHeaderLine('X-Requested-With');
-        if (!$this->request->isAJAX() && empty($xRequestedWith)) {
+        if (!$this->request->isAJAX()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'Invalid request',
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
-                'status' => 'error',
-                'message' => 'User not authenticated',
+                'status' => 'success',
+                'count' => 0,
             ]);
         }
 
+        $userId = ClientAuth::getId();
         $count = $this->notificationService->getUnreadCount($userId);
 
         return $this->response->setJSON([
@@ -164,13 +169,14 @@ class NotificationController extends BaseController
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'User not authenticated',
             ]);
         }
+
+        $userId = ClientAuth::getId();
 
         if (!$notificationId) {
             return $this->response->setJSON([
@@ -206,14 +212,14 @@ class NotificationController extends BaseController
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'User not authenticated',
             ]);
         }
 
+        $userId = ClientAuth::getId();
         $result = $this->notificationService->markAllAsRead($userId);
 
         if ($result) {
@@ -241,13 +247,14 @@ class NotificationController extends BaseController
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'User not authenticated',
             ]);
         }
+
+        $userId = ClientAuth::getId();
 
         if (!$notificationId) {
             return $this->response->setJSON([
@@ -283,14 +290,14 @@ class NotificationController extends BaseController
             ]);
         }
 
-        $userId = session()->get('id');
-        if (!$userId) {
+        if (!ClientAuth::isLoggedIn()) {
             return $this->response->setJSON([
                 'status' => 'error',
                 'message' => 'User not authenticated',
             ]);
         }
 
+        $userId = ClientAuth::getId();
         $result = $this->notificationService->clearAllRead($userId);
 
         if ($result) {
@@ -304,147 +311,5 @@ class NotificationController extends BaseController
             'status' => 'error',
             'message' => 'Failed to clear notifications',
         ]);
-    }
-
-    /**
-     * Server-Sent Events stream for real-time notifications
-     * 
-     * DISABLED: SSE has been replaced with simple polling for better performance.
-     * This method is kept for potential future use.
-     * 
-     * To re-enable SSE, remove the early return below.
-     */
-    public function stream()
-    {
-        // SSE is disabled - using polling instead
-        return $this->response->setJSON([
-            'status' => 'error',
-            'message' => 'SSE stream is disabled. Use polling instead.'
-        ])->setStatusCode(503);
-
-        // Disable all output buffering completely
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
-        
-        // Disable time limit for long-running connection
-        set_time_limit(0);
-        
-        // Disable compression for SSE
-        if (function_exists('apache_setenv')) {
-            @apache_setenv('no-gzip', 1);
-        }
-        @ini_set('zlib.output_compression', 0);
-
-        // Set SSE headers (must be sent before any output)
-        header('Content-Type: text/event-stream');
-        header('Cache-Control: no-cache, no-store, must-revalidate');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-        header('Connection: keep-alive');
-        header('X-Accel-Buffering: no'); // Disable nginx buffering
-        
-        // Send retry directive for SSE (3 seconds)
-        echo "retry: 3000\n\n";
-        if (ob_get_level() == 0) {
-            flush();
-        }
-
-        // Get user ID from session
-        $userId = session()->get('id');
-        if (!$userId) {
-            echo "event: error\n";
-            echo "data: " . json_encode(['error' => 'User not authenticated']) . "\n\n";
-            if (ob_get_level() == 0) {
-                flush();
-            }
-            exit;
-        }
-
-        // Track last count to detect changes
-        $lastCount = $this->notificationService->getUnreadCount($userId);
-
-        // Send initial connection message immediately
-        echo "event: connected\n";
-        echo "data: " . json_encode([
-            'count' => $lastCount,
-            'connected' => true
-        ]) . "\n\n";
-        if (ob_get_level() == 0) {
-            flush();
-        }
-
-        // Keep connection alive and poll for changes
-        $maxIterations = 3600; // 1 hour max (2 seconds * 3600 = 7200 seconds)
-        $iteration = 0;
-        $heartbeatInterval = 30; // Send heartbeat every 30 iterations (60 seconds)
-
-        while ($iteration < $maxIterations) {
-            // Check if connection is still alive
-            if (connection_aborted()) {
-                break;
-            }
-
-            // Validate session on each iteration
-            $currentUserId = session()->get('id');
-            if (!$currentUserId || $currentUserId != $userId) {
-                echo "event: error\n";
-                echo "data: " . json_encode(['error' => 'Session expired']) . "\n\n";
-                if (ob_get_level() == 0) {
-                    flush();
-                }
-                break;
-            }
-
-            // Get current unread count
-            $currentCount = $this->notificationService->getUnreadCount($userId);
-
-            // Check if count changed
-            if ($currentCount != $lastCount) {
-                // Get the latest notification if count increased
-                $latestNotification = null;
-                if ($currentCount > $lastCount) {
-                    $unreadNotifications = $this->notificationService->getUnread($userId, 1);
-                    if (!empty($unreadNotifications)) {
-                        $latestNotification = $unreadNotifications[0];
-                    }
-                }
-
-                // Send update immediately
-                echo "event: update\n";
-                echo "data: " . json_encode([
-                    'count' => $currentCount,
-                    'previous_count' => $lastCount,
-                    'notification' => $latestNotification
-                ]) . "\n\n";
-                if (ob_get_level() == 0) {
-                    flush();
-                }
-
-                $lastCount = $currentCount;
-            }
-
-            // Send heartbeat periodically to keep connection alive
-            if ($iteration % $heartbeatInterval === 0 && $iteration > 0) {
-                echo "event: heartbeat\n";
-                echo "data: " . json_encode(['heartbeat' => time()]) . "\n\n";
-                if (ob_get_level() == 0) {
-                    flush();
-                }
-            }
-
-            // Wait 2 seconds before next check
-            sleep(2);
-            $iteration++;
-        }
-
-        // Send close message
-        echo "event: close\n";
-        echo "data: " . json_encode(['message' => 'Connection closed']) . "\n\n";
-        if (ob_get_level() == 0) {
-            flush();
-        }
-
-        exit;
     }
 }

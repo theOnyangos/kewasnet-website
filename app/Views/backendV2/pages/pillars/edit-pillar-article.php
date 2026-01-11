@@ -449,7 +449,6 @@
         const descriptionTextarea   = document.getElementById('description');
         const descriptionCount      = document.getElementById('descriptionCount');
         const progressModal         = document.getElementById('progressModal');
-        const progressBar           = document.getElementById('progressBar');
         const progressText          = document.getElementById('progressText');
         let slugManuallyEdited      = false;
 
@@ -690,16 +689,24 @@
         $(form).on('submit', function(e) {
             e.preventDefault();
             
-            // Show progress modal with fadeIn
-            $(progressModal).removeClass('hidden').hide().fadeIn(300);
-            $(progressModal).find('.flex').css('display', 'flex');
-            let progress = 0;
+            const $progressBar = $('#progressBar');
+            const $progressModal = $(progressModal);
             
-            // Simulate progress
-            const progressInterval = setInterval(() => {
+            // Reset progress bar
+            $progressBar.css('width', '0%');
+            
+            // Show progress modal with fadeIn
+            $progressModal.removeClass('hidden').hide().fadeIn(300);
+            $progressModal.find('.flex').css('display', 'flex');
+            
+            let progress = 0;
+            let progressInterval;
+            
+            // Simulate progress only if upload progress is not available
+            progressInterval = setInterval(() => {
                 progress += Math.random() * 15;
                 if (progress > 90) progress = 90;
-                $(progressBar).animate({ width: progress + '%' }, 200);
+                $progressBar.css('width', progress + '%');
             }, 200);
             
             // Create FormData object
@@ -721,12 +728,31 @@
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 },
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    
+                    // Track upload progress if available
+                    xhr.upload.addEventListener('progress', function(e) {
+                        if (e.lengthComputable && progressInterval) {
+                            clearInterval(progressInterval);
+                            progressInterval = null;
+                        }
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 90); // Cap at 90% until complete
+                            $progressBar.css('width', percent + '%');
+                        }
+                    }, false);
+                    
+                    return xhr;
+                },
                 success: function(data) {
-                    clearInterval(progressInterval);
+                    if (progressInterval) {
+                        clearInterval(progressInterval);
+                    }
                     if (data.status === 'success') {
-                        $(progressBar).animate({ width: '100%' }, 300);
+                        $progressBar.css('width', '100%');
                         setTimeout(() => {
-                            $(progressModal).fadeOut(400, function() {
+                            $progressModal.fadeOut(400, function() {
                                 $(this).addClass('hidden');
                             });
                             Swal.fire({
@@ -741,7 +767,7 @@
                             }, 1500);
                         }, 500);
                     } else if (data.errors) {
-                        $(progressModal).fadeOut(400, function() {
+                        $progressModal.fadeOut(400, function() {
                             $(this).addClass('hidden');
                         });
                         showFormErrors(data.errors);
@@ -751,7 +777,7 @@
                             text: 'Please fix the errors and try again'
                         });
                     } else {
-                        $(progressModal).fadeOut(400, function() {
+                        $progressModal.fadeOut(400, function() {
                             $(this).addClass('hidden');
                         });
                         Swal.fire({
@@ -762,8 +788,10 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    clearInterval(progressInterval);
-                    $(progressModal).fadeOut(400, function() {
+                    if (progressInterval) {
+                        clearInterval(progressInterval);
+                    }
+                    $progressModal.fadeOut(400, function() {
                         $(this).addClass('hidden');
                     });
 

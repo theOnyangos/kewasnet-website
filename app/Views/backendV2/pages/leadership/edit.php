@@ -67,18 +67,6 @@
                         </div>
 
                         <div>
-                            <label for="linkedin" class="block text-sm font-medium text-gray-700 mb-2">
-                                LinkedIn URL
-                            </label>
-                            <input type="url"
-                                   id="linkedin"
-                                   name="linkedin"
-                                   value="<?= esc($member['linkedin'] ?? '') ?>"
-                                   class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
-                                   placeholder="https://linkedin.com/in/username">
-                        </div>
-
-                        <div>
                             <label for="experience" class="block text-sm font-medium text-gray-700 mb-2">
                                 Experience
                             </label>
@@ -127,6 +115,66 @@
                                       class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent"
                                       placeholder="Enter member description (optional)"><?= esc($member['description'] ?? '') ?></textarea>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Social Media Links -->
+                <div class="border-b pb-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Social Media Links</h3>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Social Media Profiles</label>
+                        <p class="mb-4 text-xs text-gray-500">Add social media links (LinkedIn, Twitter, Facebook, etc.). Click "Add Link" to add more platforms.</p>
+
+                        <div id="socialMediaContainer" class="space-y-3 mb-4">
+                            <?php
+                            // Parse existing social media data
+                            $existingSocialMedia = [];
+                            if (!empty($member['social_media'])) {
+                                if (is_string($member['social_media'])) {
+                                    $decoded = json_decode($member['social_media'], true);
+                                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                                        $existingSocialMedia = $decoded;
+                                    }
+                                } elseif (is_array($member['social_media'])) {
+                                    $existingSocialMedia = $member['social_media'];
+                                }
+                            }
+                            // If no social media exists, show one empty field
+                            if (empty($existingSocialMedia)) {
+                                $existingSocialMedia = [['platform' => '', 'url' => '']];
+                            }
+                            
+                            foreach ($existingSocialMedia as $index => $social):
+                            ?>
+                            <div class="social-media-item grid grid-cols-1 md:grid-cols-2 gap-3 items-start" data-index="<?= $index ?>">
+                                <div>
+                                    <select name="social_media_platform[]" class="select2 w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                        <option value="">Select Platform</option>
+                                        <option value="LinkedIn" <?= ($social['platform'] ?? '') === 'LinkedIn' ? 'selected' : '' ?>>LinkedIn</option>
+                                        <option value="github" <?= ($social['platform'] ?? '') === 'github' ? 'selected' : '' ?>>GitHub</option>
+                                        <option value="Facebook" <?= ($social['platform'] ?? '') === 'Facebook' ? 'selected' : '' ?>>Facebook</option>
+                                        <option value="Instagram" <?= ($social['platform'] ?? '') === 'Instagram' ? 'selected' : '' ?>>Instagram</option>
+                                        <option value="YouTube" <?= ($social['platform'] ?? '') === 'YouTube' ? 'selected' : '' ?>>YouTube</option>
+                                        <option value="WhatsApp" <?= ($social['platform'] ?? '') === 'WhatsApp' ? 'selected' : '' ?>>WhatsApp</option>
+                                        <option value="Website" <?= ($social['platform'] ?? '') === 'Website' ? 'selected' : '' ?>>Website</option>
+                                        <option value="X" <?= ($social['platform'] ?? '') === 'X' ? 'selected' : '' ?>>X</option>
+                                        <option value="Other" <?= ($social['platform'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                                    </select>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="url" name="social_media_url[]" value="<?= esc($social['url'] ?? '') ?>" placeholder="https://..." class="flex-1 px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                    <button type="button" class="remove-social-media-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" style="<?= count($existingSocialMedia) > 1 ? '' : 'display: none;' ?>" title="Remove this link">
+                                        <i data-lucide="x" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <button type="button" id="addSocialMediaBtn" class="px-4 py-2 bg-secondary/10 border border-secondary rounded-lg text-secondary hover:bg-secondary/20 transition-colors text-sm font-medium inline-flex items-center gap-2">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            Add Link
+                        </button>
                     </div>
                 </div>
 
@@ -278,6 +326,90 @@
                 }
             });
         }
+
+        // Social Media Links Management
+        let socialMediaCount = <?= count($existingSocialMedia ?? [['platform' => '', 'url' => '']]) ?>;
+
+        // Initialize Select2 for existing social media selects
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumResultsForSearch: Infinity
+            });
+        }
+
+        // Add new social media link field
+        const addSocialMediaBtn = document.getElementById('addSocialMediaBtn');
+        if (addSocialMediaBtn) {
+            addSocialMediaBtn.addEventListener('click', function() {
+                const socialMediaHtml = `
+                    <div class="social-media-item grid grid-cols-1 md:grid-cols-2 gap-3 items-start" data-index="${socialMediaCount}">
+                        <div>
+                            <select name="social_media_platform[]" class="select2 w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                                <option value="">Select Platform</option>
+                                <option value="LinkedIn">LinkedIn</option>
+                                <option value="Twitter">Twitter</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="YouTube">YouTube</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Website">Website</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="url" name="social_media_url[]" value="" placeholder="https://..." class="flex-1 px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent">
+                            <button type="button" class="remove-social-media-btn px-4 py-3 bg-red-50 border border-red-300 rounded-lg text-red-600 hover:bg-red-100 transition-colors flex-shrink-0" title="Remove this link">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                const container = document.getElementById('socialMediaContainer');
+                container.insertAdjacentHTML('beforeend', socialMediaHtml);
+                socialMediaCount++;
+
+                // Initialize Select2 for the new select
+                if (typeof $.fn.select2 !== 'undefined') {
+                    $(container.querySelectorAll('.select2').item(container.querySelectorAll('.select2').length - 1)).select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        minimumResultsForSearch: Infinity
+                    });
+                }
+
+                // Show all remove buttons if more than one link
+                if (container.querySelectorAll('.social-media-item').length > 1) {
+                    container.querySelectorAll('.remove-social-media-btn').forEach(btn => {
+                        btn.style.display = 'block';
+                    });
+                }
+
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            });
+        }
+
+        // Remove social media link field
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-social-media-btn')) {
+                const btn = e.target.closest('.remove-social-media-btn');
+                const item = btn.closest('.social-media-item');
+                const select2Instance = $(item).find('.select2').select2('destroy');
+                item.style.opacity = '0';
+                setTimeout(() => {
+                    item.remove();
+                    const container = document.getElementById('socialMediaContainer');
+                    if (container.querySelectorAll('.social-media-item').length <= 1) {
+                        container.querySelectorAll('.remove-social-media-btn').forEach(btn => {
+                            btn.style.display = 'none';
+                        });
+                    }
+                }, 300);
+            }
+        });
     });
 
     // Clear image preview function

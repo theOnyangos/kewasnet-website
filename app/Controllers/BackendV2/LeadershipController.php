@@ -40,7 +40,7 @@ class LeadershipController extends BaseController
     public function getLeadershipData()
     {
         $model = $this->leadershipModel;
-        $columns = ['id', 'image', 'name', 'position', 'status', 'order_index', 'created_at'];
+        $columns = ['id', 'image', 'name', 'position', 'experience', 'description', 'social_media', 'status', 'order_index', 'created_at'];
 
         return $this->dataTableService->handle(
             $model,
@@ -85,7 +85,6 @@ class LeadershipController extends BaseController
                 'name'       => 'required|min_length[2]|max_length[255]',
                 'position'   => 'required|min_length[2]|max_length[255]',
                 'description' => 'permit_empty|max_length[1000]',
-                'linkedin'   => 'permit_empty|valid_url|max_length[500]',
                 'experience' => 'permit_empty|max_length[100]',
                 'order_index' => 'required|integer',
                 'status'     => 'required|in_list[active,inactive]',
@@ -117,16 +116,49 @@ class LeadershipController extends BaseController
                 }
             }
 
+            // Process social media links
+            $socialMediaLinks = [];
+            if (isset($postData['social_media_platform']) && isset($postData['social_media_url'])) {
+                $platforms = is_array($postData['social_media_platform']) ? $postData['social_media_platform'] : [];
+                $urls = is_array($postData['social_media_url']) ? $postData['social_media_url'] : [];
+                
+                for ($i = 0; $i < count($platforms); $i++) {
+                    $platform = trim($platforms[$i] ?? '');
+                    $url = trim($urls[$i] ?? '');
+                    
+                    if (!empty($platform) && !empty($url)) {
+                        $socialMediaLinks[] = [
+                            'platform' => htmlspecialchars($platform, ENT_QUOTES, 'UTF-8'),
+                            'url' => htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
+                        ];
+                    }
+                }
+            }
+            
+            // Extract LinkedIn URL if present (for backward compatibility)
+            $linkedinUrl = '';
+            foreach ($socialMediaLinks as $link) {
+                if (strtolower($link['platform']) === 'linkedin') {
+                    $linkedinUrl = $link['url'];
+                    break;
+                }
+            }
+
             // Prepare data for insertion
             $insertData = [
                 'name'        => htmlspecialchars($postData['name'], ENT_QUOTES, 'UTF-8'),
                 'position'    => htmlspecialchars($postData['position'], ENT_QUOTES, 'UTF-8'),
                 'description' => htmlspecialchars($postData['description'] ?? '', ENT_QUOTES, 'UTF-8'),
-                'linkedin'    => htmlspecialchars($postData['linkedin'] ?? '', ENT_QUOTES, 'UTF-8'),
+                'linkedin'    => $linkedinUrl, // Store LinkedIn URL for backward compatibility
                 'experience'  => htmlspecialchars($postData['experience'] ?? '', ENT_QUOTES, 'UTF-8'),
                 'order_index' => (int) ($postData['order_index'] ?? 0),
                 'status'      => $postData['status'],
             ];
+            
+            // Store social media links as JSON if we have any
+            if (!empty($socialMediaLinks)) {
+                $insertData['social_media'] = json_encode($socialMediaLinks);
+            }
 
             if ($imagePath) {
                 $insertData['image'] = $imagePath;
@@ -273,16 +305,51 @@ class LeadershipController extends BaseController
                 $imagePath = null;
             }
 
+            // Process social media links
+            $socialMediaLinks = [];
+            if (isset($postData['social_media_platform']) && isset($postData['social_media_url'])) {
+                $platforms = is_array($postData['social_media_platform']) ? $postData['social_media_platform'] : [];
+                $urls = is_array($postData['social_media_url']) ? $postData['social_media_url'] : [];
+                
+                for ($i = 0; $i < count($platforms); $i++) {
+                    $platform = trim($platforms[$i] ?? '');
+                    $url = trim($urls[$i] ?? '');
+                    
+                    if (!empty($platform) && !empty($url)) {
+                        $socialMediaLinks[] = [
+                            'platform' => htmlspecialchars($platform, ENT_QUOTES, 'UTF-8'),
+                            'url' => htmlspecialchars($url, ENT_QUOTES, 'UTF-8')
+                        ];
+                    }
+                }
+            }
+            
+            // Extract LinkedIn URL if present (for backward compatibility)
+            $linkedinUrl = '';
+            foreach ($socialMediaLinks as $link) {
+                if (strtolower($link['platform']) === 'linkedin') {
+                    $linkedinUrl = $link['url'];
+                    break;
+                }
+            }
+
             // Prepare data for update
             $updateData = [
                 'name'        => htmlspecialchars($postData['name'], ENT_QUOTES, 'UTF-8'),
                 'position'    => htmlspecialchars($postData['position'], ENT_QUOTES, 'UTF-8'),
                 'description' => htmlspecialchars($postData['description'] ?? '', ENT_QUOTES, 'UTF-8'),
-                'linkedin'    => htmlspecialchars($postData['linkedin'] ?? '', ENT_QUOTES, 'UTF-8'),
+                'linkedin'    => $linkedinUrl, // Store LinkedIn URL for backward compatibility
                 'experience'  => htmlspecialchars($postData['experience'] ?? '', ENT_QUOTES, 'UTF-8'),
                 'order_index' => (int) ($postData['order_index'] ?? 0),
                 'status'      => $postData['status'],
             ];
+            
+            // Store social media links as JSON if we have any
+            if (!empty($socialMediaLinks)) {
+                $updateData['social_media'] = json_encode($socialMediaLinks);
+            } else {
+                $updateData['social_media'] = null;
+            }
 
             if ($imagePath !== $oldImagePath) {
                 $updateData['image'] = $imagePath;

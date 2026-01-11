@@ -292,5 +292,232 @@
         // Initialize and add resize listener
         handleResponsiveSidebar();
         window.addEventListener('resize', handleResponsiveSidebar);
+
+        /* === Notification Polling Manager === */
+        (function() {
+            const NotificationPollingManager = {
+                pollInterval: null,
+                currentCount: 0,
+                pollIntervalMs: 30000, // 30 seconds default
+                errorBackoff: 1, // Exponential backoff multiplier
+                maxBackoff: 300000, // Max 5 minutes on error
+                isPolling: false,
+                consecutiveErrors: 0,
+
+                init: function() {
+                    // Ensure badge element exists
+                    const badge = document.getElementById('notificationBadge');
+                    if (!badge) {
+                        console.error('Notification badge element not found');
+                        return;
+                    }
+
+                    console.log('NotificationPollingManager initialized');
+
+                    // Fetch initial count immediately
+                    this.fetchCount(true);
+
+                    // Start polling
+                    this.startPolling();
+                },
+
+                startPolling: function() {
+                    if (this.isPolling) {
+                        return;
+                    }
+
+                    const self = this;
+                    this.isPolling = true;
+                    this.pollInterval = setInterval(() => {
+                        // Only poll if page is visible
+                        if (!document.hidden) {
+                            self.fetchCount(false);
+                        }
+                    }, this.getPollInterval());
+                },
+
+                stopPolling: function() {
+                    if (this.pollInterval) {
+                        clearInterval(this.pollInterval);
+                        this.pollInterval = null;
+                    }
+                    this.isPolling = false;
+                },
+
+                getPollInterval: function() {
+                    // Apply exponential backoff on errors
+                    const backoffMultiplier = Math.min(this.errorBackoff, this.maxBackoff / this.pollIntervalMs);
+                    return Math.min(this.pollIntervalMs * backoffMultiplier, this.maxBackoff);
+                },
+
+                fetchCount: function(isInitial = false) {
+                    const self = this;
+                    fetch('<?= base_url('auth/notifications/unread-count') ?>', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok: ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const newCount = parseInt(data.count) || 0;
+                            const previousCount = self.currentCount;
+                            
+                            console.log('Notification count fetched:', newCount);
+                            
+                            // Reset error backoff on success
+                            self.consecutiveErrors = 0;
+                            self.errorBackoff = 1;
+                            
+                            // Update badge
+                            self.currentCount = newCount;
+                            self.updateBadge(newCount);
+                            
+                            // Play sound if count increased (but not on initial load)
+                            if (!isInitial && newCount > previousCount && newCount > 0) {
+                                self.playNotificationSound();
+                            }
+                            
+                            // Restart polling with normal interval if we had errors
+                            if (self.consecutiveErrors > 0 && self.errorBackoff > 1) {
+                                self.stopPolling();
+                                self.startPolling();
+                            }
+                        } else {
+                            console.error('Failed to fetch notification count:', data.message || 'Unknown error');
+                            throw new Error(data.message || 'Failed to fetch notification count');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching notification count:', error);
+                        self.consecutiveErrors++;
+                        
+                        // Exponential backoff on errors
+                        self.errorBackoff = Math.min(self.errorBackoff * 2, self.maxBackoff / self.pollIntervalMs);
+                        
+                        // Restart polling with new interval
+                        if (self.isPolling) {
+                            self.stopPolling();
+                            self.startPolling();
+                        }
+                    });
+                },
+
+                updateBadge: function(count) {
+                    const badge = document.getElementById('notificationBadge');
+                    if (!badge) {
+                        console.error('Notification badge element not found');
+                        return;
+                    }
+
+                    const badgeCount = parseInt(count) || 0;
+                    console.log('Updating badge with count:', badgeCount);
+
+                    if (badgeCount > 0) {
+                        badge.textContent = badgeCount > 99 ? '99+' : badgeCount.toString();
+                        // Remove hidden class first
+                        badge.classList.remove('hidden');
+                        badge.classList.add('flex');
+                        // Use setProperty with !important to override Tailwind's hidden class
+                        badge.style.setProperty('display', 'flex', 'important');
+                        badge.style.setProperty('visibility', 'visible', 'important');
+                        badge.style.setProperty('opacity', '1', 'important');
+                        
+                        // Verify it's visible
+                        setTimeout(() => {
+                            const computedStyle = window.getComputedStyle(badge);
+                            console.log('Badge computed display:', computedStyle.display);
+                            console.log('Badge computed visibility:', computedStyle.visibility);
+                            if (computedStyle.display === 'none') {
+                                console.warn('Badge display is still none, forcing visibility');
+                                badge.style.setProperty('display', 'flex', 'important');
+                            }
+                        }, 100);
+                        
+                        console.log('Badge shown with count:', badgeCount);
+                    } else {
+                        badge.classList.add('hidden');
+                        badge.classList.remove('flex');
+                        badge.style.setProperty('display', 'none', 'important');
+                        console.log('Badge hidden (count is 0)');
+                    }
+                    
+                    // Also update via NotificationManager if it exists (for notifications.js compatibility)
+                    if (window.NotificationManager && typeof window.NotificationManager.updateCount === 'function') {
+                        // Don't call it to avoid double updates, but sync the count
+                        window.NotificationPollingManager.currentCount = badgeCount;
+                    }
+                },
+
+                playNotificationSound: function() {
+                    const sound = document.getElementById('notification-sound');
+                    if (!sound) return;
+
+                    try {
+                        sound.volume = 0.3;
+                        sound.play().catch(error => {
+                            // Ignore playback errors
+                        });
+                    } catch (error) {
+                        console.error('Error playing notification sound:', error);
+                    }
+                },
+
+                disconnect: function() {
+                    this.stopPolling();
+                }
+            };
+
+            // Handle page visibility changes (pause polling when page is hidden)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    NotificationPollingManager.stopPolling();
+                } else {
+                    // Resume polling when page becomes visible
+                    if (!NotificationPollingManager.isPolling) {
+                        NotificationPollingManager.fetchCount(false);
+                        NotificationPollingManager.startPolling();
+                    }
+                }
+            });
+
+            // Expose globally for debugging
+            window.NotificationPollingManager = NotificationPollingManager;
+
+            // Initialize after DOM is ready with a delay to avoid blocking page load
+            function initializePolling() {
+                // Add 1 second delay to ensure page rendering is complete
+                setTimeout(() => {
+                    NotificationPollingManager.init();
+                }, 1000);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializePolling);
+            } else {
+                // DOM is already ready
+                initializePolling();
+            }
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                NotificationPollingManager.disconnect();
+            });
+
+            /* === SSE Implementation (Disabled - Kept for future reference) ===
+            const NotificationSSEManager = {
+                // SSE code commented out but kept for potential future use
+                // To enable SSE: uncomment this code and replace NotificationPollingManager.init() 
+                // with NotificationSSEManager.init() in the initialization section above
+            };
+            */
+        })();
     });
 </script>

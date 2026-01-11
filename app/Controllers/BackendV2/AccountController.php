@@ -137,7 +137,6 @@ class AccountController extends BaseController
             'phone'      => 'permit_empty|max_length[255]',
             'bio'        => 'permit_empty|max_length[1000]',
             'role_id'    => 'required|numeric',
-            'status'     => 'required|in_list[active,inactive]',
             'account_status' => 'required|in_list[active,suspended,blocked]',
         ];
 
@@ -146,6 +145,7 @@ class AccountController extends BaseController
         }
 
         try {
+            $accountStatus = $this->request->getPost('account_status');
             $updateData = [
                 'first_name'     => htmlspecialchars($this->request->getPost('first_name'), ENT_QUOTES, 'UTF-8'),
                 'last_name'      => htmlspecialchars($this->request->getPost('last_name'), ENT_QUOTES, 'UTF-8'),
@@ -153,8 +153,8 @@ class AccountController extends BaseController
                 'phone'          => htmlspecialchars($this->request->getPost('phone') ?? '', ENT_QUOTES, 'UTF-8'),
                 'bio'            => htmlspecialchars($this->request->getPost('bio') ?? '', ENT_QUOTES, 'UTF-8'),
                 'role_id'        => $this->request->getPost('role_id'),
-                'status'         => $this->request->getPost('status'),
-                'account_status' => $this->request->getPost('account_status'),
+                'account_status' => htmlspecialchars($accountStatus, ENT_QUOTES, 'UTF-8'),
+                'status'         => $accountStatus === 'active' ? 'active' : 'inactive',
             ];
 
             // Handle profile picture upload

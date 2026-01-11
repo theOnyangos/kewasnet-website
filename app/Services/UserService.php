@@ -195,6 +195,23 @@ class UserService
             // Send notification email to user (after successful deletion)
             $this->sendAccountDeletionEmail($user);
 
+            // Send notification to admins about account deletion
+            try {
+                $userName = ($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '');
+                $userEmail = $user['email'] ?? '';
+                $deletedAt = date('Y-m-d H:i:s');
+
+                $adminUsers = $this->userModel->getAdministrators();
+                if (!empty($adminUsers)) {
+                    $notificationService = new \App\Services\NotificationService();
+                    $adminIds = array_column($adminUsers, 'id');
+                    $notificationService->notifyUserAccountDeletion($adminIds, trim($userName), $userEmail, $deletedAt);
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending account deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
+
             return [
                 'success' => true,
                 'message' => 'User account deleted successfully',

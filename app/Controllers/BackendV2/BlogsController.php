@@ -176,7 +176,21 @@ class BlogsController extends BaseController
             ];
 
             // Insert the category
-            $this->blogCategoryModel->insert($categoryData);
+            $categoryId = $this->blogCategoryModel->insert($categoryData);
+            $insertedCategoryId = $categoryId ?: $categoryData['id'];
+
+            // Send notification after successful creation
+            try {
+                $adminId = session()->get('id');
+                $categoryName = $categoryData['name'];
+                
+                $notificationService = new \App\Services\NotificationService();
+                $details = ['is_active' => $categoryData['is_active'] ? 'Active' : 'Inactive'];
+                $notificationService->notifyAdminAction($adminId, 'created', 'blog_category', $categoryName, $insertedCategoryId, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending blog category creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
 
             return $this->response->setJSON([
                 'status' => 'success',
@@ -264,6 +278,22 @@ class BlogsController extends BaseController
 
             $this->blogCategoryModel->update($id, $updateData);
 
+            // Send notification after successful update
+            try {
+                $adminId = session()->get('id');
+                $categoryName = $updateData['name'] ?? $category['name'] ?? 'Category';
+                
+                $notificationService = new \App\Services\NotificationService();
+                $details = [];
+                if (isset($updateData['is_active'])) {
+                    $details['status'] = 'Changed to ' . ($updateData['is_active'] ? 'Active' : 'Inactive');
+                }
+                $notificationService->notifyAdminAction($adminId, 'updated', 'blog_category', $categoryName, $id, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending blog category update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
+
             return $this->response->setJSON([
                 'status' => 'success',
                 'message' => 'Category updated successfully!',
@@ -308,6 +338,18 @@ class BlogsController extends BaseController
 
             // Soft delete the category
             $this->blogCategoryModel->delete($id);
+
+            // Send notification after successful deletion
+            try {
+                $adminId = session()->get('id');
+                $categoryName = $category['name'] ?? 'Category';
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'blog_category', $categoryName, $id);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending blog category deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
 
             return $this->response->setJSON([
                 'status' => 'success',
@@ -367,7 +409,26 @@ class BlogsController extends BaseController
             log_message('info', 'Blog creation data: ' . json_encode($blogData));
             log_message('info', 'Blog creation files: ' . json_encode(array_keys($files)));
 
-            $blogPost = $this->blogPostService->createBlogPost($blogData, $files);
+            $blogPostId = $this->blogPostService->createBlogPost($blogData, $files);
+
+            // Send notification after successful creation
+            try {
+                $blogPost = $this->blogPostModel->find($blogPostId);
+                if ($blogPost) {
+                    $title = $blogPost['title'] ?? $blogData['title'] ?? 'Blog Post';
+                    $adminId = session()->get('id');
+                    
+                    $notificationService = new \App\Services\NotificationService();
+                    $details = [];
+                    if (isset($blogData['status'])) {
+                        $details['status'] = $blogData['status'];
+                    }
+                    $notificationService->notifyAdminAction($adminId, 'created', 'blog', $title, $blogPostId, $details);
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending blog creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
+            }
 
             $response = [
                 'status' => 'success',
@@ -523,6 +584,25 @@ class BlogsController extends BaseController
 
             $updatedBlogPost = $this->blogPostService->updateBlogPost($id, $blogData, $files);
 
+            // Send notification after successful update
+            try {
+                $blogPost = $this->blogPostModel->find($id);
+                if ($blogPost) {
+                    $title = $blogPost['title'] ?? $blogData['title'] ?? 'Blog Post';
+                    $adminId = session()->get('id');
+                    
+                    $notificationService = new \App\Services\NotificationService();
+                    $details = [];
+                    if (isset($blogData['status'])) {
+                        $details['status'] = 'Changed to ' . $blogData['status'];
+                    }
+                    $notificationService->notifyAdminAction($adminId, 'updated', 'blog', $title, $id, $details);
+                }
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending blog update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
+
             $response = [
                 'status' => 'success',
                 'message' => 'Blog post updated successfully!',
@@ -641,6 +721,18 @@ class BlogsController extends BaseController
 
             // Soft delete the blog post
             $this->blogPostModel->delete($id);
+
+            // Send notification after successful deletion
+            try {
+                $title = $blogPost['title'] ?? 'Blog Post';
+                $adminId = session()->get('id');
+                
+                $notificationService = new \App\Services\NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'blog', $title, $id);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending blog deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
+            }
 
             return $this->generateJsonResponse(
                 'success',

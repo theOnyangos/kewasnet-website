@@ -204,6 +204,18 @@ $routes->group('', ['filter' => 'auth:auth,/ksp/login'], static function ($route
         // Resource bookmark route (for authenticated users)
         $routes->post('api/resource/toggle-bookmark', 'FrontendV2\PillarController::toggleBookmark');
         $routes->post('api/resource/publish', 'FrontendV2\PillarController::publishArticle');
+        
+        // Notification Routes
+        $routes->group('notifications', static function ($routes) {
+            $routes->get('', 'FrontendV2\NotificationController::index');
+            $routes->post('get', 'FrontendV2\NotificationController::getNotifications');
+            $routes->get('get-recent', 'FrontendV2\NotificationController::getRecent');
+            $routes->get('unread-count', 'FrontendV2\NotificationController::getUnreadCount');
+            $routes->post('(:segment)/mark-read', 'FrontendV2\NotificationController::markAsRead/$1');
+            $routes->post('mark-all-read', 'FrontendV2\NotificationController::markAllAsRead');
+            $routes->delete('(:segment)', 'FrontendV2\NotificationController::delete/$1');
+            $routes->post('clear-all', 'FrontendV2\NotificationController::clearAll');
+        });
     });
 });
 
@@ -222,6 +234,7 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->post('get', 'BackendV2\NotificationController::getNotifications');
         $routes->get('get-recent', 'BackendV2\NotificationController::getRecent');
         $routes->get('unread-count', 'BackendV2\NotificationController::getUnreadCount');
+        $routes->get('stream', 'BackendV2\NotificationController::stream');
         $routes->post('(:segment)/mark-read', 'BackendV2\NotificationController::markAsRead/$1');
         $routes->post('mark-all-read', 'BackendV2\NotificationController::markAllAsRead');
         $routes->delete('(:segment)', 'BackendV2\NotificationController::delete/$1');
@@ -507,6 +520,7 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
         $routes->post('create', 'BackendV2\CoursesController::handleCreateCourse');
         $routes->get('edit/(:segment)', 'BackendV2\CoursesController::edit/$1');
         $routes->post('edit/(:segment)', 'BackendV2\CoursesController::handleUpdateCourse/$1');
+        $routes->get('curriculum/(:segment)', 'BackendV2\CoursesController::curriculum/$1');
         $routes->post('delete/(:segment)', 'BackendV2\CoursesController::deleteCourse/$1');
 
         // Section management

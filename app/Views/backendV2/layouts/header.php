@@ -9,7 +9,7 @@
             <div id="notificationDropdownContainer">
                 <button id="notificationButton" class="p-2 rounded-full hover:bg-primaryShades-200 relative">
                     <i data-lucide="bell" class="w-5 h-5 text-slate-500"></i>
-                    <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 items-center justify-center hidden">0</span>
+                    <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden z-50">0</span>
                 </button>
             </div>
 
