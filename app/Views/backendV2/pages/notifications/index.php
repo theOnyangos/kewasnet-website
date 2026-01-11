@@ -140,13 +140,14 @@
                 {
                     data: 'title',
                     name: 'title',
+                    width: '200px',
                     render: function(data, type, row) {
                         const icon = row.icon || 'bell';
                         const isUnread = row.status === 'unread';
                         const fontWeight = isUnread ? 'font-semibold' : 'font-normal';
                         return `<div class="flex items-center gap-2">
-                            <i data-lucide="${icon}" class="w-4 h-4 text-gray-500"></i>
-                            <span class="${fontWeight} text-gray-900">${data}</span>
+                            <i data-lucide="${icon}" class="w-8 h-8 text-secondary"></i>
+                            <span class="${fontWeight} text-primary text-sm">${data}</span>
                             ${isUnread ? '<span class="w-2 h-2 bg-primary rounded-full"></span>' : ''}
                         </div>`;
                     }
@@ -251,6 +252,9 @@
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
             },
+            data: {
+                '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+            },
             success: function(response) {
                 if (response.status === 'success') {
                     notificationsTable.ajax.reload(null, false);
@@ -263,13 +267,23 @@
                         timer: 1500,
                         showConfirmButton: false
                     });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: response.message || 'Failed to mark notification as read'
+                    });
                 }
             },
             error: function(xhr, status, error) {
+                let errorMessage = 'Failed to mark notification as read';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
-                    text: 'Failed to mark notification as read'
+                    text: errorMessage
                 });
             }
         });

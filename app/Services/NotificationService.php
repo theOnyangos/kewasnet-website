@@ -105,11 +105,27 @@ class NotificationService
     {
         // Verify the notification belongs to the user
         $notification = $this->notificationModel->find($notificationId);
-        if (!$notification || $notification['user_id'] != $userId) {
+        if (!$notification) {
+            log_message('error', "Notification not found: ID={$notificationId}");
             return false;
         }
 
-        return $this->notificationModel->markAsRead($notificationId);
+        // Convert user_id to int for comparison
+        $notificationUserId = (int) $notification['user_id'];
+        $userId = (int) $userId;
+
+        if ($notificationUserId !== $userId) {
+            log_message('error', "Notification user mismatch: Notification user_id={$notificationUserId}, Current user_id={$userId}");
+            return false;
+        }
+
+        $result = $this->notificationModel->markAsRead($notificationId);
+        if (!$result) {
+            $errors = $this->notificationModel->errors();
+            log_message('error', "Failed to mark notification as read: ID={$notificationId}, Errors: " . json_encode($errors));
+        }
+
+        return $result;
     }
 
     /**

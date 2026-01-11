@@ -179,6 +179,10 @@ class NotificationController extends BaseController
             ]);
         }
 
+        // Convert notificationId to integer
+        $notificationId = (int) $notificationId;
+        $userId = (int) $userId;
+
         $result = $this->notificationService->markAsRead($notificationId, $userId);
 
         if ($result) {
@@ -190,7 +194,7 @@ class NotificationController extends BaseController
 
         return $this->response->setJSON([
             'status' => 'error',
-            'message' => 'Failed to mark notification as read',
+            'message' => 'Failed to mark notification as read. Notification may not exist or may not belong to you.',
         ]);
     }
 

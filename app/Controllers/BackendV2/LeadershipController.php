@@ -5,6 +5,7 @@ namespace App\Controllers\BackendV2;
 use App\Controllers\BaseController;
 use App\Models\LeadershipModel;
 use App\Services\DataTableService;
+use App\Services\NotificationService;
 use App\Exceptions\ValidationException;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -177,6 +178,25 @@ class LeadershipController extends BaseController
                     'status' => 'error',
                     'message' => 'Failed to create leadership member: ' . implode(', ', $this->leadershipModel->errors()),
                 ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            // Send notification after successful creation
+            try {
+                $memberName = $insertData['name'] ?? 'Leadership Member';
+                $adminId = session()->get('id');
+                
+                $notificationService = new NotificationService();
+                $details = [];
+                if (isset($insertData['status'])) {
+                    $details['status'] = $insertData['status'];
+                }
+                if (isset($insertData['position'])) {
+                    $details['position'] = $insertData['position'];
+                }
+                $notificationService->notifyAdminAction($adminId, 'created', 'leadership', $memberName, (string)$result, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending leadership creation notification: " . $notificationError->getMessage());
+                // Don't fail creation if notification fails
             }
 
             return $this->response->setJSON([
@@ -366,6 +386,28 @@ class LeadershipController extends BaseController
                 ])->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR);
             }
 
+            // Send notification after successful update
+            try {
+                $memberName = $updateData['name'] ?? $member['name'] ?? 'Leadership Member';
+                $adminId = session()->get('id');
+                
+                $notificationService = new NotificationService();
+                $details = [];
+                if (isset($updateData['status']) && ($updateData['status'] != ($member['status'] ?? ''))) {
+                    $details['status'] = 'Changed to ' . $updateData['status'];
+                }
+                if (isset($updateData['position']) && ($updateData['position'] != ($member['position'] ?? ''))) {
+                    $details['position'] = 'Changed to ' . $updateData['position'];
+                }
+                if ($imagePath !== $oldImagePath && $imagePath !== null) {
+                    $details['image'] = 'Updated';
+                }
+                $notificationService->notifyAdminAction($adminId, 'updated', 'leadership', $memberName, (string)$id, $details);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending leadership update notification: " . $notificationError->getMessage());
+                // Don't fail update if notification fails
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'status' => 'success',
@@ -426,6 +468,18 @@ class LeadershipController extends BaseController
             // Optionally delete image file
             if (!empty($member['image']) && file_exists(FCPATH . $member['image'])) {
                 @unlink(FCPATH . $member['image']);
+            }
+
+            // Send notification after successful deletion
+            try {
+                $memberName = $member['name'] ?? 'Leadership Member';
+                $adminId = session()->get('id');
+                
+                $notificationService = new NotificationService();
+                $notificationService->notifyAdminAction($adminId, 'deleted', 'leadership', $memberName, (string)$id);
+            } catch (\Exception $notificationError) {
+                log_message('error', "Error sending leadership deletion notification: " . $notificationError->getMessage());
+                // Don't fail deletion if notification fails
             }
 
             return $this->response->setJSON([
