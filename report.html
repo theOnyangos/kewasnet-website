@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KEWASNET Web Application - Development Report & Deployment Proposal</title>
+    <style>
+        /* CSS for PDF Styling */
+        @page {
+            size: A4;
+            margin: 2cm;
+
+            @bottom-right {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            font-size: 11pt;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #2c5282;
+        }
+
+        .header h1 {
+            color: #2c5282;
+            font-size: 24pt;
+            margin-bottom: 10px;
+        }
+
+        .header h2 {
+            color: #4a5568;
+            font-size: 16pt;
+            font-weight: normal;
+            margin-bottom: 15px;
+        }
+
+        .project-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .project-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .project-info-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(1, 1fr);
+            gap: 10px;
+        }
+
+        .info-item {
+            margin-bottom: 5px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        /* Section Styles */
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            background: #2c5282;
+            color: white;
+            padding: 10px 15px;
+            margin: 25px 0 15px 0;
+            font-size: 14pt;
+            border-radius: 4px;
+        }
+
+        .subsection-title {
+            color: #2d3748;
+            padding: 8px 0;
+            margin: 20px 0 10px 0;
+            font-size: 12pt;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* Feature Grid */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4299e1;
+        }
+
+        .feature-status {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #48bb78;
+            color: white;
+            border-radius: 12px;
+            font-size: 9pt;
+            margin-bottom: 8px;
+        }
+
+        /* Table Styles */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10pt;
+        }
+
+        .comparison-table th {
+            background: #2c5282;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .comparison-table td {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+
+        /* Highlight Boxes */
+        .highlight-box {
+            background: #ebf8ff;
+            border: 2px solid #4299e1;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .recommendation-box {
+            background: #f0fff4;
+            border: 2px solid #48bb78;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: #fffaf0;
+            border: 2px solid #ed8936;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        /* Checkmark List */
+        .checkmark-list {
+            list-style-type: none;
+            margin: 15px 0;
+        }
+
+        .checkmark-list li {
+            padding: 5px 0 5px 25px;
+            position: relative;
+        }
+
+        .checkmark-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            color: #718096;
+            font-size: 10pt;
+        }
+
+        /* Print-specific styles */
+        @media print {
+            body {
+                font-size: 11pt;
+            }
+
+            .section {
+                page-break-inside: avoid;
+            }
+
+            .no-break {
+                page-break-inside: avoid;
+            }
+
+            .header {
+                page-break-before: always;
+            }
+        }
+
+        /* Utility Classes */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .mb-20 {
+            margin-bottom: 20px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .color-primary {
+            color: #2c5282;
+        }
+
+        .color-success {
+            color: #48bb78;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        /* Technical Spec Box */
+        .tech-spec {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+
+        .tech-spec-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            font-size: 10pt;
+        }
+
+        .tech-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .tech-category {
+            font-weight: bold;
+            color: #2c5282;
+            margin-bottom: 3px;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 60pt;
+            color: rgba(44, 82, 130, 0.1);
+            z-index: -1;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Watermark -->
+    <div class="watermark">KEWASNET CONFIDENTIAL</div>
+
+    <!-- Header Section -->
+    <div class="header">
+        <h1>KEWASNET WEB APPLICATION</h1>
+        <h2>Comprehensive Development Report & Production Deployment Proposal</h2>
+
+        <div class="project-info">
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <div class="project-info-grid-2" style="text-align: left;">
+                    <div class="info-item">
+                        <span class="label">Report Date:</span> January 2025
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Application Version:</span> 1.0.0
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Status:</span> <span class="color-success bold">PRODUCTION READY</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Production Domain:</span> https://kewasnet.co.ke
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Staging URL:</span> https://test.mtalii.tech
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Total Features:</span> 254+ Implemented
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Report Version:</span> 1.1
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary -->
+    <div class="section no-break">
+        <div class="section-title">1.0 EXECUTIVE SUMMARY</div>
+
+        <p class="mb-20">
+            This report provides a comprehensive overview of the fully developed KEWASNET web application,
+            detailing all implemented features, technical specifications, and production readiness. The application
+            represents a complete digital ecosystem comprising a public-facing website, a sophisticated Knowledge
+            Sharing Platform (KSP), a Learning Management System, Networking Corner, comprehensive Event Management,
+            and an extensive Admin Control Panel.
+        </p>
+
+        <div class="highlight-box">
+            <h3 class="subsection-title" style="color: #2c5282;">Key Achievement</h3>
+            <p>
+                All 254+ documented features across 10 major modules have been implemented according to specifications,
+                with integrated payment systems, user management, content administration, and real-time functionality.
+            </p>
+        </div>
+
+        <div class="recommendation-box">
+            <h3 class="subsection-title" style="color: #48bb78;">Primary Recommendation</h3>
+            <p class="bold">Hosting Solution: Hostinger VPS</p>
+            <p>
+                After thorough technical analysis and cost-benefit evaluation, we strongly recommend deploying the
+                KEWASNET application on a Hostinger Virtual Private Server. This solution provides optimal performance,
+                scalability, security, and cost-effectiveness for the Kenyan context.
+            </p>
+        </div>
+    </div>
+
+    <!-- Project Overview -->
+    <div class="section">
+        <div class="section-title">2.0 PROJECT OVERVIEW</div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <div class="feature-status">COMPLETED</div>
+                <h4>Public Website</h4>
+                <p>Corporate presence and information dissemination platform</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-status">COMPLETED</div>
+                <h4>Knowledge Sharing Platform</h4>
+                <p>Member-exclusive content and collaboration system</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-status">COMPLETED</div>
+                <h4>Learning Hub</h4>
+                <p>Comprehensive e-learning with certification</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-status">COMPLETED</div>
+                <h4>Event Management</h4>
+                <p>End-to-end event organization and ticketing</p>
+            </div>
+        </div>
+
+        <p class="mt-20">
+            <strong>Application Purpose:</strong> KEWASNET's digital platform serves as a centralized hub for
+            knowledge dissemination, professional networking, capacity building, and resource sharing within
+            the water and sanitation sector, facilitating collaboration among stakeholders across Kenya.
+        </p>
+    </div>
+
+    <!-- Feature Implementation Summary -->
+    <div class="section">
+        <div class="section-title">3.0 FEATURE IMPLEMENTATION SUMMARY</div>
+
+        <div class="highlight-box">
+            <h3 class="subsection-title" style="color: #2c5282; margin-top: 0;">Client Requirements Fulfillment</h3>
+            <p>
+                <strong>All features documented in this report were developed based on client specifications and
+                    requirements.</strong>
+                The comprehensive admin control panel provides complete system management capabilities as requested,
+                enabling
+                administrators to manage all aspects of the platform including content, users, events, courses, forums,
+                and
+                system configurations without requiring technical intervention.
+            </p>
+        </div>
+
+        <div class="subsection-title">3.1 Public Website Features ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>10+ Public Pages with responsive design and SEO optimization</li>
+            <li>Dynamic Leadership Team profiles with social integration</li>
+            <li>Resource Management System with categorization and download tracking</li>
+            <li>Programs & Opportunities portals with application management</li>
+            <li>Newsletter subscription system</li>
+            <li>Contact form with email notifications</li>
+            <li>Cookie consent management</li>
+            <li>Legal pages (Privacy Policy, Terms of Service, Cookies Policy)</li>
+            <li>Best Practices and Policy Briefs sections</li>
+            <li>Help Center with FAQ system</li>
+        </ul>
+
+        <div class="subsection-title">3.2 Knowledge Sharing Platform ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>User Authentication System with email verification</li>
+            <li>Password reset with code verification</li>
+            <li>Pillar-based Knowledge Repository with 5+ content categories</li>
+            <li>Interactive Features: Comments, voting, bookmarking</li>
+            <li>Personalized User Dashboard with activity tracking</li>
+            <li>Article publishing workflow</li>
+            <li>File attachment system (download/view)</li>
+            <li>Bookmarked articles management</li>
+            <li>User profile management</li>
+        </ul>
+
+        <div class="subsection-title">3.3 Learning Hub ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>Course Management System with 50+ course capacity</li>
+            <li>Complete Learning Experience: Video, quizzes, progress tracking</li>
+            <li>QR-verified PDF Certificate System with public validation</li>
+            <li>Integrated Payment: Paystack (Inline) and M-Pesa for enrollments</li>
+            <li>Course Q&A system with replies and resolution</li>
+            <li>Course reviews and ratings</li>
+            <li>Learning goals and resources management</li>
+            <li>Student statistics and progress tracking</li>
+            <li>Quiz attempt history and statistics</li>
+            <li>Certificate download and sharing</li>
+        </ul>
+
+        <div class="subsection-title">3.4 Admin Control Panel ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>Comprehensive Dashboard with analytics and statistics</li>
+            <li>User Management with RBAC (5,000+ user capacity)</li>
+            <li>Complete Content Administration for all modules</li>
+            <li>Real-time Monitoring and Notification Systems</li>
+            <li>Activity Tracking & Analytics Dashboard with real-time stats</li>
+            <li>Email Queue Management System for transactional emails</li>
+            <li>Newsletter Management & Distribution with subscriber management</li>
+            <li>System Settings & Configuration (Payments, Email, SMS, Social Media)</li>
+            <li>Profile & Account Management for admins</li>
+            <li>Security Settings (Password change, 2FA, Login history)</li>
+            <li>Help Center and Documentation</li>
+            <li>Sitemap Generation and Management</li>
+            <li>FAQ Management System</li>
+            <li>YouTube Links Management</li>
+            <li>Partner Settings Management</li>
+        </ul>
+
+        <div class="subsection-title">3.5 Networking Corner ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>Forum Creation and Management</li>
+            <li>Discussion Threads with replies</li>
+            <li>Like/Unlike discussions and replies</li>
+            <li>Best Answer Marking System</li>
+            <li>Discussion Bookmarking</li>
+            <li>User Reporting System</li>
+            <li>Moderator Management</li>
+            <li>Member Management (Join/Leave, Promote, Block)</li>
+            <li>File Attachments in discussions</li>
+            <li>Contact Moderators functionality</li>
+            <li>Forum Categories and Organization</li>
+        </ul>
+
+        <div class="subsection-title">3.6 Event Management ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>Event Creation and Management</li>
+            <li>Ticket Type Management</li>
+            <li>Event Booking System</li>
+            <li>Payment Integration (Paystack, M-Pesa)</li>
+            <li>Digital Ticket Generation</li>
+            <li>Ticket Download and Email Delivery</li>
+            <li>Ticket Verification System</li>
+            <li>Check-in System for events</li>
+            <li>Booking Management and Cancellation</li>
+            <li>Event Statistics and Analytics</li>
+        </ul>
+
+        <div class="subsection-title">3.7 Notification System ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>Comprehensive Notification System (Frontend & Backend)</li>
+            <li>Real-time notification polling with badge count</li>
+            <li>Unread notification badge in navigation</li>
+            <li>Notification categories (Admin Actions, User Activities, System Events)</li>
+            <li>Mark as read/unread functionality</li>
+            <li>Delete notifications</li>
+            <li>Mark all as read</li>
+            <li>Clear all notifications</li>
+            <li>Notification sound alerts</li>
+            <li>Action-based notifications for all CRUD operations</li>
+            <li>Notification dropdown with recent notifications</li>
+        </ul>
+
+        <div class="subsection-title">3.8 Additional Features ✓ COMPLETED</div>
+        <ul class="checkmark-list">
+            <li>Activity Tracking API with cookie consent integration</li>
+            <li>Email Queue System for reliable email delivery</li>
+            <li>Newsletter subscription and management</li>
+            <li>File Upload & Management System</li>
+            <li>Image Processing & Optimization</li>
+            <li>Search Functionality across resources and content</li>
+            <li>Download Tracking & Analytics</li>
+            <li>View Count Tracking</li>
+            <li>Social Media Integration</li>
+            <li>Google OAuth Integration</li>
+            <li>Facebook OAuth Integration</li>
+            <li>Summernote Rich Text Editor Integration</li>
+            <li>DataTables for advanced data management</li>
+            <li>Select2 for enhanced dropdowns</li>
+            <li>SweetAlert2 for user-friendly notifications</li>
+            <li>Responsive Mobile Design (TailwindCSS)</li>
+            <li>Sticky Navigation & Breadcrumbs</li>
+            <li>Progress Bars for uploads and updates</li>
+            <li>Form Validation (Client-side & Server-side)</li>
+            <li>CSRF Protection on all forms</li>
+            <li>Session Management</li>
+            <li>Role-Based Access Control (RBAC)</li>
+            <li>Soft Delete functionality</li>
+            <li>Bulk Operations support</li>
+            <li>Export functionality (where applicable)</li>
+            <li>Email Queue Processing System</li>
+            <li>Newsletter Draft Management</li>
+            <li>Newsletter Test Sending</li>
+            <li>Newsletter Subscriber Management</li>
+            <li>Newsletter Reactivation/Unsubscribe</li>
+            <li>Sent Newsletters Archive</li>
+        </ul>
+    </div>
+
+    <!-- Feature Statistics -->
+    <div class="section">
+        <div class="section-title">3.9 FEATURE STATISTICS</div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>Total Pages</h4>
+                <p style="font-size: 18pt; font-weight: bold; color: #2c5282;">100+</p>
+                <p>Public, KSP, and Admin pages</p>
+            </div>
+
+            <div class="feature-card">
+                <h4>Admin Modules</h4>
+                <p style="font-size: 18pt; font-weight: bold; color: #2c5282;">60+</p>
+                <p>Complete management modules</p>
+            </div>
+
+            <div class="feature-card">
+                <h4>API Endpoints</h4>
+                <p style="font-size: 18pt; font-weight: bold; color: #2c5282;">200+</p>
+                <p>RESTful API endpoints</p>
+            </div>
+
+            <div class="feature-card">
+                <h4>Database Tables</h4>
+                <p style="font-size: 18pt; font-weight: bold; color: #2c5282;">100+</p>
+                <p>Optimized database schema</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Feature Links -->
+    <div class="section">
+        <div class="section-title">3.5 COMPREHENSIVE FEATURE LINKS</div>
+
+        <div class="subsection-title">Public Website Pages</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Homepage</strong></td>
+                    <td><a href="https://test.mtalii.tech/" target="_blank">https://test.mtalii.tech/</a></td>
+                    <td>Main landing page with stats and platform overview</td>
+                </tr>
+                <tr>
+                    <td><strong>About Us</strong></td>
+                    <td><a href="https://test.mtalii.tech/about" target="_blank">https://test.mtalii.tech/about</a></td>
+                    <td>Company information with dynamic leadership team</td>
+                </tr>
+                <tr>
+                    <td><strong>News & Updates</strong></td>
+                    <td><a href="https://test.mtalii.tech/news" target="_blank">https://test.mtalii.tech/news</a></td>
+                    <td>Blog posts and news articles</td>
+                </tr>
+                <tr>
+                    <td><strong>Resources</strong></td>
+                    <td><a href="https://test.mtalii.tech/resources"
+                            target="_blank">https://test.mtalii.tech/resources</a></td>
+                    <td>Document library with categories and downloads</td>
+                </tr>
+                <tr>
+                    <td><strong>Programs</strong></td>
+                    <td><a href="https://test.mtalii.tech/programs"
+                            target="_blank">https://test.mtalii.tech/programs</a></td>
+                    <td>KEWASNET programs and initiatives</td>
+                </tr>
+                <tr>
+                    <td><strong>Opportunities</strong></td>
+                    <td><a href="https://test.mtalii.tech/opportunities"
+                            target="_blank">https://test.mtalii.tech/opportunities</a></td>
+                    <td>Job opportunities and career listings</td>
+                </tr>
+                <tr>
+                    <td><strong>Events</strong></td>
+                    <td><a href="https://test.mtalii.tech/events" target="_blank">https://test.mtalii.tech/events</a>
+                    </td>
+                    <td>Public events listing and registration</td>
+                </tr>
+                <tr>
+                    <td><strong>Contact Us</strong></td>
+                    <td><a href="https://test.mtalii.tech/contact-us"
+                            target="_blank">https://test.mtalii.tech/contact-us</a></td>
+                    <td>Contact form and location information</td>
+                </tr>
+                <tr>
+                    <td><strong>FAQ</strong></td>
+                    <td><a href="https://test.mtalii.tech/faq" target="_blank">https://test.mtalii.tech/faq</a></td>
+                    <td>Frequently asked questions</td>
+                </tr>
+                <tr>
+                    <td><strong>Help Center</strong></td>
+                    <td><a href="https://test.mtalii.tech/help-center"
+                            target="_blank">https://test.mtalii.tech/help-center</a></td>
+                    <td>User support and help resources</td>
+                </tr>
+                <tr>
+                    <td><strong>Sitemap</strong></td>
+                    <td><a href="https://test.mtalii.tech/sitemap" target="_blank">https://test.mtalii.tech/sitemap</a>
+                    </td>
+                    <td>HTML sitemap for users</td>
+                </tr>
+                <tr>
+                    <td><strong>XML Sitemap</strong></td>
+                    <td><a href="https://test.mtalii.tech/sitemap.xml"
+                            target="_blank">https://test.mtalii.tech/sitemap.xml</a></td>
+                    <td>Search engine sitemap</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="subsection-title">Knowledge Sharing Platform (KSP)</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>KSP Landing</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp" target="_blank">https://test.mtalii.tech/ksp</a></td>
+                    <td>Knowledge Sharing Platform homepage</td>
+                </tr>
+                <tr>
+                    <td><strong>Login</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/login"
+                            target="_blank">https://test.mtalii.tech/ksp/login</a></td>
+                    <td>Member login page</td>
+                </tr>
+                <tr>
+                    <td><strong>Registration</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/signup"
+                            target="_blank">https://test.mtalii.tech/ksp/signup</a></td>
+                    <td>New member registration</td>
+                </tr>
+                <tr>
+                    <td><strong>Dashboard</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/dashboard"
+                            target="_blank">https://test.mtalii.tech/ksp/dashboard</a></td>
+                    <td>User dashboard with activity and bookmarks</td>
+                </tr>
+                <tr>
+                    <td><strong>Pillars</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/pillars"
+                            target="_blank">https://test.mtalii.tech/ksp/pillars</a></td>
+                    <td>WASH knowledge pillars listing</td>
+                </tr>
+                <tr>
+                    <td><strong>Pillar Articles</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/pillars/articles"
+                            target="_blank">https://test.mtalii.tech/ksp/pillars/articles</a></td>
+                    <td>All pillar articles listing</td>
+                </tr>
+                <tr>
+                    <td><strong>Article Details</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/pillar-article/{slug}"
+                            target="_blank">https://test.mtalii.tech/ksp/pillar-article/{slug}</a></td>
+                    <td>Individual article with comments and bookmarks</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="subsection-title">Learning Hub</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Learning Hub Home</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub</a></td>
+                    <td>Main learning hub page</td>
+                </tr>
+                <tr>
+                    <td><strong>Course Catalog</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/courses"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/courses</a></td>
+                    <td>Browse all available courses</td>
+                </tr>
+                <tr>
+                    <td><strong>Course Details</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/course/{id}"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/course/{id}</a></td>
+                    <td>Course information, reviews, and enrollment</td>
+                </tr>
+                <tr>
+                    <td><strong>My Courses</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/my-courses"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/my-courses</a></td>
+                    <td>User's enrolled courses with progress</td>
+                </tr>
+                <tr>
+                    <td><strong>Course Player</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/learn/{course_id}"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/learn/{course_id}</a></td>
+                    <td>Interactive course learning interface</td>
+                </tr>
+                <tr>
+                    <td><strong>Lecture View</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/lecture/{course_id}/{lecture_id}"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/lecture/{course_id}/{lecture_id}</a>
+                    </td>
+                    <td>Individual lecture with completion tracking</td>
+                </tr>
+                <tr>
+                    <td><strong>Quiz View</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/quiz/{course_id}/{quiz_id}"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/quiz/{course_id}/{quiz_id}</a>
+                    </td>
+                    <td>Interactive quiz with scoring and statistics</td>
+                </tr>
+                <tr>
+                    <td><strong>Certificates</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/certificates"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/certificates</a></td>
+                    <td>User's earned certificates</td>
+                </tr>
+                <tr>
+                    <td><strong>Certificate Verification</strong></td>
+                    <td><a href="https://test.mtalii.tech/certificate/verify"
+                            target="_blank">https://test.mtalii.tech/certificate/verify</a></td>
+                    <td>Public certificate verification with QR code</td>
+                </tr>
+                <tr>
+                    <td><strong>Profile</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/learning-hub/profile"
+                            target="_blank">https://test.mtalii.tech/ksp/learning-hub/profile</a></td>
+                    <td>User profile management</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="subsection-title">Networking Corner</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Networking Corner</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/networking-corner"
+                            target="_blank">https://test.mtalii.tech/ksp/networking-corner</a></td>
+                    <td>Main networking platform page</td>
+                </tr>
+                <tr>
+                    <td><strong>Forums</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/networking-corner/forums"
+                            target="_blank">https://test.mtalii.tech/ksp/networking-corner/forums</a></td>
+                    <td>All forums listing</td>
+                </tr>
+                <tr>
+                    <td><strong>Discussions</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/networking-corner-discussions"
+                            target="_blank">https://test.mtalii.tech/ksp/networking-corner-discussions</a></td>
+                    <td>All discussions across forums</td>
+                </tr>
+                <tr>
+                    <td><strong>Forum Discussion</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/networking-corner-forum-discussion/{slug}"
+                            target="_blank">https://test.mtalii.tech/ksp/networking-corner-forum-discussion/{slug}</a>
+                    </td>
+                    <td>Forum with discussions and members</td>
+                </tr>
+                <tr>
+                    <td><strong>Discussion View</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/discussion/{slug}/view"
+                            target="_blank">https://test.mtalii.tech/ksp/discussion/{slug}/view</a></td>
+                    <td>Individual discussion with replies and attachments</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="subsection-title">Admin Control Panel</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Admin Dashboard</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/dashboard"
+                            target="_blank">https://test.mtalii.tech/auth/dashboard</a></td>
+                    <td>Main admin dashboard with statistics</td>
+                </tr>
+                <tr>
+                    <td><strong>Users Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/users"
+                            target="_blank">https://test.mtalii.tech/auth/users</a></td>
+                    <td>User CRUD operations</td>
+                </tr>
+                <tr>
+                    <td><strong>Blogs Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/blogs"
+                            target="_blank">https://test.mtalii.tech/auth/blogs</a></td>
+                    <td>Blog posts and categories management</td>
+                </tr>
+                <tr>
+                    <td><strong>Courses Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/courses"
+                            target="_blank">https://test.mtalii.tech/auth/courses</a></td>
+                    <td>Course, section, lecture, and quiz management</td>
+                </tr>
+                <tr>
+                    <td><strong>Pillars Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/pillars"
+                            target="_blank">https://test.mtalii.tech/auth/pillars</a></td>
+                    <td>Pillars and articles management</td>
+                </tr>
+                <tr>
+                    <td><strong>Resources Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/resources"
+                            target="_blank">https://test.mtalii.tech/auth/resources</a></td>
+                    <td>Resource documents and categories</td>
+                </tr>
+                <tr>
+                    <td><strong>Events Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/events"
+                            target="_blank">https://test.mtalii.tech/auth/events</a></td>
+                    <td>Event creation and booking management</td>
+                </tr>
+                <tr>
+                    <td><strong>Opportunities Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/opportunities"
+                            target="_blank">https://test.mtalii.tech/auth/opportunities</a></td>
+                    <td>Job opportunities and applications</td>
+                </tr>
+                <tr>
+                    <td><strong>Forums Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/forums"
+                            target="_blank">https://test.mtalii.tech/auth/forums</a></td>
+                    <td>Forum, discussion, and moderator management</td>
+                </tr>
+                <tr>
+                    <td><strong>Partners Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/partners"
+                            target="_blank">https://test.mtalii.tech/auth/partners</a></td>
+                    <td>Partner organizations management</td>
+                </tr>
+                <tr>
+                    <td><strong>Leadership Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/leadership"
+                            target="_blank">https://test.mtalii.tech/auth/leadership</a></td>
+                    <td>Leadership team member management</td>
+                </tr>
+                <tr>
+                    <td><strong>Programs Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/programs"
+                            target="_blank">https://test.mtalii.tech/auth/programs</a></td>
+                    <td>Program management</td>
+                </tr>
+                <tr>
+                    <td><strong>Notifications</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/notifications"
+                            target="_blank">https://test.mtalii.tech/auth/notifications</a></td>
+                    <td>Notification center with real-time updates</td>
+                </tr>
+                <tr>
+                    <td><strong>Activity Dashboard</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/activity-dashboard"
+                            target="_blank">https://test.mtalii.tech/auth/activity-dashboard</a></td>
+                    <td>User activity tracking and analytics</td>
+                </tr>
+                <tr>
+                    <td><strong>Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings"
+                            target="_blank">https://test.mtalii.tech/auth/settings</a></td>
+                    <td>System configuration and settings</td>
+                </tr>
+                <tr>
+                    <td><strong>Profile</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/profile"
+                            target="_blank">https://test.mtalii.tech/auth/profile</a></td>
+                    <td>Admin profile management</td>
+                </tr>
+                <tr>
+                    <td><strong>Account Management</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/account"
+                            target="_blank">https://test.mtalii.tech/auth/account</a></td>
+                    <td>Admin account management</td>
+                </tr>
+                <tr>
+                    <td><strong>Security Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/security"
+                            target="_blank">https://test.mtalii.tech/auth/security</a></td>
+                    <td>Password change and 2FA settings</td>
+                </tr>
+                <tr>
+                    <td><strong>Help</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/help"
+                            target="_blank">https://test.mtalii.tech/auth/help</a></td>
+                    <td>Admin help and documentation</td>
+                </tr>
+                <tr>
+                    <td><strong>About KEWASNET</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/about"
+                            target="_blank">https://test.mtalii.tech/auth/about</a></td>
+                    <td>About page management</td>
+                </tr>
+                <tr>
+                    <td><strong>Preferences</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/preferences"
+                            target="_blank">https://test.mtalii.tech/auth/preferences</a></td>
+                    <td>Admin preferences and settings</td>
+                </tr>
+                <tr>
+                    <td><strong>Social Media Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/social-media"
+                            target="_blank">https://test.mtalii.tech/auth/settings/social-media</a></td>
+                    <td>Social media links configuration</td>
+                </tr>
+                <tr>
+                    <td><strong>Payment Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/payments"
+                            target="_blank">https://test.mtalii.tech/auth/settings/payments</a></td>
+                    <td>Paystack and M-Pesa configuration</td>
+                </tr>
+                <tr>
+                    <td><strong>Email Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/email"
+                            target="_blank">https://test.mtalii.tech/auth/settings/email</a></td>
+                    <td>SMTP and email configuration</td>
+                </tr>
+                <tr>
+                    <td><strong>SMS Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/sms"
+                            target="_blank">https://test.mtalii.tech/auth/settings/sms</a></td>
+                    <td>SMS gateway configuration</td>
+                </tr>
+                <tr>
+                    <td><strong>Google Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/google"
+                            target="_blank">https://test.mtalii.tech/auth/settings/google</a></td>
+                    <td>Google OAuth configuration</td>
+                </tr>
+                <tr>
+                    <td><strong>Sitemap Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/sitemap"
+                            target="_blank">https://test.mtalii.tech/auth/settings/sitemap</a></td>
+                    <td>Sitemap generation and management</td>
+                </tr>
+                <tr>
+                    <td><strong>FAQs Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/faqs"
+                            target="_blank">https://test.mtalii.tech/auth/settings/faqs</a></td>
+                    <td>FAQ management</td>
+                </tr>
+                <tr>
+                    <td><strong>YouTube Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/youtube"
+                            target="_blank">https://test.mtalii.tech/auth/settings/youtube</a></td>
+                    <td>YouTube links management</td>
+                </tr>
+                <tr>
+                    <td><strong>Partners Settings</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/settings/partners"
+                            target="_blank">https://test.mtalii.tech/auth/settings/partners</a></td>
+                    <td>Partner settings management</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="subsection-title">API Endpoints & Services</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>URL</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Activity Tracking API</strong></td>
+                    <td><a href="https://test.mtalii.tech/api/tracking"
+                            target="_blank">https://test.mtalii.tech/api/tracking</a></td>
+                    <td>User activity and page view tracking</td>
+                </tr>
+                <tr>
+                    <td><strong>Activity Dashboard</strong></td>
+                    <td><a href="https://test.mtalii.tech/api/tracking/admin/dashboard"
+                            target="_blank">https://test.mtalii.tech/api/tracking/admin/dashboard</a></td>
+                    <td>Analytics dashboard data</td>
+                </tr>
+                <tr>
+                    <td><strong>Real-time Stats</strong></td>
+                    <td><a href="https://test.mtalii.tech/api/tracking/admin/real-time"
+                            target="_blank">https://test.mtalii.tech/api/tracking/admin/real-time</a></td>
+                    <td>Real-time activity statistics</td>
+                </tr>
+                <tr>
+                    <td><strong>Resource Search API</strong></td>
+                    <td><a href="https://test.mtalii.tech/api/resources/search"
+                            target="_blank">https://test.mtalii.tech/api/resources/search</a></td>
+                    <td>Search resources by keyword</td>
+                </tr>
+                <tr>
+                    <td><strong>Payment Initiate</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/payment/initiate"
+                            target="_blank">https://test.mtalii.tech/ksp/payment/initiate</a></td>
+                    <td>Initialize course/event payment</td>
+                </tr>
+                <tr>
+                    <td><strong>Payment Verify</strong></td>
+                    <td><a href="https://test.mtalii.tech/ksp/payment/verify"
+                            target="_blank">https://test.mtalii.tech/ksp/payment/verify</a></td>
+                    <td>Verify payment transaction</td>
+                </tr>
+                <tr>
+                    <td><strong>Notification Unread Count</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/notifications/unread-count"
+                            target="_blank">https://test.mtalii.tech/auth/notifications/unread-count</a></td>
+                    <td>Get unread notification count (AJAX)</td>
+                </tr>
+                <tr>
+                    <td><strong>Recent Notifications</strong></td>
+                    <td><a href="https://test.mtalii.tech/auth/notifications/get-recent"
+                            target="_blank">https://test.mtalii.tech/auth/notifications/get-recent</a></td>
+                    <td>Get recent notifications (AJAX)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Technical Specifications -->
+    <div class="section">
+        <div class="section-title">4.0 TECHNICAL SPECIFICATIONS</div>
+
+        <div class="tech-spec">
+            <h3 class="subsection-title">Technology Stack</h3>
+            <div class="tech-spec-grid">
+                <div class="tech-item">
+                    <div class="tech-category">Backend Framework</div>
+                    <div>CodeIgniter 4.x</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">Frontend</div>
+                    <div>HTML5, CSS3, JavaScript ES6+</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">CSS Framework</div>
+                    <div>TailwindCSS 3.x</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">Database</div>
+                    <div>MySQL 8.0+</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">Payment Gateways</div>
+                    <div>Paystack, M-Pesa</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">Security</div>
+                    <div>CSRF Protection, bcrypt</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">PDF Generation</div>
+                    <div>DomPDF</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">QR Codes</div>
+                    <div>Endroid QR Code</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">Email</div>
+                    <div>PHPMailer</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">Icons</div>
+                    <div>Lucide Icons</div>
+                </div>
+                <div class="tech-item">
+                    <div class="tech-category">UI Libraries</div>
+                    <div>jQuery, DataTables, Select2, SweetAlert2</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection-title">System Requirements</div>
+        <ul class="checkmark-list">
+            <li><strong>PHP:</strong> 8.0 or higher (8.1+ recommended)</li>
+            <li><strong>MySQL:</strong> 5.7+ (8.0 recommended)</li>
+            <li><strong>Web Server:</strong> Apache with mod_rewrite or Nginx</li>
+            <li><strong>Storage:</strong> Minimum 10GB for initial deployment</li>
+            <li><strong>Memory:</strong> Minimum 2GB RAM for smooth operation</li>
+            <li><strong>Extensions:</strong> cURL, GD Library, OpenSSL, MySQLi, MBString, Intl, FileInfo</li>
+            <li><strong>Composer:</strong> Required for dependency management</li>
+            <li><strong>Node.js & NPM:</strong> Optional for frontend build tools</li>
+        </ul>
+
+        <div class="subsection-title">Key Integrations</div>
+        <ul class="checkmark-list">
+            <li><strong>Payment Gateways:</strong> Paystack (Inline Integration), M-Pesa API</li>
+            <li><strong>Email Services:</strong> SMTP (PHPMailer), Email Queue System</li>
+            <li><strong>SMS Services:</strong> SMS Gateway Integration</li>
+            <li><strong>Social Authentication:</strong> Google OAuth, Facebook OAuth</li>
+            <li><strong>Analytics:</strong> Custom Activity Tracking System</li>
+            <li><strong>File Storage:</strong> Local file system with secure access</li>
+        </ul>
+    </div>
+
+    <!-- Hosting Recommendation -->
+    <div class="section no-break">
+        <div class="section-title">5.0 CRITICAL PRODUCTION HOSTING RECOMMENDATION</div>
+
+        <div class="recommendation-box">
+            <h2 class="text-center color-primary">RECOMMENDED SOLUTION: HOSTINGER VPS</h2>
+            <p class="text-center bold">Optimal Balance of Performance, Cost, and Reliability for Kenyan Context</p>
+        </div>
+
+        <div class="subsection-title">5.1 Benefits Analysis: Hostinger VPS for KEWASNET</div>
+
+        <h4>A. Performance Optimization</h4>
+        <ul class="checkmark-list">
+            <li><strong>Dedicated Resources:</strong> Guaranteed CPU, RAM, and SSD storage</li>
+            <li><strong>SSD Storage:</strong> Faster database queries and file operations</li>
+            <li><strong>Stack Optimized:</strong> Native support for CodeIgniter 4, PHP 8.x, MySQL</li>
+        </ul>
+
+        <h4>B. Scalability for Growth</h4>
+        <ul class="checkmark-list">
+            <li><strong>Vertical Scaling:</strong> Easy upgrade path (2GB → 4GB → 8GB RAM)</li>
+            <li><strong>Traffic Handling:</strong> 100+ concurrent event bookings capability</li>
+            <li><strong>Growth Support:</strong> 1,000 to 10,000+ user scalability</li>
+        </ul>
+
+        <h4>C. Cost-Effectiveness</h4>
+        <ul class="checkmark-list">
+            <li><strong>Competitive Pricing:</strong> $9.99 - $29.99/month vs $80+ AWS/Azure</li>
+            <li><strong>Predictable Costs:</strong> Fixed monthly pricing, no hidden charges</li>
+            <li><strong>Inclusive Features:</strong> SSL, backups, security included</li>
+        </ul>
+
+        <h4>D. Enhanced Security</h4>
+        <ul class="checkmark-list">
+            <li><strong>DDoS Protection:</strong> Critical for payment pages and member data</li>
+            <li><strong>Firewall Control:</strong> Custom rules for Admin Panel and APIs</li>
+            <li><strong>SSL Integration:</strong> Easy Let's Encrypt implementation</li>
+            <li><strong>Isolated Environment:</strong> Protection from shared hosting issues</li>
+        </ul>
+
+        <h4>E. Kenyan Context Advantages</h4>
+        <ul class="checkmark-list">
+            <li><strong>24/7 Relevant Support:</strong> Aligned with East Africa Time</li>
+            <li><strong>Localized Expertise:</strong> Experience with African payment gateways</li>
+            <li><strong>Connectivity Optimized:</strong> Tailored for Kenya's internet patterns</li>
+            <li><strong>Cost Appropriate:</strong> Budget-friendly for Kenyan operations</li>
+        </ul>
+    </div>
+
+    <!-- VPS Configuration -->
+    <div class="section">
+        <div class="section-title">5.2 Recommended VPS Configuration</div>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Tier</th>
+                    <th>RAM</th>
+                    <th>CPU Cores</th>
+                    <th>Storage</th>
+                    <th>Bandwidth</th>
+                    <th>Recommended For</th>
+                    <th>Monthly Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Minimum</strong></td>
+                    <td>2GB</td>
+                    <td>2 vCPU</td>
+                    <td>40GB SSD</td>
+                    <td>2TB</td>
+                    <td>Initial launch (1,000 users)</td>
+                    <td>~$9.99</td>
+                </tr>
+                <tr style="background: #f0fff4;">
+                    <td><strong>RECOMMENDED ★</strong></td>
+                    <td>4GB</td>
+                    <td>4 vCPU</td>
+                    <td>80GB SSD</td>
+                    <td>4TB</td>
+                    <td>Growth phase (5,000 users)</td>
+                    <td>~$19.99</td>
+                </tr>
+                <tr>
+                    <td><strong>Optimal</strong></td>
+                    <td>8GB</td>
+                    <td>6 vCPU</td>
+                    <td>160GB SSD</td>
+                    <td>Unlimited</td>
+                    <td>Full capacity (10,000+ users)</td>
+                    <td>~$29.99</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="highlight-box">
+            <h4>Initial Recommendation</h4>
+            <p class="bold">
+                Start with 4GB RAM, 4 vCPU, 80GB SSD configuration to accommodate initial users while allowing
+                headroom for growth. This provides optimal performance for the first 12-18 months of operation.
+            </p>
+        </div>
+    </div>
+
+    <!-- Deployment Plan -->
+    <div class="section no-break">
+        <div class="section-title">6.0 DEPLOYMENT IMPLEMENTATION PLAN</div>
+
+        <div class="subsection-title">6.1 Pre-Deployment Checklist</div>
+        <ol class="checkmark-list" style="counter-reset: item; padding-left: 0;">
+            <li style="padding-left: 25px;"><strong>Domain Configuration:</strong> Point kewasnet.co.ke to Hostinger
+                nameservers</li>
+            <li style="padding-left: 25px;"><strong>SSL Certificate:</strong> Install Let's Encrypt SSL for HTTPS</li>
+            <li style="padding-left: 25px;"><strong>Database Migration:</strong> Transfer MySQL database from staging
+            </li>
+            <li style="padding-left: 25px;"><strong>Payment Gateway:</strong> Switch to live Paystack and M-Pesa
+                credentials</li>
+            <li style="padding-left: 25px;"><strong>Environment Configuration:</strong> Set production environment
+                variables</li>
+        </ol>
+
+        <div class="subsection-title">6.2 Cost Breakdown (First Year)</div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Cost</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Hostinger VPS (4GB plan)</td>
+                    <td>$240/year</td>
+                    <td>$19.99/month</td>
+                </tr>
+                <tr>
+                    <td>Domain Renewal</td>
+                    <td>$15/year</td>
+                    <td>kewasnet.co.ke</td>
+                </tr>
+                <tr>
+                    <td>SSL Certificate</td>
+                    <td>$0/year</td>
+                    <td>Let's Encrypt</td>
+                </tr>
+                <tr>
+                    <td>Backup Storage</td>
+                    <td>$60/year</td>
+                    <td>100GB remote backup</td>
+                </tr>
+                <tr style="background: #f7fafc; font-weight: bold;">
+                    <td>TOTAL ESTIMATED</td>
+                    <td>$315/year</td>
+                    <td>≈ $26/month</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Support & Maintenance -->
+    <div class="section">
+        <div class="section-title">7.0 SUPPORT & MAINTENANCE FRAMEWORK</div>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>Post-Deployment Support</h4>
+                <ul style="padding-left: 20px; font-size: 10pt;">
+                    <li>30-Day Transition Period</li>
+                    <li>Complete Documentation</li>
+                    <li>Admin Panel Training</li>
+                    <li>Monitoring Setup</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>Maintenance Requirements</h4>
+                <ul style="padding-left: 20px; font-size: 10pt;">
+                    <li>Monthly Security Updates</li>
+                    <li>Weekly Backup Checks</li>
+                    <li>Quarterly Performance Audit</li>
+                    <li>Bi-annual Scalability Review</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <h4>Risk Mitigation Strategy</h4>
+            <p><strong>High Traffic During Events:</strong> Auto-scaling rules and caching implemented</p>
+            <p><strong>Payment Failures:</strong> Fallback methods and manual override procedures</p>
+            <p><strong>Data Loss:</strong> Multi-tier backup system (daily, weekly, monthly)</p>
+            <p><strong>Business Continuity:</strong> 99.9% uptime target with 24-hour recovery time</p>
+        </div>
+    </div>
+
+    <!-- Admin Control Panel Details -->
+    <div class="section">
+        <div class="section-title">7.1 ADMIN CONTROL PANEL CAPABILITIES</div>
+
+        <div class="subsection-title">Complete System Management</div>
+        <p class="mb-20">
+            The admin control panel, accessible at <a href="https://test.mtalii.tech/auth/dashboard"
+                target="_blank">https://test.mtalii.tech/auth/dashboard</a>,
+            provides comprehensive management capabilities for all aspects of the platform:
+        </p>
+
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>Content Management</h4>
+                <ul style="padding-left: 20px; font-size: 10pt; margin-top: 10px;">
+                    <li>Blog Posts & Categories</li>
+                    <li>Courses, Sections, Lectures</li>
+                    <li>Quizzes & Questions</li>
+                    <li>Pillars & Articles</li>
+                    <li>Resources & Categories</li>
+                    <li>Events & Ticket Types</li>
+                    <li>Job Opportunities</li>
+                    <li>Forums & Discussions</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>User Management</h4>
+                <ul style="padding-left: 20px; font-size: 10pt; margin-top: 10px;">
+                    <li>User CRUD Operations</li>
+                    <li>Role-Based Access Control</li>
+                    <li>Account Status Management</li>
+                    <li>Password Reset</li>
+                    <li>Login Activity Tracking</li>
+                    <li>Profile Image Management</li>
+                    <li>Email Verification</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>System Configuration</h4>
+                <ul style="padding-left: 20px; font-size: 10pt; margin-top: 10px;">
+                    <li>Payment Gateway Setup</li>
+                    <li>Email Configuration</li>
+                    <li>SMS Gateway Setup</li>
+                    <li>Social Media Links</li>
+                    <li>YouTube Integration</li>
+                    <li>Sitemap Generation</li>
+                    <li>FAQ Management</li>
+                    <li>Partner Settings</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <h4>Analytics & Monitoring</h4>
+                <ul style="padding-left: 20px; font-size: 10pt; margin-top: 10px;">
+                    <li>Activity Dashboard</li>
+                    <li>Real-time Statistics</li>
+                    <li>User Activity Tracking</li>
+                    <li>Page View Analytics</li>
+                    <li>Event Tracking</li>
+                    <li>Notification Management</li>
+                    <li>Course Enrollment Stats</li>
+                    <li>Event Booking Analytics</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="recommendation-box">
+            <h4>Admin Panel Highlights</h4>
+            <p>
+                The admin control panel was built according to client specifications, providing a user-friendly
+                interface
+                for managing all platform features without requiring technical knowledge. All CRUD operations, settings
+                configurations, and monitoring capabilities are accessible through intuitive navigation and modern UI
+                design.
+            </p>
+        </div>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="section">
+        <div class="section-title">8.0 CONCLUSION & NEXT STEPS</div>
+
+        <p class="mb-20">
+            The KEWASNET web application has been successfully developed into a robust, feature-complete platform
+            ready for production deployment on <strong>https://kewasnet.co.ke</strong>. The application's architecture
+            fully supports the organization's mission of knowledge sharing, capacity building, and sector networking.
+            All features requested by the client have been implemented, including the comprehensive admin control panel
+            for complete system management.
+        </p>
+
+        <div class="highlight-box">
+            <h4>Hostinger VPS Recommendation Justification</h4>
+            <p>
+                The selection of Hostinger VPS is based on <strong>technical compatibility</strong>,
+                <strong>cost-effectiveness</strong> for Kenyan operational budgets, <strong>scalability</strong>
+                aligned with KEWASNET's growth projections, and <strong>reliable support infrastructure</strong>.
+                This hosting solution provides the optimal balance of performance, control, and value required for
+                successful long-term platform operation.
+            </p>
+            <p class="mt-10">
+                <strong>Production Domain:</strong> The application will be accessible at
+                <strong>https://kewasnet.co.ke</strong> once deployed on the recommended Hostinger VPS infrastructure.
+            </p>
+        </div>
+
+        <div class="subsection-title">Next Steps</div>
+        <ol class="checkmark-list" style="counter-reset: item; padding-left: 0;">
+            <li style="padding-left: 25px; font-weight: bold;">Client approval of hosting recommendation</li>
+            <li style="padding-left: 25px;">Procurement of Hostinger VPS plan</li>
+            <li style="padding-left: 25px;">Scheduling of deployment timeline (3-5 business days)</li>
+            <li style="padding-left: 25px;">Final testing and go-live authorization</li>
+        </ol>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="project-info-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="info-item">
+                <span class="label">Prepared for:</span><br>
+                KEWASNET Management
+            </div>
+            <div class="info-item">
+                <span class="label">Prepared by:</span><br>
+                Dennis Otieno
+            </div>
+            <div class="info-item">
+                <span class="label">Date:</span><br>
+                January 2025
+            </div>
+        </div>
+
+        <p class="mt-20">
+            <strong>Disclaimer:</strong> This report reflects the application status as of January 2025.
+            All features have been implemented and tested in the staging environment. Final performance
+            may vary based on production hosting configuration and real-world usage patterns.
+        </p>
+
+        <p style="margin-top: 20px; font-size: 9pt; color: #a0aec0;">
+            Document Classification: CONFIDENTIAL | Report Version: 1.1 | Application Version: 1.0.0
+        </p>
+    </div>
+
+    <script>
+        // JavaScript for PDF generation enhancement
+        document.addEventListener('DOMContentLoaded', function () {
+            // Add page break before major sections for better PDF formatting
+            const sections = document.querySelectorAll('.section-title');
+            sections.forEach((section, index) => {
+                if (index > 0 && index % 2 === 0) {
+                    section.parentElement.classList.add('no-break');
+                }
+            });
+
+            // Update page counter
+            const totalPages = Math.ceil(document.body.scrollHeight / 1123); // A4 height in pixels at 96dpi
+            const pageCounter = document.createElement('div');
+            pageCounter.id = 'pageCounter';
+            pageCounter.style.display = 'none';
+            document.body.appendChild(pageCounter);
+
+            // Add print functionality hint
+            console.log('To generate PDF: Press Ctrl+P (Cmd+P on Mac) and select "Save as PDF"');
+            console.log('Recommended print settings: A4, Margins: Default, Scale: 100%');
+        });
+    </script>
+</body>
+
+</html>

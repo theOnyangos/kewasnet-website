@@ -71,5 +71,8 @@
       <!-- Render scripts -->
       <?= $this->renderSection("scripts") ?>
 
+      <!-- Activity Tracking -->
+      <?= view('tracking/tracking-snippet') ?>
+
     </body>
 </html>

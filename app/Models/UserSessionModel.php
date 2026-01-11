@@ -12,9 +12,9 @@ class UserSessionModel extends Model
     protected $returnType    = 'object';
     protected $useSoftDeletes = false;
     protected $allowedFields = [
-        'session_id', 'user_id', 'ip_address', 'user_agent', 'browser', 'device', 
+        'id', 'session_id', 'user_id', 'ip_address', 'user_agent', 'browser', 'device', 
         'os', 'country', 'city', 'referrer', 'analytics_consent', 'marketing_consent',
-        'session_start', 'session_end', 'page_views', 'is_bounce'
+        'session_start', 'session_end', 'total_duration', 'page_views', 'is_bounce'
     ];
 
     // Dates
@@ -69,40 +69,65 @@ class UserSessionModel extends Model
      */
     public function getSessionStats($startDate = null, $endDate = null)
     {
-        $builder = $this->builder();
-        
-        if ($startDate && $endDate) {
-            $builder->where('session_start >=', $startDate)
-                   ->where('session_start <=', $endDate);
+        try {
+            $builder = $this->builder();
+            
+            if ($startDate && $endDate) {
+                $builder->where('session_start >=', $startDate)
+                       ->where('session_start <=', $endDate);
+            }
+
+            $totalSessions = $builder->countAllResults(false);
+            
+            // Reset builder for bounce sessions query
+            $bounceBuilder = $this->builder();
+            if ($startDate && $endDate) {
+                $bounceBuilder->where('session_start >=', $startDate)
+                             ->where('session_start <=', $endDate);
+            }
+            $bounceSessions = $bounceBuilder->where('is_bounce', 1)->countAllResults(false);
+            
+            $avgDuration = 0;
+            $avgPageViews = 0;
+            
+            if ($startDate && $endDate) {
+                $durationResult = $this->db->table($this->table)
+                                   ->select('AVG(TIMESTAMPDIFF(SECOND, session_start, session_end)) as avg_duration')
+                                   ->where('session_end IS NOT NULL')
+                                   ->where('session_start >=', $startDate)
+                                   ->where('session_start <=', $endDate)
+                                   ->get()
+                                   ->getRow();
+                
+                $avgDuration = $durationResult ? ($durationResult->avg_duration ?? 0) : 0;
+
+                $pageViewsResult = $this->db->table($this->table)
+                                   ->selectAvg('page_views')
+                                   ->where('session_start >=', $startDate)
+                                   ->where('session_start <=', $endDate)
+                                   ->get()
+                                   ->getRow();
+                
+                $avgPageViews = $pageViewsResult ? ($pageViewsResult->page_views ?? 0) : 0;
+            }
+
+            return [
+                'total_sessions' => (int) $totalSessions,
+                'bounce_sessions' => (int) $bounceSessions,
+                'bounce_rate' => $totalSessions > 0 ? round(($bounceSessions / $totalSessions) * 100, 2) : 0,
+                'avg_duration' => round((float) $avgDuration, 2),
+                'avg_page_views' => round((float) $avgPageViews, 2)
+            ];
+        } catch (\Exception $e) {
+            log_message('error', 'getSessionStats error: ' . $e->getMessage());
+            return [
+                'total_sessions' => 0,
+                'bounce_sessions' => 0,
+                'bounce_rate' => 0,
+                'avg_duration' => 0,
+                'avg_page_views' => 0
+            ];
         }
-
-        $totalSessions = $builder->countAllResults(false);
-        $bounceSessions = $builder->where('is_bounce', 1)->countAllResults(false);
-        
-        $avgDuration = $this->db->table($this->table)
-                           ->select('AVG(TIMESTAMPDIFF(SECOND, session_start, session_end)) as avg_duration')
-                           ->where('session_end IS NOT NULL')
-                           ->where('session_start >=', $startDate)
-                           ->where('session_start <=', $endDate)
-                           ->get()
-                           ->getRow()
-                           ->avg_duration ?? 0;
-
-        $avgPageViews = $this->db->table($this->table)
-                           ->selectAvg('page_views')
-                           ->where('session_start >=', $startDate)
-                           ->where('session_start <=', $endDate)
-                           ->get()
-                           ->getRow()
-                           ->page_views ?? 0;
-
-        return [
-            'total_sessions' => $totalSessions,
-            'bounce_sessions' => $bounceSessions,
-            'bounce_rate' => $totalSessions > 0 ? round(($bounceSessions / $totalSessions) * 100, 2) : 0,
-            'avg_duration' => round($avgDuration, 2),
-            'avg_page_views' => round($avgPageViews, 2)
-        ];
     }
 
     /**

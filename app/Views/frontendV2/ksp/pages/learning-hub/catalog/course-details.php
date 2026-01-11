@@ -30,7 +30,7 @@
     </div>
     
     <!-- Course Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 md:p-8 mb-6">
         <?php if (!empty($course['image_url'])): ?>
             <img src="<?= base_url(esc($course['image_url'])) ?>" alt="<?= esc($course['title']) ?>" 
                  class="w-full h-64 object-cover rounded-lg mb-6">
@@ -91,9 +91,9 @@
             <?php endif; ?>
         </div>
     </div>
-    
+
     <!-- Course Description -->
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 md:p-8 mb-6">
         <h2 class="text-2xl font-bold text-dark mb-4">About This Course</h2>
         <div class="prose max-w-none">
             <?= $course['description'] ?? '' ?>
@@ -123,7 +123,7 @@
     
     if (!empty($goals)):
     ?>
-    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 md:p-8 mb-6">
         <h2 class="text-2xl font-bold text-dark mb-6">What You'll Learn</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <?php foreach ($goals as $goal): 
@@ -145,7 +145,7 @@
     
     <!-- Course Curriculum (Overview only for non-enrolled) -->
     <?php if ($is_enrolled): ?>
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 md:p-8">
             <h2 class="text-2xl font-bold text-dark mb-4">Course Curriculum</h2>
             <p class="text-slate-600">You have access to <?= $course['sections_count'] ?? 0 ?> sections and <?= $course['lectures_count'] ?? 0 ?> lectures.</p>
             <a href="<?= base_url('ksp/learning-hub/learn/' . $course['id']) ?>" 
@@ -154,7 +154,7 @@
             </a>
         </div>
     <?php else: ?>
-        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+        <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-4 md:p-8">
             <h2 class="text-2xl font-bold text-dark mb-4">Course Curriculum</h2>
             <p class="text-slate-600 mb-4">This course includes:</p>
             <ul class="list-disc list-inside space-y-2 text-slate-600">

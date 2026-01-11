@@ -12,7 +12,7 @@ class UserEventModel extends Model
     protected $returnType    = 'object';
     protected $useSoftDeletes = false;
     protected $allowedFields = [
-        'session_id', 'page_view_id', 'event_type', 'event_category', 'event_action',
+        'id', 'session_id', 'page_view_id', 'event_type', 'event_category', 'event_action',
         'event_label', 'event_value', 'event_metadata', 'occurred_at'
     ];
 

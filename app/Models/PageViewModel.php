@@ -12,7 +12,7 @@ class PageViewModel extends Model
     protected $returnType    = 'object';
     protected $useSoftDeletes = false;
     protected $allowedFields = [
-        'session_id', 'page_url', 'page_title', 'page_category',
+        'id', 'session_id', 'user_id', 'page_url', 'page_title', 'page_category',
         'time_on_page', 'scroll_depth', 'exit_page', 'viewed_at'
     ];
 
@@ -58,17 +58,22 @@ class PageViewModel extends Model
      */
     public function getPopularPages($limit = 10, $startDate = null, $endDate = null)
     {
-        $builder = $this->select('page_url, page_title, COUNT(*) as views, AVG(time_on_page) as avg_time')
-                       ->groupBy('page_url')
-                       ->orderBy('views', 'DESC')
-                       ->limit($limit);
-        
-        if ($startDate && $endDate) {
-            $builder->where('viewed_at >=', $startDate)
-                   ->where('viewed_at <=', $endDate);
-        }
+        try {
+            $builder = $this->select('page_url, page_title, COUNT(*) as views, AVG(time_on_page) as avg_time')
+                           ->groupBy('page_url')
+                           ->orderBy('views', 'DESC')
+                           ->limit($limit);
+            
+            if ($startDate && $endDate) {
+                $builder->where('viewed_at >=', $startDate)
+                       ->where('viewed_at <=', $endDate);
+            }
 
-        return $builder->get()->getResult();
+            return $builder->get()->getResult();
+        } catch (\Exception $e) {
+            log_message('error', 'getPopularPages error: ' . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -76,17 +81,22 @@ class PageViewModel extends Model
      */
     public function getViewsByCategory($startDate = null, $endDate = null)
     {
-        $builder = $this->select('page_category, COUNT(*) as views')
-                       ->where('page_category IS NOT NULL')
-                       ->groupBy('page_category')
-                       ->orderBy('views', 'DESC');
-        
-        if ($startDate && $endDate) {
-            $builder->where('viewed_at >=', $startDate)
-                   ->where('viewed_at <=', $endDate);
-        }
+        try {
+            $builder = $this->select('page_category, COUNT(*) as views')
+                           ->where('page_category IS NOT NULL')
+                           ->groupBy('page_category')
+                           ->orderBy('views', 'DESC');
+            
+            if ($startDate && $endDate) {
+                $builder->where('viewed_at >=', $startDate)
+                       ->where('viewed_at <=', $endDate);
+            }
 
-        return $builder->get()->getResult();
+            return $builder->get()->getResult();
+        } catch (\Exception $e) {
+            log_message('error', 'getViewsByCategory error: ' . $e->getMessage());
+            return [];
+        }
     }
 
     /**

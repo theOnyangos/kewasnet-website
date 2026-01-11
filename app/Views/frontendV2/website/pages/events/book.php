@@ -101,7 +101,7 @@
 
                 <!-- Booking Form -->
                 <div class="lg:col-span-2">
-                    <div class="bg-white border border-slate-200 rounded-xl p-8">
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 md:p-8">
                         <h2 class="text-2xl font-bold text-secondary mb-6">Book Your Tickets</h2>
                         
                         <form id="bookingForm" method="POST">

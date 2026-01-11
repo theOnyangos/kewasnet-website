@@ -56,9 +56,18 @@ class ActivityTrackingService
             ];
             
             $result = $this->sessionModel->insert($sessionData);
-            $this->session->set('tracking_session_id', $this->sessionModel->getInsertID());
             
-            return $result;
+            if ($result) {
+                // Since the model generates UUID in beforeInsert, we need to retrieve it
+                // Find the session we just inserted by session_id
+                $insertedSession = $this->sessionModel->where('session_id', $sessionId)->first();
+                if ($insertedSession) {
+                    $this->session->set('tracking_session_id', $insertedSession->id);
+                    return true;
+                }
+            }
+            
+            return false;
         } else {
             // Update consent if needed
             if ($existingSession->analytics_consent != $analyticsConsent || 
@@ -90,23 +99,40 @@ class ActivityTrackingService
         }
 
         // Record page view
+        $viewedAt = date('Y-m-d H:i:s');
         $pageViewData = [
             'session_id' => $sessionId,
             'page_url' => $this->cleanUrl($pageUrl),
             'page_title' => $pageTitle,
             'page_category' => $pageCategory ?: $this->categorizeUrl($pageUrl),
-            'viewed_at' => date('Y-m-d H:i:s')
+            'viewed_at' => $viewedAt
         ];
 
-        $pageViewId = $this->pageViewModel->insert($pageViewData);
+        $result = $this->pageViewModel->insert($pageViewData);
         
-        // Update session page count
-        $this->incrementPageViews($sessionId);
+        if ($result) {
+            // Retrieve the inserted page view to get its UUID
+            $insertedPageView = $this->pageViewModel
+                ->where('session_id', $sessionId)
+                ->where('page_url', $this->cleanUrl($pageUrl))
+                ->where('viewed_at', $viewedAt)
+                ->orderBy('created_at', 'DESC')
+                ->first();
+            
+            if ($insertedPageView) {
+                $pageViewId = $insertedPageView->id;
+                
+                // Update session page count
+                $this->incrementPageViews($sessionId);
+                
+                // Store current page view ID in session for later updates
+                $this->session->set('current_page_view_id', $pageViewId);
+                
+                return $pageViewId;
+            }
+        }
         
-        // Store current page view ID in session for later updates
-        $this->session->set('current_page_view_id', $pageViewId);
-        
-        return $pageViewId;
+        return false;
     }
 
     /**
@@ -166,24 +192,72 @@ class ActivityTrackingService
     public function getDashboardData($startDate = null, $endDate = null)
     {
         if (!$startDate) {
-            $startDate = date('Y-m-d', strtotime('-30 days'));
+            $startDate = date('Y-m-d 00:00:00', strtotime('-30 days'));
+        } else {
+            // Ensure startDate has time component
+            if (strlen($startDate) === 10) {
+                $startDate .= ' 00:00:00';
+            }
         }
+        
         if (!$endDate) {
-            $endDate = date('Y-m-d');
+            $endDate = date('Y-m-d 23:59:59');
+        } else {
+            // Ensure endDate has time component
+            if (strlen($endDate) === 10) {
+                $endDate .= ' 23:59:59';
+            }
         }
 
+        $sessionStats = $this->sessionModel->getSessionStats($startDate, $endDate);
+        $popularPages = $this->pageViewModel->getPopularPages(10, $startDate, $endDate);
+        $viewsByCategory = $this->pageViewModel->getViewsByCategory($startDate, $endDate);
+        $deviceBreakdown = $this->sessionModel->getSessionsByDevice($startDate, $endDate);
+        $topCountries = $this->sessionModel->getTopCountries(10, $startDate, $endDate);
+        $eventStats = $this->eventModel->getEventStats($startDate, $endDate);
+        $topClicks = $this->eventModel->getTopClicks(10, $startDate, $endDate);
+        $formSubmissions = $this->eventModel->getFormStats($startDate, $endDate);
+        $downloads = $this->eventModel->getDownloadStats($startDate, $endDate);
+        $searchQueries = $this->eventModel->getSearchQueries(10, $startDate, $endDate);
+        $newRegistrations = $this->eventModel->getNewRegistrations($startDate, $endDate);
+
+        // Calculate overview metrics
+        $totalPageViews = 0;
+        if (is_array($popularPages)) {
+            foreach ($popularPages as $page) {
+                $totalPageViews += is_object($page) ? ($page->views ?? 0) : ($page['views'] ?? 0);
+            }
+        }
+        
+        $activeSessions = is_array($sessionStats) ? ($sessionStats['total_sessions'] ?? 0) : 0;
+        
+        $totalEvents = 0;
+        if (is_array($eventStats)) {
+            foreach ($eventStats as $event) {
+                $totalEvents += is_object($event) ? ($event->count ?? 0) : ($event['count'] ?? 0);
+            }
+        }
+        
+        $avgSessionDuration = is_array($sessionStats) ? ($sessionStats['avg_duration'] ?? 0) : 0;
+
         return [
-            'session_stats' => $this->sessionModel->getSessionStats($startDate, $endDate),
-            'popular_pages' => $this->pageViewModel->getPopularPages(10, $startDate, $endDate),
-            'views_by_category' => $this->pageViewModel->getViewsByCategory($startDate, $endDate),
-            'device_breakdown' => $this->sessionModel->getSessionsByDevice($startDate, $endDate),
-            'top_countries' => $this->sessionModel->getTopCountries(10, $startDate, $endDate),
-            'event_stats' => $this->eventModel->getEventStats($startDate, $endDate),
-            'top_clicks' => $this->eventModel->getTopClicks(10, $startDate, $endDate),
-            'form_submissions' => $this->eventModel->getFormStats($startDate, $endDate),
-            'downloads' => $this->eventModel->getDownloadStats($startDate, $endDate),
-            'search_queries' => $this->eventModel->getSearchQueries(10, $startDate, $endDate),
-            'new_registrations' => $this->eventModel->getNewRegistrations($startDate, $endDate)
+            'overview' => [
+                'total_page_views' => $totalPageViews,
+                'active_sessions' => $activeSessions,
+                'total_events' => $totalEvents,
+                'avg_session_duration' => $avgSessionDuration
+            ],
+            'session_stats' => $sessionStats,
+            'popular_pages' => $popularPages,
+            'views_by_category' => $viewsByCategory,
+            'device_breakdown' => $deviceBreakdown,
+            'top_countries' => $topCountries,
+            'event_stats' => $eventStats,
+            'top_clicks' => $topClicks,
+            'form_submissions' => $formSubmissions,
+            'downloads' => $downloads,
+            'search_queries' => $searchQueries,
+            'new_registrations' => $newRegistrations
         ];
     }
 
@@ -336,5 +410,68 @@ class ActivityTrackingService
             'todays_page_views' => $this->pageViewModel->where('viewed_at >=', $todayStart)->countAllResults(),
             'todays_events' => $this->eventModel->where('occurred_at >=', $todayStart)->countAllResults()
         ];
+    }
+
+    /**
+     * Get recent activities for real-time feed
+     */
+    public function getRecentActivities($limit = 10)
+    {
+        $activities = [];
+        
+        // Get recent page views
+        $recentPageViews = $this->pageViewModel
+            ->orderBy('viewed_at', 'DESC')
+            ->limit($limit)
+            ->findAll();
+        
+        foreach ($recentPageViews as $pageView) {
+            $activities[] = [
+                'type' => 'page_view',
+                'description' => 'Page viewed: ' . ($pageView->page_title ?: $pageView->page_url),
+                'created_at' => $pageView->viewed_at,
+                'url' => $pageView->page_url
+            ];
+        }
+        
+        // Get recent events
+        $recentEvents = $this->eventModel
+            ->orderBy('occurred_at', 'DESC')
+            ->limit($limit)
+            ->findAll();
+        
+        foreach ($recentEvents as $event) {
+            $activities[] = [
+                'type' => $event->event_type,
+                'description' => ucfirst($event->event_action) . ': ' . ($event->event_label ?: 'Unknown'),
+                'created_at' => $event->occurred_at,
+                'category' => $event->event_category
+            ];
+        }
+        
+        // Sort by created_at descending and limit
+        usort($activities, function($a, $b) {
+            return strtotime($b['created_at']) - strtotime($a['created_at']);
+        });
+        
+        return array_slice($activities, 0, $limit);
+    }
+
+    /**
+     * Generate UUID for tracking records
+     */
+    private function generateUuid()
+    {
+        return sprintf(
+            '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
     }
 }

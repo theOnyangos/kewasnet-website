@@ -400,7 +400,9 @@
 
                     if (response.ok) {
                         const data = await response.json();
-                        this.updateRealTimeActivity(data.data || []);
+                        // Extract activities from the response
+                        const activities = data.data?.activities || data.data || [];
+                        this.updateRealTimeActivity(activities);
                     }
                 } catch (error) {
                     console.error('Real-time update failed:', error);
@@ -410,6 +412,11 @@
             updateRealTimeActivity(activities) {
                 const container = document.getElementById('realTimeActivity');
                 container.innerHTML = '';
+
+                // Ensure activities is an array
+                if (!Array.isArray(activities)) {
+                    activities = [];
+                }
 
                 if (activities.length === 0) {
                     container.innerHTML = '<p class="text-gray-500 text-center">No recent activity</p>';

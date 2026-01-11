@@ -162,24 +162,67 @@ class TrackingController extends BaseController
      */
     public function dashboard()
     {
+        // Check admin permission first
+        if (!$this->isAdmin()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Access denied',
+                'error' => 'Unauthorized'
+            ])->setStatusCode(401);
+        }
+        
         try {
-            // Check admin permission
-            if (!$this->isAdmin()) {
-                return $this->failUnauthorized('Access denied');
-            }
-            
             $startDate = $this->request->getGet('start_date');
             $endDate = $this->request->getGet('end_date');
+            $range = $this->request->getGet('range');
+            
+            // If range is provided, calculate start and end dates
+            if ($range && !$startDate && !$endDate) {
+                switch ($range) {
+                    case 'today':
+                        $startDate = date('Y-m-d 00:00:00');
+                        $endDate = date('Y-m-d 23:59:59');
+                        break;
+                    case 'yesterday':
+                        $startDate = date('Y-m-d 00:00:00', strtotime('-1 day'));
+                        $endDate = date('Y-m-d 23:59:59', strtotime('-1 day'));
+                        break;
+                    case 'week':
+                        $startDate = date('Y-m-d 00:00:00', strtotime('-7 days'));
+                        $endDate = date('Y-m-d 23:59:59');
+                        break;
+                    case 'month':
+                        $startDate = date('Y-m-d 00:00:00', strtotime('-30 days'));
+                        $endDate = date('Y-m-d 23:59:59');
+                        break;
+                    default:
+                        $startDate = date('Y-m-d 00:00:00', strtotime('-30 days'));
+                        $endDate = date('Y-m-d 23:59:59');
+                }
+            }
+            
+            // Ensure we have dates
+            if (!$startDate) {
+                $startDate = date('Y-m-d 00:00:00', strtotime('-30 days'));
+            }
+            if (!$endDate) {
+                $endDate = date('Y-m-d 23:59:59');
+            }
             
             $data = $this->trackingService->getDashboardData($startDate, $endDate);
             
-            return $this->respond([
+            return $this->response->setJSON([
                 'success' => true,
                 'data' => $data
-            ]);
+            ])->setStatusCode(200);
         } catch (\Exception $e) {
             log_message('error', 'Dashboard data fetch failed: ' . $e->getMessage());
-            return $this->fail('An error occurred while fetching dashboard data');
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'An error occurred while fetching dashboard data',
+                'error' => $e->getMessage()
+            ])->setStatusCode(500);
         }
     }
 
@@ -188,21 +231,40 @@ class TrackingController extends BaseController
      */
     public function realTime()
     {
+        // Check admin permission first
+        if (!$this->isAdmin()) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Access denied',
+                'error' => 'Unauthorized'
+            ])->setStatusCode(401);
+        }
+        
         try {
-            // Check admin permission
-            if (!$this->isAdmin()) {
-                return $this->failUnauthorized('Access denied');
-            }
-            
             $stats = $this->trackingService->getRealTimeStats();
             
-            return $this->respond([
+            // Get recent activities for real-time feed
+            $recentActivities = $this->trackingService->getRecentActivities(10);
+            
+            return $this->response->setJSON([
                 'success' => true,
-                'data' => $stats
-            ]);
+                'data' => [
+                    'stats' => $stats,
+                    'activities' => $recentActivities
+                ]
+            ])->setStatusCode(200);
         } catch (\Exception $e) {
             log_message('error', 'Real-time stats fetch failed: ' . $e->getMessage());
-            return $this->fail('An error occurred while fetching real-time stats');
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'An error occurred while fetching real-time stats',
+                'error' => $e->getMessage(),
+                'data' => [
+                    'stats' => [],
+                    'activities' => []
+                ]
+            ])->setStatusCode(500);
         }
     }
 
@@ -328,6 +390,11 @@ class TrackingController extends BaseController
      */
     private function isAdmin()
     {
-        return CIAuth::isLoggedIn() && CIAuth::isAdmin();
+        try {
+            return CIAuth::isLoggedIn() && CIAuth::isAdmin();
+        } catch (\Exception $e) {
+            log_message('error', 'Admin check failed: ' . $e->getMessage());
+            return false;
+        }
     }
 }

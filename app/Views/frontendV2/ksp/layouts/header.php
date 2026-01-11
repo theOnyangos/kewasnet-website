@@ -34,7 +34,7 @@
                         
                         <!-- User Profile Dropdown -->
                         <div class="relative user-menu-wrapper">
-                            <button class="user-menu-trigger flex items-center gap-3 focus:outline-none bg-gradient-to-r from-slate-50 to-slate-100 px-3 py-2 md:px-4 md:py-2.5 rounded-xl hover:shadow-md hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 border border-slate-200 min-w-[180px] md:min-w-[220px]">
+                            <button class="user-menu-trigger flex items-center gap-3 focus:outline-none bg-gradient-to-r from-slate-50 to-slate-100 px-3 py-2 md:px-4 md:py-2.5 rounded-xl hover:shadow-md hover:from-primary/5 hover:to-secondary/5 transition-all duration-300 border border-slate-200 min-w-[50px] md:min-w-[220px]">
                                 <div class="hidden md:flex flex-col items-start min-w-0">
                                     <span class="font-semibold text-sm text-slate-800 whitespace-nowrap"><?= $userName ?></span>
                                     <span class="text-xs text-slate-500 font-medium flex items-center gap-1">

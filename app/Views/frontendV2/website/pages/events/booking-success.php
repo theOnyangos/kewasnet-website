@@ -22,21 +22,21 @@
         <div class="container mx-auto px-4 max-w-4xl">
             <!-- Breadcrumbs -->
             <nav class="mb-8" aria-label="Breadcrumb">
-                <ol class="flex items-center space-x-2 text-sm">
+                <ol class="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
                     <li>
-                        <a href="<?= base_url() ?>" class="text-slate-600 hover:text-primary transition-colors">Home</a>
+                        <a href="<?= base_url() ?>" class="text-slate-600 hover:text-primary transition-colors whitespace-nowrap">Home</a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
                     <li>
-                        <a href="<?= base_url('events') ?>" class="text-slate-600 hover:text-primary transition-colors">Events</a>
+                        <a href="<?= base_url('events') ?>" class="text-slate-600 hover:text-primary transition-colors whitespace-nowrap">Events</a>
                     </li>
-                    <li>
+                    <li class="flex-shrink-0">
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
                     </li>
-                    <li>
-                        <a href="<?= base_url('events/' . esc($event['slug'])) ?>" class="text-slate-600 hover:text-primary transition-colors"><?= esc($event['title']) ?></a>
+                    <li class="min-w-0 flex-1">
+                        <a href="<?= base_url('events/' . esc($event['slug'])) ?>" class="text-slate-600 hover:text-primary transition-colors truncate block"><?= esc($event['title']) ?></a>
                     </li>
                     <li>
                         <i data-lucide="chevron-right" class="icon-xs text-slate-400"></i>
@@ -48,7 +48,7 @@
             </nav>
 
             <!-- Success Message -->
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-8 text-center mb-8">
+            <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-4 md:p-8 text-center mb-8">
                 <div class="mb-6">
                     <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <i data-lucide="check-circle" class="w-12 h-12 text-green-600"></i>

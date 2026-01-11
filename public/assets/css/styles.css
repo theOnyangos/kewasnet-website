@@ -1978,6 +1978,14 @@ input[type="range"]::-ms-fill-lower {
   min-width: 280px;
 }
 
+.min-w-\[80px\] {
+  min-width: 80px;
+}
+
+.min-w-\[50px\] {
+  min-width: 50px;
+}
+
 .max-w-2xl {
   max-width: 42rem;
 }
