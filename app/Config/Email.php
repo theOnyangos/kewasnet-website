@@ -86,8 +86,8 @@ class Email extends BaseConfig
     private function loadFromDatabase(): void
     {
         try {
-            $db = \Config\Database::connect();
-            $builder = $db->table('email_settings');
+            $db       = \Config\Database::connect();
+            $builder  = $db->table('email_settings');
             $settings = $builder->orderBy('id', 'DESC')->get(1)->getRowArray();
 
             if ($settings) {
@@ -95,7 +95,9 @@ class Email extends BaseConfig
                 $this->SMTPUser   = $settings['username'] ?? env('EMAIL_USERNAME', '');
                 $this->SMTPPass   = $settings['password'] ?? env('EMAIL_PASSWORD', '');
                 $this->SMTPPort   = (int) ($settings['port'] ?? env('EMAIL_PORT', 2525));
-                $this->SMTPCrypto = $settings['encryption'] ?? env('EMAIL_ENCRYPTION', 'tls');
+                // Normalize encryption to lowercase (tls, ssl, or empty string)
+                $encryption       = strtolower($settings['encryption'] ?? env('EMAIL_ENCRYPTION', 'tls'));
+                $this->SMTPCrypto = in_array($encryption, ['tls', 'ssl', '']) ? $encryption : 'tls';
                 $this->fromEmail  = $settings['from_address'] ?? env('EMAIL_FROM_ADDRESS', 'info@kewasnet.co.ke');
                 $this->fromName   = $settings['from_name'] ?? env('EMAIL_FROM_NAME', 'KEWASNET');
             } else {

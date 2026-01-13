@@ -3,16 +3,19 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
 
 class EmailQueue extends Model
 {
     protected $table            = 'email_queue';
     protected $primaryKey       = 'id';
-    protected $useAutoIncrement = true;
+    protected $useAutoIncrement = false; // Changed to false for UUID
     protected $returnType       = 'object';
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
+        'id', // Added id to allowedFields for UUID insertion
         'to',
         'bcc',
         'subject',
@@ -28,6 +31,25 @@ class EmailQueue extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
+
+    protected $beforeInsert = ['generateUUID'];
+
+    /**
+     * Generate UUID for new email queue records
+     */
+    protected function generateUUID(array $data)
+    {
+        if (!isset($data['data']['id']) || empty($data['data']['id'])) {
+            try {
+                $data['data']['id'] = Uuid::uuid4()->toString();
+            } catch (UnsatisfiedDependencyException $e) {
+                log_message('error', 'EmailQueue UUID generation failed: ' . $e->getMessage());
+                // Fallback to database UUID function
+                unset($data['data']['id']);
+            }
+        }
+        return $data;
+    }
 
     /**
      * Add email to queue

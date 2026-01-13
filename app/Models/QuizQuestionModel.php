@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\Exception\UnsatisfiedDependencyException;
 
 class QuizQuestionModel extends Model
 {
@@ -30,15 +32,14 @@ class QuizQuestionModel extends Model
     
     protected function generateUUID(array $data)
     {
-        if (!isset($data['data']['id'])) {
-            $data['data']['id'] = sprintf(
-                '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-                mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-                mt_rand(0, 0xffff),
-                mt_rand(0, 0x0fff) | 0x4000,
-                mt_rand(0, 0x3fff) | 0x8000,
-                mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-            );
+        if (!isset($data['data']['id']) || empty($data['data']['id'])) {
+            try {
+                $data['data']['id'] = Uuid::uuid4()->toString();
+            } catch (UnsatisfiedDependencyException $e) {
+                log_message('error', 'UUID generation failed: ' . $e->getMessage());
+                // Fallback to database UUID function
+                unset($data['data']['id']);
+            }
         }
         return $data;
     }
