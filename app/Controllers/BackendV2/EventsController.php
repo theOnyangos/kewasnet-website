@@ -1271,14 +1271,22 @@ class EventsController extends BaseController
                 ]);
             }
 
-            // Check in the ticket
             $userId = session()->get('id');
-            $this->ticketModel->checkIn($result['ticket']['id'], $userId);
+            $affected = $this->ticketModel->attemptCheckIn((string) $result['ticket']['id'], (string) $userId);
+
+            if ($affected !== 1) {
+                $fresh = $this->ticketModel->find($result['ticket']['id']);
+                return $this->response->setJSON([
+                    'status' => 'error',
+                    'message' => ($fresh && ($fresh['status'] ?? '') === 'used') ? 'Ticket already used' : 'Ticket cannot be checked in',
+                    'already_used' => ($fresh && ($fresh['status'] ?? '') === 'used'),
+                ]);
+            }
 
             return $this->response->setJSON([
                 'status' => 'success',
                 'message' => 'Ticket checked in successfully',
-                'ticket' => $result['ticket'],
+                'ticket' => $this->ticketModel->find($result['ticket']['id']) ?: $result['ticket'],
                 'booking' => $result['booking'],
                 'event' => $result['event']
             ]);

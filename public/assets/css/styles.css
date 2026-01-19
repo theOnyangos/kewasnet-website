@@ -4190,6 +4190,10 @@ input[type="range"]::-ms-fill-lower {
   line-height: 1.25;
 }
 
+.leading-5 {
+  line-height: 1.25rem;
+}
+
 .tracking-wider {
   letter-spacing: 0.05em;
 }
@@ -7108,6 +7112,11 @@ ul .menu-item {
   .sm\:text-xl {
     font-size: 1.25rem;
     line-height: 1.75rem;
+  }
+
+  .sm\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
   }
 }
 

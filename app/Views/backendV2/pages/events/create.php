@@ -17,19 +17,19 @@
         </a>'
     ]) ?>
 
-    <div class="bg-white rounded-b-xl shadow-sm max-w-full mx-5">
+    <div class="bg-white rounded-xl shadow-sm max-w-full mx-5">
         <form class="p-6 space-y-6" id="createEventForm" method="POST" action="<?= site_url('auth/events/store') ?>" enctype="multipart/form-data">
             <?= csrf_field() ?>
             
             <!-- Title Field -->
-            <div>
+            <div class="mb-5">
                 <label for="title" class="block text-sm font-medium text-dark mb-1">Event Title <span class="text-red-500">*</span></label>
                 <input type="text" id="title" name="title" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Enter event title" required>
                 <p class="mt-1 text-xs text-gray-500">A clear and descriptive title for your event</p>
             </div>
 
             <!-- Event Type Selection -->
-            <div>
+            <div class="mb-5">
                 <label class="block text-sm font-medium text-dark mb-3">Event Type <span class="text-red-500">*</span></label>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <label class="inline-flex items-center p-3 border border-borderColor rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-secondary has-[:checked]:bg-secondaryShades-100">
@@ -39,6 +39,7 @@
                             <p class="text-xs text-gray-500">No payment required</p>
                         </div>
                     </label>
+
                     <label class="inline-flex items-center p-3 border border-borderColor rounded-lg hover:bg-gray-50 cursor-pointer transition-colors has-[:checked]:border-secondary has-[:checked]:bg-secondaryShades-100">
                         <input type="radio" name="event_type" value="paid" class="h-4 w-4 text-secondary focus:ring-secondary border-borderColor">
                         <div class="ml-3">

@@ -17,7 +17,7 @@
         </a>'
     ]) ?>
 
-    <div class="bg-white rounded-b-xl shadow-sm max-w-full event-form-container mx-5">
+    <div class="bg-white rounded-xl shadow-sm max-w-full event-form-container mx-5">
         <form class="p-6 space-y-6" id="editEventForm" method="POST" action="<?= site_url('auth/events/update/' . $event['id']) ?>" enctype="multipart/form-data">
             <?= csrf_field() ?>
 
@@ -25,13 +25,13 @@
             <div class="border-b pb-6">
                 <h3 class="text-lg font-medium text-dark mb-4">Basic Information</h3>
 
-                <div>
+                <div class="mb-5">
                     <label for="title" class="block text-sm font-medium text-dark mb-1">Event Title <span class="text-red-500">*</span></label>
                     <input type="text" id="title" name="title" value="<?= esc($event['title']) ?>" class="w-full px-4 py-3 border border-borderColor rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-transparent" placeholder="Enter event title" required>
                     <p class="mt-1 text-xs text-gray-500">A clear and descriptive title for your event.</p>
                 </div>
 
-                <div>
+                <div class="mb-5">
                     <label for="slug" class="block text-sm font-medium text-dark mb-1">URL Slug <span class="text-red-500">*</span></label>
                     <div class="flex w-full">
                         <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-borderColor bg-lightGray text-dark text-sm whitespace-nowrap">
@@ -42,7 +42,7 @@
                     <p class="mt-1 text-xs text-gray-500">Auto-generated from title. Edit if needed.</p>
                 </div>
 
-                <div>
+                <div class="mb-5">
                     <label for="description" class="block text-sm font-medium text-dark mb-1">Description</label>
                     <div class="rounded-lg">
                         <textarea id="description" name="description" class="summernote-editor w-full px-4 py-3 focus:outline-none" placeholder="Describe your event in detail"><?= esc($event['description'] ?? '') ?></textarea>

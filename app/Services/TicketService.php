@@ -361,6 +361,24 @@ class TicketService
             ];
         }
 
+        // Cancelled tickets are invalid
+        if (($ticket['status'] ?? '') === 'cancelled') {
+            return [
+                'valid' => false,
+                'message' => 'Ticket cancelled'
+            ];
+        }
+
+        // Check if already used
+        if (($ticket['status'] ?? '') === 'used') {
+            return [
+                'valid' => false,
+                'already_used' => true,
+                'message' => 'Ticket already used',
+                'checked_in_at' => $ticket['checked_in_at'] ?? null
+            ];
+        }
+
         // Get booking
         $booking = $this->bookingModel->find($ticket['booking_id']);
         if (!$booking || $booking['status'] != 'confirmed') {
@@ -379,22 +397,88 @@ class TicketService
             ];
         }
 
-        // Check if already used
-        if ($ticket['status'] == 'used') {
-            return [
-                'valid' => false,
-                'already_used' => true,
-                'message' => 'Ticket already used',
-                'checked_in_at' => $ticket['checked_in_at']
-            ];
-        }
-
         return [
             'valid' => true,
             'ticket' => $ticket,
             'booking' => $booking,
             'event' => $event,
             'message' => 'Ticket is valid'
+        ];
+    }
+
+    /**
+     * Verify ticket within an event scope and optionally check-in (atomic, one-time).
+     *
+     * Returns a JSON-friendly payload:
+     * - success: bool
+     * - message: string
+     * - ticket/event/booking: arrays when applicable
+     * - already_used: bool
+     * - checked_in: bool
+     */
+    public function verifyTicketScoped(string $qrCodeData, string $eventId, string $mode = 'check', string $checkedInBy = ''): array
+    {
+        $base = $this->verifyTicket($qrCodeData);
+
+        if (empty($base['valid'])) {
+            return [
+                'success' => false,
+                'message' => $base['message'] ?? 'Invalid ticket',
+                'already_used' => $base['already_used'] ?? false,
+                'checked_in_at' => $base['checked_in_at'] ?? null,
+            ];
+        }
+
+        $ticket = $base['ticket'];
+        $booking = $base['booking'];
+        $event = $base['event'];
+
+        if (($booking['event_id'] ?? '') !== $eventId) {
+            return [
+                'success' => false,
+                'message' => 'Ticket is for a different event.',
+                'ticket' => $ticket,
+                'booking' => $booking,
+                'event' => $event,
+            ];
+        }
+
+        if ($mode !== 'checkin') {
+            return [
+                'success' => true,
+                'message' => 'Ticket is valid',
+                'ticket' => $ticket,
+                'booking' => $booking,
+                'event' => $event,
+                'checked_in' => false,
+            ];
+        }
+
+        // Check-in (atomic). If it fails, treat as already used (or cancelled).
+        $affected = $this->ticketModel->attemptCheckIn((string) $ticket['id'], $checkedInBy);
+
+        if ($affected !== 1) {
+            // Re-fetch to return accurate checked-in time/status
+            $fresh = $this->ticketModel->find($ticket['id']);
+            return [
+                'success' => false,
+                'message' => ($fresh && ($fresh['status'] ?? '') === 'used') ? 'Ticket already used' : 'Ticket cannot be checked in',
+                'already_used' => ($fresh && ($fresh['status'] ?? '') === 'used'),
+                'checked_in_at' => $fresh['checked_in_at'] ?? null,
+                'ticket' => $fresh ?: $ticket,
+                'booking' => $booking,
+                'event' => $event,
+            ];
+        }
+
+        $fresh = $this->ticketModel->find($ticket['id']);
+        return [
+            'success' => true,
+            'message' => 'Ticket checked in successfully',
+            'checked_in' => true,
+            'ticket' => $fresh ?: $ticket,
+            'booking' => $booking,
+            'event' => $event,
         ];
     }
 }

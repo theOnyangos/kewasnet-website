@@ -81,9 +81,29 @@ class EventTicketModel extends Model
      */
     public function verifyByQrCode($qrCodeData)
     {
-        return $this->where('qr_code_data', $qrCodeData)
-            ->where('status', 'active')
-            ->first();
+        // NOTE: Do not filter by status here.
+        // The caller needs to detect "used" vs "cancelled" vs "active" accurately.
+        return $this->where('qr_code_data', $qrCodeData)->first();
+    }
+
+    /**
+     * Attempt to check-in a ticket exactly once (atomic).
+     * Returns affected rows: 1 = checked in, 0 = already used/cancelled/not found.
+     */
+    public function attemptCheckIn(string $ticketId, string $checkedInBy): int
+    {
+        $builder = $this->db->table($this->table);
+        $builder->where('id', $ticketId);
+        $builder->where('status', 'active');
+        $builder->set([
+            'status' => 'used',
+            'checked_in_at' => date('Y-m-d H:i:s'),
+            'checked_in_by' => $checkedInBy,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $builder->update();
+
+        return (int) $this->db->affectedRows();
     }
 
     /**
@@ -91,6 +111,7 @@ class EventTicketModel extends Model
      */
     public function checkIn($ticketId, $checkedInBy)
     {
+        // Backward-compatible wrapper (non-atomic). Prefer attemptCheckIn().
         return $this->update($ticketId, [
             'status' => 'used',
             'checked_in_at' => date('Y-m-d H:i:s'),
