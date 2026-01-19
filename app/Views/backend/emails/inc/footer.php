@@ -43,7 +43,7 @@
 
                   <a href="<?= $social_links[0]['facebook'] ?>">
                     <img
-                      src="https://spintowinkenya.com/images/facebook.png"
+                      src="https://test.mtalii.tech/images/facebook.png"
                       alt="Facebook"
                       class="social"
                       style="width: 24px; max-width: 24px; height: auto;"
