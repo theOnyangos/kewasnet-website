@@ -768,6 +768,7 @@ $routes->group('scanner', static function ($routes) {
         // Data endpoints used by scanner UI
         $routes->get('events', 'Scanner\ScannerController::events');
         $routes->post('verify', 'Scanner\ScannerController::verify');
+        $routes->post('decode-image', 'Scanner\ScannerController::decodeImage');
     });
 });
 

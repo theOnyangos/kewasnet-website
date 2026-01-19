@@ -21,6 +21,7 @@
         "google/apiclient": "^2.15.0",
         "guzzlehttp/guzzle": "^7.0",
         "hermawan/codeigniter4-datatables": "^0.7.1",
+        "khanamiryan/qrcode-detector-decoder": "^2.0",
         "monken/tablesigniter": "^1.2",
         "nesbot/carbon": "^2.72",
         "openai-php/client": "^0.18.0",
