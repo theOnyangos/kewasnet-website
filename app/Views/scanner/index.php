@@ -55,12 +55,20 @@
                   <i data-lucide="scan-line" class="w-5 h-5 text-primary"></i>
                   Camera Scanner
                 </div>
-                <button id="startBtn" class="gradient-btn text-white font-medium px-4 py-2 rounded-lg">
-                  Start
-                </button>
+                <div class="flex items-center gap-2">
+                  <input id="qrImageInput" type="file" accept="image/*" class="hidden" />
+                  <button id="scanImageBtn" type="button" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition">
+                    Scan from Image
+                  </button>
+                  <button id="startBtn" class="gradient-btn text-white font-medium px-4 py-2 rounded-lg">
+                    Start
+                  </button>
+                </div>
               </div>
               <div id="reader" class="rounded-xl overflow-hidden bg-white border border-slate-200"></div>
-              <p class="text-xs text-slate-500 mt-3">Allow camera permission. If camera is unavailable, use manual entry.</p>
+              <p class="text-xs text-slate-500 mt-3">
+                Allow camera permission. If camera is unavailable (common on older iOS), use “Scan from Image” or manual entry.
+              </p>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-xl p-5">
@@ -117,6 +125,8 @@
     const confirmBtn = document.getElementById('confirmBtn');
     const statusWrap = document.getElementById('statusWrap');
     const startBtn = document.getElementById('startBtn');
+    const scanImageBtn = document.getElementById('scanImageBtn');
+    const qrImageInput = document.getElementById('qrImageInput');
 
     let lastCheckedPayload = null;
     let html5Qr = null;
@@ -208,6 +218,39 @@
       nativeVideoEl = null;
     }
 
+    async function ensureHtml5QrcodeLoaded() {
+      if (window.Html5Qrcode) return true;
+
+      const sources = [
+        // primary
+        'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.10/minified/html5-qrcode.min.js',
+        // fallback (in case jsdelivr is blocked on some networks/devices)
+        'https://unpkg.com/html5-qrcode@2.3.10/minified/html5-qrcode.min.js',
+      ];
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = true;
+          s.onload = () => resolve(true);
+          s.onerror = () => reject(new Error(`Failed to load ${src}`));
+          document.head.appendChild(s);
+        });
+      }
+
+      for (const src of sources) {
+        try {
+          await loadScript(src);
+          if (window.Html5Qrcode) return true;
+        } catch (e) {
+          // keep trying other sources
+        }
+      }
+
+      return false;
+    }
+
     async function startNativeQrScanner() {
       ensureAudioUnlocked();
       if (!('mediaDevices' in navigator) || !navigator.mediaDevices.getUserMedia) {
@@ -216,7 +259,11 @@
         return;
       }
       if (!('BarcodeDetector' in window)) {
-        showStatus('bad', 'Scanner unavailable', ['QR scanner library failed to load and this browser has no native QR support. Use manual entry.']);
+        showStatus('bad', 'Scanner unavailable', [
+          'QR scanner library failed to load.',
+          'This device/browser does not support the native QR fallback.',
+          'Use manual entry, or check your site CSP/network blocking external scripts.'
+        ]);
         beepError();
         return;
       }
@@ -360,6 +407,50 @@
       confirmBtn.disabled = false;
     }
 
+    async function scanFromImageFile(file) {
+      ensureAudioUnlocked();
+      const eventId = eventSelect.value;
+      if (!eventId) {
+        showStatus('warn', 'Select event', ['Please select an event first.']);
+        return;
+      }
+      if (!file) return;
+
+      const ok = await ensureHtml5QrcodeLoaded();
+      if (!ok || !window.Html5Qrcode) {
+        showStatus('bad', 'Scanner unavailable', [
+          'QR scanner library failed to load.',
+          'Please check your network/CSP or try manual entry.'
+        ]);
+        beepError();
+        return;
+      }
+
+      try {
+        showStatus('warn', 'Scanning image…', ['Reading QR code from selected image.']);
+
+        // Use a dedicated instance for file scans (does not require camera permissions).
+        const fileScanner = new Html5Qrcode('reader');
+        const decodedText = await fileScanner.scanFile(file, /* showImage= */ true);
+
+        if (decodedText) {
+          qrInput.value = decodedText;
+          beepSuccess();
+          await verify('check');
+        } else {
+          showStatus('bad', 'No QR found', ['No QR code detected in the selected image.']);
+          beepError();
+        }
+      } catch (err) {
+        console.error(err);
+        showStatus('bad', 'Scan failed', ['Unable to read a QR code from that image. Try a clearer photo, or use manual entry.']);
+        beepError();
+      } finally {
+        // allow re-selecting the same file again
+        if (qrImageInput) qrImageInput.value = '';
+      }
+    }
+
     checkBtn.addEventListener('click', (e) => {
       e.preventDefault();
       ensureAudioUnlocked();
@@ -381,9 +472,12 @@
         return;
       }
       if (!window.Html5Qrcode) {
-        // CDN/library may be blocked (CSP/network). Try native browser fallback.
-        await startNativeQrScanner();
-        return;
+        // CDN/library may be blocked (CSP/network). Try to load from alternate CDN, then fallback.
+        const loaded = await ensureHtml5QrcodeLoaded();
+        if (!loaded || !window.Html5Qrcode) {
+          await startNativeQrScanner();
+          return;
+        }
       }
 
       if (!html5Qr) {
@@ -416,6 +510,27 @@
         showStatus('bad', 'Camera error', ['Unable to start camera. Check permissions, or use manual entry.']);
         beepError();
       }
+    });
+
+    scanImageBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      ensureAudioUnlocked();
+      // ensure library is ready before opening picker (better UX on slow networks)
+      const ok = await ensureHtml5QrcodeLoaded();
+      if (!ok || !window.Html5Qrcode) {
+        showStatus('bad', 'Scanner unavailable', [
+          'QR scanner library failed to load.',
+          'Please check your network/CSP or use manual entry.'
+        ]);
+        beepError();
+        return;
+      }
+      qrImageInput.click();
+    });
+
+    qrImageInput.addEventListener('change', async (e) => {
+      const file = e.target && e.target.files ? e.target.files[0] : null;
+      await scanFromImageFile(file);
     });
 
     fetchEvents().catch(() => {
