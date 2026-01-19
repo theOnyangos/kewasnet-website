@@ -367,12 +367,36 @@ $(document).ready(function() {
     }
     
     // Event handlers
-    $('#applyFilters').on('click', applyFilters);
-    $('#searchBtn').on('click', applyFilters);
+    $('#applyFilters').on('click', function() {
+        // Track filter application
+        if (window.kewasnetTracker) {
+            window.kewasnetTracker.trackEvent('opportunity_filter', 'apply', 'Opportunity Filters Applied', null, 'Opportunities');
+        } else if (window.trackEvent) {
+            window.trackEvent('opportunity_filter', 'apply', 'Opportunity Filters Applied', null, 'Opportunities');
+        }
+        applyFilters();
+    });
+    $('#searchBtn').on('click', function() {
+        const searchQuery = $('#globalSearch').val();
+        // Track search
+        if (window.kewasnetTracker && searchQuery) {
+            window.kewasnetTracker.trackSearch(searchQuery, 'Opportunity Search');
+        } else if (window.trackSearch && searchQuery) {
+            window.trackSearch(searchQuery, 'Opportunity Search');
+        }
+        applyFilters();
+    });
     
     // Search on Enter key
     $('#globalSearch').on('keypress', function(e) {
         if (e.which === 13) {
+            const searchQuery = $(this).val();
+            // Track search
+            if (window.kewasnetTracker && searchQuery) {
+                window.kewasnetTracker.trackSearch(searchQuery, 'Opportunity Search');
+            } else if (window.trackSearch && searchQuery) {
+                window.trackSearch(searchQuery, 'Opportunity Search');
+            }
             applyFilters();
         }
     });

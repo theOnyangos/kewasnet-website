@@ -27,7 +27,8 @@ class DiscussionView extends Model
     
     protected $useTimestamps = false;
     protected $createdField = 'viewed_at';
-    protected $updatedField = null;
+    // Keep empty string to avoid BaseModel inserting an empty column name.
+    protected $updatedField = '';
     protected $dateFormat = 'datetime';
     
     protected $validationRules = [

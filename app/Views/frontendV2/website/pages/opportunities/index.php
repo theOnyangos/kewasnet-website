@@ -46,7 +46,7 @@
                             Find career opportunities with KEWASNET and partner organizations in the WASH sector
                         </p>
                         <div class="text-center">
-                            <a href="<?= site_url('opportunities/explore?type=full-time') ?>" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primaryShades-700 transition-colors inline-block">
+                            <a href="<?= site_url('opportunities/explore?type=full-time') ?>" onclick="trackOpportunityCategory('browse_jobs', 'Job Opportunities');" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primaryShades-700 transition-colors inline-block">
                                 Browse Jobs
                             </a>
                         </div>
@@ -68,7 +68,7 @@
                             Gain hands-on experience in Kenya's WASH sector through our structured internship opportunities
                         </p>
                         <div class="text-center">
-                            <a href="<?= site_url('opportunities/explore?type=internship') ?>" class="bg-secondaryShades-500 text-white px-6 py-3 rounded-lg hover:bg-secondaryShades-600 transition-colors inline-block">
+                            <a href="<?= site_url('opportunities/explore?type=internship') ?>" onclick="trackOpportunityCategory('browse_internships', 'Internship Opportunities');" class="bg-secondaryShades-500 text-white px-6 py-3 rounded-lg hover:bg-secondaryShades-600 transition-colors inline-block">
                                 Browse Internships
                             </a>
                         </div>
@@ -93,7 +93,7 @@
                             Explore contract and freelance opportunities for flexible engagement with our network
                         </p>
                         <div class="text-center">
-                            <a href="<?= site_url('opportunities/explore?type=contract') ?>" class="bg-primaryShades-700 text-white px-6 py-3 rounded-lg hover:bg-primaryShades-800 transition-colors inline-block">
+                            <a href="<?= site_url('opportunities/explore?type=contract') ?>" onclick="trackOpportunityCategory('browse_contracts', 'Contract & Freelance');" class="bg-primaryShades-700 text-white px-6 py-3 rounded-lg hover:bg-primaryShades-800 transition-colors inline-block">
                                 Browse Contracts
                             </a>
                         </div>
@@ -208,7 +208,7 @@
                 
                 <!-- Call to Action -->
                 <div class="text-center mt-12">
-                    <a href="<?= site_url('opportunities/explore') ?>" class="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primaryShades-700 transition-colors inline-flex items-center">
+                    <a href="<?= site_url('opportunities/explore') ?>" onclick="trackOpportunityCategory('explore_more', 'All Opportunities');" class="bg-primary text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-primaryShades-700 transition-colors inline-flex items-center">
                         Explore More Opportunities
                         <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -292,6 +292,28 @@ $(document).ready(function() {
             $(this).find('.apply-btn').removeClass('scale-105');
         }
     );
+    
+    // Track opportunity view clicks
+    $('a[href*="opportunities/"]').on('click', function() {
+        const href = $(this).attr('href');
+        if (href && href.includes('/opportunities/') && !href.includes('/explore') && !href.includes('/apply')) {
+            const slug = href.split('/opportunities/')[1];
+            if (slug && window.kewasnetTracker) {
+                window.kewasnetTracker.trackEvent('opportunity_view', 'click', 'Opportunity View', slug, 'Opportunities');
+            } else if (slug && window.trackEvent) {
+                window.trackEvent('opportunity_view', 'click', 'Opportunity View', slug, 'Opportunities');
+            }
+        }
+    });
+    
+    // Helper function to track opportunity category clicks
+    window.trackOpportunityCategory = function(action, category) {
+        if (window.kewasnetTracker) {
+            window.kewasnetTracker.trackEvent('opportunity_category', 'click', action, null, category);
+        } else if (window.trackEvent) {
+            window.trackEvent('opportunity_category', 'click', action, null, category);
+        }
+    };
 });
 </script>
 <?= $this->endSection() ?>

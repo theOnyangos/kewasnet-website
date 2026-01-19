@@ -272,6 +272,13 @@ $(document).ready(function() {
         })
         .done(function(data) {
             if (data.status === 'success') {
+                // Track contact form submission
+                if (window.kewasnetTracker) {
+                    window.kewasnetTracker.trackEvent('form_submit', 'submit', 'Contact Form', null, 'Form');
+                } else if (window.trackEvent) {
+                    window.trackEvent('form_submit', 'submit', 'Contact Form', null, 'Form');
+                }
+                
                 Swal.fire({
                     icon: 'success',
                     title: 'Message Sent!',

@@ -20,12 +20,16 @@
             'pageDescription' => 'Manage organizational pillars and strategic focus areas',
             'breadcrumbs' => [
                 ['label' => 'Pillars']
-            ]
+            ],
+            'bannerActions' => '<div class="flex items-center gap-3">
+                <button type="button" onclick="window.open(\'' . site_url('auth/activity-dashboard') . '\', \'_blank\')" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i>
+                    Analytics
+                </button>
+            </div>'
         ]) ?>
 
-        <div class="px-6 pb-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/pillars/partials/header_section') ?>
+        <div class="px-6 pb-6 pb-10">
 
         <!-- Quick Stats Cards -->
         <?= $this->include('backendV2/pages/pillars/partials/quick_stats_section') ?>
@@ -34,7 +38,7 @@
         <?= $this->include('backendV2/pages/pillars/partials/navigation_section') ?>
 
         <!-- Pillars Management Content -->
-        <div class="bg-white rounded-b-xl shadow-sm p-6">
+        <div class="bg-white rounded-b-xl shadow-sm p-6 pb-10">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">Organizational Pillars</h1>

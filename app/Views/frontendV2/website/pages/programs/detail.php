@@ -102,10 +102,10 @@
                 Join us in making a difference through <?= esc($program->title) ?>. Together, we can create lasting change in Kenya's WASH sector.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="<?= base_url('contact') ?>" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-lightGray transition-colors">
+                <a href="<?= base_url('contact') ?>" onclick="trackCTA('partner_with_us', 'Program Detail CTA');" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-lightGray transition-colors">
                     Partner With Us
                 </a>
-                <a href="<?= base_url('programs') ?>" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
+                <a href="<?= base_url('programs') ?>" onclick="trackCTA('view_all_programs', 'Program Detail CTA');" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
                     View All Programs
                 </a>
             </div>
@@ -116,6 +116,13 @@
 <!--  Section Scripts Block  -->
 <?= $this->section('scripts') ?>
 <script>
-    // Add any program-specific JavaScript here
+    // Helper function to track CTA clicks
+    function trackCTA(action, category) {
+        if (window.kewasnetTracker) {
+            window.kewasnetTracker.trackEvent('cta_click', 'click', action, null, category);
+        } else if (window.trackEvent) {
+            window.trackEvent('cta_click', 'click', action, null, category);
+        }
+    }
 </script>
 <?= $this->endSection() ?>

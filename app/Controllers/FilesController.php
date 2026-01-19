@@ -45,11 +45,17 @@ class FilesController extends BaseController
 
         // Find attachment record to get original name
         $attachment = $this->fileAttachmentModel->where('file_path', $filePath)->first();
-        $originalName = $attachment ? $attachment->original_name : basename($filePath);
+        
+        // Convert to array if object (FileAttachment returns arrays)
+        if ($attachment && is_object($attachment)) {
+            $attachment = (array) $attachment;
+        }
+        
+        $originalName = $attachment ? ($attachment['original_name'] ?? $attachment['file_name'] ?? basename($filePath)) : basename($filePath);
 
         // Increment download count
-        if ($attachment) {
-            $this->fileAttachmentModel->incrementDownloadCount($attachment->id);
+        if ($attachment && isset($attachment['id'])) {
+            $this->fileAttachmentModel->incrementDownloadCount($attachment['id']);
         }
 
         return $this->response->download($fullPath, null)->setFileName($originalName);

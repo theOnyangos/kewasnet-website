@@ -20,12 +20,16 @@
             'pageDescription' => 'Manage blog posts, categories, and tags',
             'breadcrumbs' => [
                 ['label' => 'Blogs']
-            ]
+            ],
+            'bannerActions' => '<div class="flex items-center gap-3">
+                <button type="button" onclick="window.open(\'' . site_url('auth/activity-dashboard') . '\', \'_blank\')" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i>
+                    Analytics
+                </button>
+            </div>'
         ]) ?>
 
         <div class="px-6 pb-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/blogs/partials/header_section') ?>
 
         <!-- Quick Stats Cards -->
         <?= $this->include('backendV2/pages/blogs/partials/quick_stats_section') ?>
@@ -34,7 +38,7 @@
         <?= $this->include('backendV2/pages/blogs/partials/navigation_section') ?>
         
         <!-- Overview Tab Content - Blog Categories -->
-        <div class="bg-white rounded-b-xl shadow-sm p-6">
+        <div class="bg-white rounded-b-xl shadow-sm p-6 pb-10">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">Blog Categories</h1>
@@ -451,28 +455,83 @@
     }
 
     function deleteCategory(id) {
-        if (confirm('Are you sure you want to delete this category? This action cannot be undone.')) {
-            $.ajax({
-                url: '<?= base_url('auth/blogs/delete-category') ?>/' + id,
-                method: 'DELETE',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        showNotification('success', response.message || 'Category deleted successfully!');
-                        categoriesTable.ajax.reload();
-                    } else {
-                        showNotification('error', response.message || 'Failed to delete category');
+        Swal.fire({
+            title: 'Delete Category?',
+            text: 'This action cannot be undone. The category will be permanently deleted.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#6b7280',
+            confirmButtonText: 'Yes, Delete It',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the category',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
                     }
-                },
-                error: function(xhr) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        showNotification('error', response.message || 'Failed to delete category');
-                    } catch (e) {
-                        showNotification('error', 'A network error occurred');
+                });
+
+                $.ajax({
+                    url: '<?= base_url('auth/blogs/delete-category') ?>/' + id,
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': $('input[name="<?= csrf_token() ?>"]').val()
+                    },
+                    data: {
+                        [<?= json_encode(csrf_token()) ?>]: $('input[name="<?= csrf_token() ?>"]').val()
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Deleted!',
+                                text: response.message || 'Category deleted successfully',
+                                timer: 2000,
+                                showConfirmButton: false,
+                                timerProgressBar: true
+                            });
+                            categoriesTable.ajax.reload(null, false);
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Failed to delete category',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response?.message || 'An error occurred while deleting category',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        } catch (e) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'A network error occurred',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        });
     }
 
     // Handle edit category form submission

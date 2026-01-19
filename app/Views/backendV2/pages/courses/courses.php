@@ -22,15 +22,19 @@
                 ['label' => 'Courses', 'url' => site_url('auth/courses')],
                 ['label' => 'All Courses']
             ],
-            'bannerActions' => '<a href="' . site_url('auth/courses/create') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
-                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
-                Add New Course
-            </a>'
+            'bannerActions' => '<div class="flex items-center gap-3">
+                <a href="' . site_url('auth/courses/create') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Create Course
+                </a>
+                <button type="button" onclick="window.open(\'' . site_url('ksp/learning-hub') . '\', \'_blank\')" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="external-link" class="w-4 h-4 mr-2"></i>
+                    View Frontend
+                </button>
+            </div>'
         ]) ?>
 
         <div class="px-6 pb-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/courses/partials/header_section') ?>
 
         <!-- Quick Stats Cards -->
         <?= $this->include('backendV2/pages/courses/partials/quick_stats_section') ?>

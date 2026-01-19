@@ -15,7 +15,9 @@ class BlogPostView extends Model
     protected $allowedFields = ['id', 'post_id', 'ip_address', 'user_agent'];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
-    protected $updatedField = null; // Table doesn't have updated_at column
+    // Important: BaseModel only checks for '' (empty string), not null.
+    // Setting null causes it to insert an empty column name, leading to SQL errors.
+    protected $updatedField = ''; // Table doesn't have updated_at column
     protected $beforeInsert = ['generateUUID'];
 
     protected function generateUUID(array $data)
@@ -39,11 +41,27 @@ class BlogPostView extends Model
                        ->first();
 
         if (!$existing) {
-            return $this->insert([
+            // Generate UUID for the view record
+            try {
+                $viewId = \Ramsey\Uuid\Uuid::uuid4()->toString();
+            } catch (\Exception $e) {
+                log_message('error', 'UUID generation failed: ' . $e->getMessage());
+                return false;
+            }
+            
+            // Use query builder directly to avoid model callback issues
+            $db = \Config\Database::connect();
+            $now = date('Y-m-d H:i:s');
+            
+            $data = [
+                'id' => $viewId,
                 'post_id' => $postId,
                 'ip_address' => $ipAddress,
-                'user_agent' => $userAgent
-            ]);
+                'user_agent' => $userAgent,
+                'created_at' => $now
+            ];
+            
+            return $db->table('blog_post_views')->insert($data);
         }
 
         return false;

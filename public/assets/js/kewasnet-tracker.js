@@ -15,6 +15,9 @@ class KewasnetTracker {
         this.isInitialized = false;
         this.eventQueue = [];
         this.isOnline = navigator.onLine;
+        this.pageViewRetryCount = 0;
+        this.maxPageViewRetries = 3;
+        this.pageViewRetryDelay = 1000; // Start with 1 second
         
         // Initialize tracking based on consent
         this.init();
@@ -70,11 +73,18 @@ class KewasnetTracker {
                 marketing_consent: marketingConsent
             });
             
-            if (response.success) {
+            if (response.success && response.session_id) {
                 this.sessionId = response.session_id;
+                console.log('KEWASNET Tracker: Session initialized', response.session_id);
+            } else {
+                console.warn('KEWASNET Tracker: Session initialization returned no session_id');
             }
         } catch (error) {
-            console.error('Failed to initialize session:', error);
+            console.error('KEWASNET Tracker: Failed to initialize session:', error);
+            // Retry once after a short delay
+            setTimeout(() => {
+                this.initializeSession();
+            }, 1000);
         }
     }
 
@@ -82,7 +92,16 @@ class KewasnetTracker {
      * Track current page view
      */
     async trackCurrentPage() {
-        if (!this.hasAnalyticsConsent()) return;
+        if (!this.hasAnalyticsConsent()) {
+            console.warn('KEWASNET Tracker: Cannot track page view - no analytics consent');
+            return;
+        }
+
+        // Ensure session is initialized
+        if (!this.sessionId && !this.isInitialized) {
+            console.warn('KEWASNET Tracker: Session not initialized, initializing now...');
+            await this.initializeSession();
+        }
 
         const pageData = {
             page_url: window.location.pathname,
@@ -94,11 +113,62 @@ class KewasnetTracker {
             const response = await this.makeRequest('/track-page', pageData);
             if (response.success) {
                 this.currentPageViewId = response.page_view_id;
+                this.pageViewRetryCount = 0; // Reset retry count on success
+                console.log('KEWASNET Tracker: Page view tracked successfully', response.page_view_id);
+            } else {
+                console.warn('KEWASNET Tracker: Page view tracking returned failure:', response.message);
+                this.retryPageView(pageData);
             }
         } catch (error) {
-            console.error('Failed to track page view:', error);
-            this.queueEvent('page_view', pageData);
+            console.error('KEWASNET Tracker: Failed to track page view:', error);
+            this.retryPageView(pageData);
         }
+    }
+
+    /**
+     * Retry page view tracking with exponential backoff
+     */
+    async retryPageView(pageData) {
+        if (this.pageViewRetryCount >= this.maxPageViewRetries) {
+            console.warn('KEWASNET Tracker: Max retries reached for page view tracking. Queuing for later.');
+            this.queueEvent('page_view', pageData);
+            return;
+        }
+
+        this.pageViewRetryCount++;
+        const delay = this.pageViewRetryDelay * Math.pow(2, this.pageViewRetryCount - 1); // Exponential backoff
+        
+        console.log(`KEWASNET Tracker: Retrying page view tracking (attempt ${this.pageViewRetryCount}/${this.maxPageViewRetries}) in ${delay}ms...`);
+        
+        setTimeout(async () => {
+            // Ensure session is still initialized before retry
+            if (!this.sessionId) {
+                await this.initializeSession();
+            }
+            
+            try {
+                const response = await this.makeRequest('/track-page', pageData);
+                if (response.success) {
+                    this.currentPageViewId = response.page_view_id;
+                    this.pageViewRetryCount = 0; // Reset on success
+                    console.log('KEWASNET Tracker: Page view tracked successfully on retry', response.page_view_id);
+                } else {
+                    // Retry again if not at max
+                    if (this.pageViewRetryCount < this.maxPageViewRetries) {
+                        this.retryPageView(pageData);
+                    } else {
+                        this.queueEvent('page_view', pageData);
+                    }
+                }
+            } catch (error) {
+                console.error('KEWASNET Tracker: Page view retry failed:', error);
+                if (this.pageViewRetryCount < this.maxPageViewRetries) {
+                    this.retryPageView(pageData);
+                } else {
+                    this.queueEvent('page_view', pageData);
+                }
+            }
+        }, delay);
     }
 
     /**
@@ -127,7 +197,16 @@ class KewasnetTracker {
      * Track custom event
      */
     async trackEvent(eventType, eventAction, eventLabel = null, eventValue = null, eventCategory = null) {
-        if (!this.hasAnalyticsConsent()) return;
+        if (!this.hasAnalyticsConsent()) {
+            console.warn('KEWASNET Tracker: Cannot track event - no analytics consent');
+            return;
+        }
+
+        // Ensure session is initialized
+        if (!this.sessionId && !this.isInitialized) {
+            console.warn('KEWASNET Tracker: Session not initialized, initializing now...');
+            await this.initializeSession();
+        }
 
         const eventData = {
             event_type: eventType,
@@ -138,9 +217,12 @@ class KewasnetTracker {
         };
 
         try {
-            await this.makeRequest('/track-event', eventData);
+            const response = await this.makeRequest('/track-event', eventData);
+            if (!response.success) {
+                console.warn('KEWASNET Tracker: Event tracking failed:', response.message);
+            }
         } catch (error) {
-            console.error('Failed to track event:', error);
+            console.error('KEWASNET Tracker: Failed to track event:', error);
             this.queueEvent('event', eventData);
         }
     }
@@ -234,6 +316,52 @@ class KewasnetTracker {
         window.addEventListener('offline', () => {
             this.isOnline = false;
         });
+
+        // SPA Navigation Support - Track page views on history changes
+        this.setupSPANavigationTracking();
+    }
+
+    /**
+     * Setup Single Page Application (SPA) navigation tracking
+     */
+    setupSPANavigationTracking() {
+        // Track page views on browser back/forward navigation
+        window.addEventListener('popstate', () => {
+            this.handlePageNavigation();
+        });
+
+        // Override pushState and replaceState to track programmatic navigation
+        const originalPushState = history.pushState;
+        const originalReplaceState = history.replaceState;
+
+        const self = this;
+
+        history.pushState = function(...args) {
+            originalPushState.apply(history, args);
+            self.handlePageNavigation();
+        };
+
+        history.replaceState = function(...args) {
+            originalReplaceState.apply(history, args);
+            self.handlePageNavigation();
+        };
+    }
+
+    /**
+     * Handle page navigation (for SPA support)
+     */
+    handlePageNavigation() {
+        // Reset page tracking data for new page
+        this.pageStartTime = Date.now();
+        this.lastScrollDepth = 0;
+        this.maxScrollDepth = 0;
+        this.pageViewRetryCount = 0;
+        this.currentPageViewId = null;
+
+        // Track the new page view
+        if (this.hasAnalyticsConsent()) {
+            this.trackCurrentPage();
+        }
     }
 
     /**
@@ -374,6 +502,7 @@ class KewasnetTracker {
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
+            credentials: 'same-origin', // Include cookies with request
             body: JSON.stringify(data)
         });
 

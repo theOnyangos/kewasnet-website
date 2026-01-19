@@ -18,6 +18,7 @@
     $coursesActive          = ($segments[1] === 'courses') ? $activeClass : '';
     $eventsActive           = ($segments[1] === 'events') ? $activeClass : '';
     $notificationsActive    = ($segments[1] === 'notifications') ? $activeClass : '';
+    $aiAssistantActive      = ($segments[1] === 'ai-assistant') ? $activeClass : '';
     $settingsActive         = ($segments[1] === 'settings') ? $activeClass : '';
     
     // Dropdown menu active states - check if current route matches any route under these paths
@@ -127,6 +128,12 @@
                 <a href="<?= base_url('auth/notifications') ?>" class="<?= $notificationsActive ?> flex items-center p-3 rounded-lg text-slate-700 hover:bg-secondaryShades-100 hover:text-primary transition-colors duration-200 group/minimized">
                     <i data-lucide="bell" class="w-5 h-5 mx-auto md:mr-3 md:ml-0 sidebar-icon"></i>
                     <span class="sidebar-label">Notifications</span>
+                </a>
+            </li>
+            <li class="relative">
+                <a href="<?= base_url('auth/ai-assistant') ?>" class="<?= $aiAssistantActive ?> flex items-center p-3 rounded-lg text-slate-700 hover:bg-secondaryShades-100 hover:text-primary transition-colors duration-200 group/minimized">
+                    <i data-lucide="sparkles" class="w-5 h-5 mx-auto md:mr-3 md:ml-0 sidebar-icon"></i>
+                    <span class="sidebar-label">AI Assistant</span>
                 </a>
             </li>
             <li class="relative">

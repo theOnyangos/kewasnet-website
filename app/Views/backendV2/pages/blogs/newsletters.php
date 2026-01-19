@@ -20,12 +20,16 @@
             'pageDescription' => 'Manage blog posts, categories, and tags',
             'breadcrumbs' => [
                 ['label' => 'Blogs']
-            ]
+            ],
+            'bannerActions' => '<div class="flex items-center gap-3">
+                <button type="button" onclick="window.open(\'' . site_url('auth/activity-dashboard') . '\', \'_blank\')" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i>
+                    Analytics
+                </button>
+            </div>'
         ]) ?>
 
         <div class="px-6 pb-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/blogs/partials/header_section') ?>
 
         <!-- Newsletter Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 stats-container">

@@ -15,51 +15,16 @@
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
     <main class="flex-1 overflow-y-auto">
-        <!-- Hero Banner with Gradient Overlay -->
-        <div class="relative h-64 mb-6 overflow-hidden bg-cover bg-center" style="background-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.8) 100%), url('<?= base_url('images/dashboard-breadcrumb.jpg') ?>');">
-            <!-- Content -->
-            <div class="relative z-10 h-full flex flex-col justify-center px-6 md:px-12">
-                <!-- Breadcrumbs -->
-                <nav class="mb-4" aria-label="Breadcrumb">
-                    <ol class="inline-flex items-center space-x-1 md:space-x-2">
-                        <li class="inline-flex items-center">
-                            <a href="<?= base_url('dashboard') ?>" class="inline-flex items-center text-sm font-medium text-white/80 hover:text-white transition-colors">
-                                <i data-lucide="home" class="w-4 h-4 mr-2"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <div class="flex items-center">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-white/60"></i>
-                                <a href="<?= base_url('auth/forums') ?>" class="ml-1 text-sm font-medium text-white/80 hover:text-white md:ml-2 transition-colors">Forums</a>
-                            </div>
-                        </li>
-                        <li aria-current="page">
-                            <div class="flex items-center">
-                                <i data-lucide="chevron-right" class="w-4 h-4 text-white/60"></i>
-                                <span class="ml-1 text-sm font-medium text-white md:ml-2">Content Reports</span>
-                            </div>
-                        </li>
-                    </ol>
-                </nav>
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Content Reports',
+            'pageDescription' => 'Review and moderate reported forum content and discussions',
+            'breadcrumbs' => [
+                ['label' => 'Forums', 'url' => base_url('auth/forums')],
+                ['label' => 'Content Reports']
+            ]
+        ]) ?>
 
-                <!-- Title and Description -->
-                <div class="flex flex-col md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
-                            Content Reports
-                        </h1>
-                        <p class="text-lg text-white/90 max-w-2xl">
-                            Review and moderate reported forum content and discussions
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="px-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/forums/partials/header_section') ?>
+        <div class="px-6 pb-6">
 
         <!-- Quick Stats Cards -->
         <?= $this->include('backendV2/pages/forums/partials/quick_stats_section') ?>

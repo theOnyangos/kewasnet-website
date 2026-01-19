@@ -590,6 +590,13 @@ $(document).ready(function() {
             contentType: false,
             success: function(response) {
                 if (response.success) {
+                    // Track job application submission
+                    if (window.kewasnetTracker) {
+                        window.kewasnetTracker.trackEvent('form_submit', 'submit', 'Job Application Form', null, 'Form');
+                    } else if (window.trackEvent) {
+                        window.trackEvent('form_submit', 'submit', 'Job Application Form', null, 'Form');
+                    }
+                    
                     // Show success message
                     Swal.fire({
                         icon: 'success',

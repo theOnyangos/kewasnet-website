@@ -137,6 +137,28 @@ class PageViewModel extends Model
     }
 
     /**
+     * Get daily page views timeline
+     */
+    public function getDailyViewsTimeline($startDate = null, $endDate = null)
+    {
+        try {
+            $builder = $this->select('DATE(viewed_at) as date, COUNT(*) as views')
+                           ->groupBy('DATE(viewed_at)')
+                           ->orderBy('date', 'ASC');
+            
+            if ($startDate && $endDate) {
+                $builder->where('viewed_at >=', $startDate)
+                       ->where('viewed_at <=', $endDate);
+            }
+
+            return $builder->get()->getResult();
+        } catch (\Exception $e) {
+            log_message('error', 'getDailyViewsTimeline error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
      * Get user journey (page flow)
      */
     public function getUserJourney($sessionId)

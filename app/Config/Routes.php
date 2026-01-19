@@ -254,6 +254,25 @@ $routes->group('auth', ['filter' => 'auth:auth,/auth/login'], static function ($
     $routes->post('resources/update/(:segment)', 'BackendV2\ResourcesController::updateResource/$1');
     $routes->get('activity-dashboard', 'BackendV2\ActivityDashboardController::index');
     
+    // AI Assistant Routes
+    $routes->group('ai-assistant', static function ($routes) {
+        $routes->get('', 'BackendV2\AIAssistantController::index');
+        $routes->get('settings', 'BackendV2\AIAssistantController::settings');
+        $routes->post('settings', 'BackendV2\AIAssistantController::updateSettings');
+        $routes->get('documentation', 'BackendV2\AIAssistantController::documentation');
+        $routes->get('openai/assistants', 'BackendV2\AIAssistantController::listOpenAIAssistants');
+        $routes->get('openai/models', 'BackendV2\AIAssistantController::listOpenAIModels');
+
+        // AI Knowledge Base (admin-managed sources)
+        $routes->get('knowledge-base', 'BackendV2\AIKnowledgeBaseController::index');
+        $routes->get('knowledge-base/create', 'BackendV2\AIKnowledgeBaseController::create');
+        $routes->post('knowledge-base/store', 'BackendV2\AIKnowledgeBaseController::store');
+        $routes->get('knowledge-base/edit/(:segment)', 'BackendV2\AIKnowledgeBaseController::edit/$1');
+        $routes->post('knowledge-base/update/(:segment)', 'BackendV2\AIKnowledgeBaseController::update/$1');
+        $routes->post('knowledge-base/toggle/(:segment)', 'BackendV2\AIKnowledgeBaseController::toggle/$1');
+        $routes->post('knowledge-base/ingest/(:segment)', 'BackendV2\AIKnowledgeBaseController::ingest/$1');
+    });
+    
     // Settings Panel Routes
     $routes->group('settings', static function ($routes) {
         $routes->get('', 'BackendV2\SettingsController::index');
@@ -716,12 +735,23 @@ $routes->group('api/tracking', static function ($routes) {
     $routes->post('update-page', 'API\TrackingController::updatePage');
     $routes->post('track-event', 'API\TrackingController::trackEvent');
     $routes->post('batch-track', 'API\TrackingController::batchTrack');
+    $routes->get('debug-status', 'API\TrackingController::debugStatus');
     
     // Admin routes (authentication handled in controller)
     $routes->group('admin', static function ($routes) {
         $routes->get('dashboard', 'API\TrackingController::dashboard');
         $routes->get('real-time', 'API\TrackingController::realTime');
+        $routes->post('activities-datatable', 'API\TrackingController::activitiesDataTable');
     });
+});
+
+// AI Agent API routes (authentication handled in controller)
+$routes->group('api/ai', static function ($routes) {
+    $routes->post('chat', 'API\AIAgentController::chat');
+    $routes->get('conversations', 'API\AIAgentController::getConversations');
+    $routes->get('conversations/(:segment)', 'API\AIAgentController::getConversation');
+    $routes->delete('conversations/(:segment)', 'API\AIAgentController::deleteConversation');
+    $routes->post('conversations/(:segment)/regenerate', 'API\AIAgentController::regenerate');
 });
 
 // Test routes (only in development)

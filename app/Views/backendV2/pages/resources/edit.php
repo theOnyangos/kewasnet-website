@@ -13,47 +13,23 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
-        <!-- Breadcrumb -->
-        <nav class="flex mb-4" aria-label="Breadcrumb">
-            <ol class="inline-flex items-center space-x-1 md:space-x-3">
-                <li class="inline-flex items-center">
-                    <a href="<?= base_url('auth/dashboard') ?>" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary">
-                        <i data-lucide="home" class="w-4 h-4 mr-2"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <div class="flex items-center">
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                        <a href="<?= base_url('auth/resources') ?>" class="ml-1 text-sm font-medium text-gray-700 hover:text-primary md:ml-2">
-                            Resources
-                        </a>
-                    </div>
-                </li>
-                <li aria-current="page">
-                    <div class="flex items-center">
-                        <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i>
-                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Edit Resource</span>
-                    </div>
-                </li>
-            </ol>
-        </nav>
-
-        <!-- Back Button -->
-        <div class="mb-6">
-            <a href="<?= base_url('auth/resources') ?>" class="inline-flex items-center text-slate-600 hover:text-primary transition-colors">
-                <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
+    <main class="flex-1 overflow-y-auto">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Edit Resource',
+            'pageDescription' => 'Update resource information and manage attached files',
+            'breadcrumbs' => [
+                ['label' => 'Resources', 'url' => base_url('auth/resources')],
+                ['label' => esc($resource['title'] ?? 'Edit Resource')]
+            ],
+            'bannerActions' => '<a href="' . base_url('auth/resources') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
                 Back to Resources
-            </a>
-        </div>
+            </a>'
+        ]) ?>
 
+        <div class="px-6 pb-6">
         <!-- Edit Form -->
         <div class="bg-white rounded-xl shadow-sm p-8">
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-slate-800">Edit Resource</h1>
-                <p class="mt-1 text-sm text-slate-500">Update resource information and manage attached files</p>
-            </div>
 
             <form id="editResourceForm" class="space-y-6" enctype="multipart/form-data" method="post" action="<?= base_url('auth/resources/update/' . $resource['id']) ?>">
                 <!-- Resource Name -->
@@ -87,7 +63,7 @@
                     </label>
                     <select id="category_id" 
                             name="category_id" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                            class="select2 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                             required>
                         <option value="">Select Category</option>
                         <?php foreach ($categories as $category): ?>
@@ -221,6 +197,7 @@
                 </div>
             </form>
         </div>
+    </div>
     </main>
 <?= $this->endSection() ?>
 

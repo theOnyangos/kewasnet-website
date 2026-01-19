@@ -72,25 +72,37 @@ class CoursesController extends BaseController
 
     public function sections()
     {
+        // Get section statistics
+        $sectionStats = $this->getSectionStatistics();
+
         return view('backendV2/pages/courses/sections', [
             'title' => 'Course Sections - KEWASNET',
-            'dashboardTitle' => 'Course Sections Management'
+            'dashboardTitle' => 'Course Sections Management',
+            'courseStats' => $sectionStats
         ]);
     }
 
     public function lectures()
     {
+        // Get lecture statistics
+        $lectureStats = $this->getLectureStatistics();
+
         return view('backendV2/pages/courses/lectures', [
             'title' => 'Course Lectures - KEWASNET',
-            'dashboardTitle' => 'Course Lectures Management'
+            'dashboardTitle' => 'Course Lectures Management',
+            'courseStats' => $lectureStats
         ]);
     }
 
     public function enrollments()
     {
+        // Get enrollment statistics
+        $enrollmentStats = $this->getEnrollmentStatistics();
+
         return view('backendV2/pages/courses/enrollments', [
             'title' => 'Course Enrollments - KEWASNET',
-            'dashboardTitle' => 'Course Enrollments Management'
+            'dashboardTitle' => 'Course Enrollments Management',
+            'courseStats' => $enrollmentStats
         ]);
     }
 
@@ -1426,6 +1438,131 @@ class CoursesController extends BaseController
             'total_lectures' => $totalLectures,
             'certificates_issued' => $certificatesIssued,
             'total_revenue' => $totalRevenue
+        ];
+    }
+
+    /**
+     * Get section statistics
+     */
+    private function getSectionStatistics(): array
+    {
+        // Count total sections (excluding soft deleted)
+        $totalSections = $this->sectionModel->countAllResults(false);
+        
+        // Count active sections
+        $activeSections = $this->sectionModel->where('status', 'active')->countAllResults(false);
+        
+        // Count inactive sections
+        $inactiveSections = $this->sectionModel->where('status', 'inactive')->countAllResults(false);
+        
+        // Count sections with lectures (using course_lectures table)
+        $db = \Config\Database::connect();
+        $sectionsWithLectures = $db->query("
+            SELECT COUNT(DISTINCT section_id) as count
+            FROM course_lectures
+            WHERE deleted_at IS NULL
+        ")->getRow();
+        $sectionsWithLecturesCount = $sectionsWithLectures ? (int)$sectionsWithLectures->count : 0;
+
+        return [
+            'total_sections' => $totalSections,
+            'active_sections' => $activeSections,
+            'inactive_sections' => $inactiveSections,
+            'sections_with_lectures' => $sectionsWithLecturesCount,
+            'total_courses' => 0,
+            'published_courses' => 0,
+            'draft_courses' => 0,
+            'total_enrollments' => 0,
+            'total_lectures' => 0,
+            'certificates_issued' => 0,
+            'total_revenue' => 0
+        ];
+    }
+
+    /**
+     * Get lecture statistics
+     */
+    private function getLectureStatistics(): array
+    {
+        // Count total lectures (excluding soft deleted)
+        $totalLectures = $this->lectureModel->countAllResults(false);
+        
+        // Count preview lectures
+        $previewLectures = $this->lectureModel->where('is_preview', 1)->countAllResults(false);
+        
+        // Calculate total duration in minutes
+        $db = \Config\Database::connect();
+        $durationResult = $db->table('course_lectures')
+            ->selectSum('duration')
+            ->where('deleted_at', null)
+            ->get()
+            ->getRow();
+        $totalDurationMinutes = $durationResult && $durationResult->duration ? (int)($durationResult->duration / 60) : 0;
+        
+        // Count lectures with video
+        $lecturesWithVideo = $this->lectureModel->where('video_url !=', null)->where('video_url !=', '')->countAllResults(false);
+
+        return [
+            'total_lectures' => $totalLectures,
+            'preview_lectures' => $previewLectures,
+            'total_duration_minutes' => $totalDurationMinutes,
+            'lectures_with_video' => $lecturesWithVideo,
+            'total_courses' => 0,
+            'published_courses' => 0,
+            'draft_courses' => 0,
+            'total_enrollments' => 0,
+            'total_sections' => 0,
+            'certificates_issued' => 0,
+            'total_revenue' => 0
+        ];
+    }
+
+    /**
+     * Get enrollment statistics
+     */
+    private function getEnrollmentStatistics(): array
+    {
+        // Count total enrollments - count distinct user-course combinations from user_progress table
+        $db = \Config\Database::connect();
+        $enrollmentResult = $db->query("
+            SELECT COUNT(*) as count 
+            FROM (
+                SELECT DISTINCT user_id, course_id 
+                FROM user_progress
+            ) as distinct_enrollments
+        ")->getRow();
+        $totalEnrollments = $enrollmentResult ? (int)$enrollmentResult->count : 0;
+        
+        // Count active enrollments (enrollments with recent activity in last 30 days)
+        $activeEnrollments = $db->query("
+            SELECT COUNT(DISTINCT CONCAT(user_id, '-', course_id)) as count
+            FROM user_progress
+            WHERE last_accessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+        ")->getRow();
+        $activeEnrollmentsCount = $activeEnrollments ? (int)$activeEnrollments->count : 0;
+        
+        // Count completed enrollments (from certificates table)
+        $completedEnrollments = $this->certificateModel->countAllResults(false);
+        
+        // Calculate average progress
+        $progressResult = $db->query("
+            SELECT AVG(progress_percentage) as avg_progress
+            FROM user_progress
+        ")->getRow();
+        $avgProgress = $progressResult && $progressResult->avg_progress ? round((float)$progressResult->avg_progress, 1) : 0;
+
+        return [
+            'total_enrollments' => $totalEnrollments,
+            'active_enrollments' => $activeEnrollmentsCount,
+            'completed_enrollments' => $completedEnrollments,
+            'avg_progress' => $avgProgress,
+            'total_courses' => 0,
+            'published_courses' => 0,
+            'draft_courses' => 0,
+            'total_sections' => 0,
+            'total_lectures' => 0,
+            'certificates_issued' => $completedEnrollments,
+            'total_revenue' => 0
         ];
     }
 

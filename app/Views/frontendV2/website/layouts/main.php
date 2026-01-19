@@ -23,6 +23,9 @@
         <!-- Floating Action Buttons -->
         <?= $this->include("frontendV2/constants/floating-action-button") ?>
 
+        <!-- AI Chat Widget -->
+        <?= view('components/ai-chat-widget') ?>
+
         <!-- Welcome Water Drop Sound -->
         <?= $this->include("frontendV2/constants/welcome-sound") ?>
 
@@ -34,6 +37,9 @@
 
         <!--  Include Common Javascript -->
         <?= $this->include("frontendV2/constants/javascript") ?>
+
+        <!-- AI Chat Widget JavaScript -->
+        <script src="<?= base_url('assets/js/ai-chat-widget.js') ?>"></script>
 
       <script>
         // Play welcome sound on first interaction

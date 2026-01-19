@@ -6,7 +6,24 @@
 
 <!-- Optional: Custom tracking events -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// Wait for tracker to be initialized before setting up event listeners
+function initializeTrackingEvents() {
+    // Check if tracker is available
+    if (!window.kewasnetTracker && !window.trackEvent) {
+        // Retry after a short delay if tracker not yet loaded
+        setTimeout(initializeTrackingEvents, 100);
+        return;
+    }
+
+    // Helper function to safely track events
+    function safeTrackEvent(type, action, label, value, category) {
+        if (window.kewasnetTracker && window.kewasnetTracker.hasAnalyticsConsent()) {
+            window.kewasnetTracker.trackEvent(type, action, label, value, category);
+        } else if (window.trackEvent) {
+            window.trackEvent(type, action, label, value, category);
+        }
+    }
+
     // Track page category based on current URL
     const path = window.location.pathname;
     let pageCategory = 'General';
@@ -29,6 +46,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Track contact form submissions
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', function() {
+            safeTrackEvent('form_submit', 'submit', 'Contact Form', null, 'Form');
+        });
+    }
+    
+    // Track event booking form submissions
+    const bookingForm = document.getElementById('bookingForm');
+    if (bookingForm) {
+        bookingForm.addEventListener('submit', function() {
+            safeTrackEvent('form_submit', 'submit', 'Event Booking Form', null, 'Form');
+        });
+    }
+    
+    // Track job application form submissions
+    const jobApplicationForm = document.getElementById('jobApplicationForm');
+    if (jobApplicationForm) {
+        jobApplicationForm.addEventListener('submit', function() {
+            safeTrackEvent('form_submit', 'submit', 'Job Application Form', null, 'Form');
+        });
+    }
+    
     // Track social media clicks
     document.querySelectorAll('a[href*="facebook.com"], a[href*="twitter.com"], a[href*="linkedin.com"], a[href*="instagram.com"], a[href*="youtube.com"]').forEach(link => {
         link.addEventListener('click', function() {
@@ -38,45 +79,35 @@ document.addEventListener('DOMContentLoaded', function() {
                            this.href.includes('instagram') ? 'Instagram' :
                            this.href.includes('youtube') ? 'YouTube' : 'Social';
             
-            if (window.trackEvent) {
-                window.trackEvent('social_click', 'click', platform, this.href, 'Social Media');
-            }
+            safeTrackEvent('social_click', 'click', platform, this.href, 'Social Media');
         });
     });
     
     // Track external link clicks
     document.querySelectorAll('a[href^="http"]:not([href*="' + window.location.hostname + '"])').forEach(link => {
         link.addEventListener('click', function() {
-            if (window.trackEvent) {
-                window.trackEvent('external_link', 'click', this.textContent.trim(), this.href, 'External Link');
-            }
+            safeTrackEvent('external_link', 'click', this.textContent.trim(), this.href, 'External Link');
         });
     });
     
     // Track phone number clicks
     document.querySelectorAll('a[href^="tel:"]').forEach(link => {
         link.addEventListener('click', function() {
-            if (window.trackEvent) {
-                window.trackEvent('phone_click', 'click', this.href.replace('tel:', ''), null, 'Contact');
-            }
+            safeTrackEvent('phone_click', 'click', this.href.replace('tel:', ''), null, 'Contact');
         });
     });
     
     // Track email clicks
     document.querySelectorAll('a[href^="mailto:"]').forEach(link => {
         link.addEventListener('click', function() {
-            if (window.trackEvent) {
-                window.trackEvent('email_click', 'click', this.href.replace('mailto:', ''), null, 'Contact');
-            }
+            safeTrackEvent('email_click', 'click', this.href.replace('mailto:', ''), null, 'Contact');
         });
     });
     
     // Track video plays (if you have video elements)
     document.querySelectorAll('video').forEach(video => {
         video.addEventListener('play', function() {
-            if (window.trackEvent) {
-                window.trackEvent('video_play', 'play', this.src || 'Unknown Video', null, 'Media');
-            }
+            safeTrackEvent('video_play', 'play', this.src || 'Unknown Video', null, 'Media');
         });
     });
     
@@ -84,12 +115,24 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('form[role="search"], .search-form, #search-form').forEach(form => {
         form.addEventListener('submit', function() {
             const searchInput = this.querySelector('input[type="search"], input[name*="search"], input[name*="query"]');
-            if (searchInput && searchInput.value && window.trackSearch) {
-                window.trackSearch(searchInput.value.trim());
+            if (searchInput && searchInput.value) {
+                if (window.kewasnetTracker) {
+                    window.kewasnetTracker.trackSearch(searchInput.value.trim());
+                } else if (window.trackSearch) {
+                    window.trackSearch(searchInput.value.trim());
+                }
             }
         });
     });
-});
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTrackingEvents);
+} else {
+    // DOM already loaded, but wait a bit for tracker to initialize
+    setTimeout(initializeTrackingEvents, 100);
+}
 
 // Global function to manually track custom events
 window.trackCustomEvent = function(action, label, value, category) {

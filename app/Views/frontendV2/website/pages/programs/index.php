@@ -77,10 +77,10 @@
                 Join us in creating lasting change in Kenya's WASH sector through collaboration, innovation, and shared commitment.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button type="button" onclick="showCreatePartnerModal()" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-lightGray transition-colors">
+                <button type="button" onclick="showCreatePartnerModal(); trackCTA('partner_with_us', 'Programs CTA');" class="bg-white text-primary px-8 py-3 rounded-lg font-semibold hover:bg-lightGray transition-colors">
                     Partner With Us
                 </button>
-                <a href="#" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
+                <a href="#" onclick="trackCTA('download_program_guide', 'Programs CTA');" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
                     Download Program Guide
                 </a>
             </div>
@@ -93,6 +93,15 @@
 <script>
     const createPartnerURL = '<?= base_url('api/partners/create') ?>';
     let selectedFile = null; // Add this variable declaration
+    
+    // Helper function to track CTA clicks
+    function trackCTA(action, category) {
+        if (window.kewasnetTracker) {
+            window.kewasnetTracker.trackEvent('cta_click', 'click', action, null, category);
+        } else if (window.trackEvent) {
+            window.trackEvent('cta_click', 'click', action, null, category);
+        }
+    }
 
     function toggleMobileMenu() {
         const menu = document.getElementById('mobile-menu');
@@ -173,6 +182,13 @@
                             const data = typeof response === 'string' ? JSON.parse(response) : response;
                             
                             if (data.status === 'success') {
+                                // Track partner registration
+                                if (window.kewasnetTracker) {
+                                    window.kewasnetTracker.trackEvent('form_submit', 'submit', 'Partner Registration Form', null, 'Programs');
+                                } else if (window.trackEvent) {
+                                    window.trackEvent('form_submit', 'submit', 'Partner Registration Form', null, 'Programs');
+                                }
+                                
                                 showNotification('success', data.message || 'Partner created successfully!');
                                 
                                 // Close modal after a brief delay to show notification

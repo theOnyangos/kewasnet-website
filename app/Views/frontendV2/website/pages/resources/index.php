@@ -716,6 +716,13 @@
 
     // Increment download count
     function incrementDownloadCount(resourceId, attachmentId) {
+        // Track resource download
+        if (window.kewasnetTracker) {
+            window.kewasnetTracker.trackDownload('Resource ' + resourceId, null);
+        } else if (window.trackEvent) {
+            window.trackEvent('download', 'download', 'Resource Download', resourceId, 'Resources');
+        }
+        
         $.ajax({
             url: '<?= base_url('api/resources/increment-download') ?>',
             method: 'POST',
@@ -761,6 +768,13 @@
     }
 
     function incrementViewCount(resourceId) {
+        // Track resource view
+        if (window.kewasnetTracker) {
+            window.kewasnetTracker.trackEvent('resource_view', 'view', 'Resource View', resourceId, 'Resources');
+        } else if (window.trackEvent) {
+            window.trackEvent('resource_view', 'view', 'Resource View', resourceId, 'Resources');
+        }
+        
         $.ajax({
             url: '<?= base_url('api/resources/increment-view-count') ?>',
             method: 'POST',

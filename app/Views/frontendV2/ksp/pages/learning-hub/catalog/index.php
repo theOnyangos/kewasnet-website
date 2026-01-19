@@ -40,7 +40,7 @@
     </section>
 
     <!-- Breadcrumb -->
-    <div class="sticky top-[110px] z-40 bg-white border-b borderColor shadow-sm">
+    <div class="sticky top-[95px] z-40 bg-white border-b borderColor shadow-sm">
         <div class="container mx-auto px-4 py-3">
             <nav class="flex" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -62,7 +62,7 @@
     </div>
 
     <!-- Main Content -->
-    <main class="py-12 relative">
+    <main class="pb-12 relative">
         <!-- Diagonal Grid Pattern -->
         <div class="events-page-pattern-bg"></div>
 

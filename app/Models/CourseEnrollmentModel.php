@@ -80,11 +80,15 @@ class CourseEnrollmentModel extends Model
      */
 
     /**
-     * Get enrollments for DataTable with joins
+     * Build a fresh enrollments query builder (no shared state).
+     *
+     * IMPORTANT: Model::builder() caches the builder instance; DataTableService calls
+     * getEnrollmentsTable() then countEnrollments() on the same model instance, which
+     * can lead to duplicate JOINs and "Not unique table/alias" SQL errors.
      */
-    public function getEnrollmentsTable($start, $length, $search = null, $orderBy = 'id', $orderDir = 'DESC')
+    protected function enrollmentsBuilder(?string $search = null)
     {
-        $builder = $this->builder()
+        $builder = $this->db->table($this->table)
             ->select('user_progress.id,
                      user_progress.user_id,
                      user_progress.course_id,
@@ -98,7 +102,6 @@ class CourseEnrollmentModel extends Model
             ->join('courses', 'courses.id = user_progress.course_id', 'left', false)
             ->join('system_users', 'system_users.id = user_progress.user_id', 'left', false);
 
-        // Apply search filter
         if ($search) {
             $builder->groupStart()
                 ->like('courses.title', $search)
@@ -107,6 +110,16 @@ class CourseEnrollmentModel extends Model
                 ->orLike('system_users.email', $search)
                 ->groupEnd();
         }
+
+        return $builder;
+    }
+
+    /**
+     * Get enrollments for DataTable with joins
+     */
+    public function getEnrollmentsTable($start, $length, $search = null, $orderBy = 'id', $orderDir = 'DESC')
+    {
+        $builder = $this->enrollmentsBuilder($search);
 
         // Apply ordering
         if ($orderBy === 'student_name') {
@@ -126,11 +139,9 @@ class CourseEnrollmentModel extends Model
     /**
      * Count total enrollments for DataTable
      */
-    public function countEnrollments(): int
+    public function countEnrollments($search = null): int
     {
-        return $this->builder()
-            ->join('courses', 'courses.id = user_progress.course_id', 'left', false)
-            ->join('system_users', 'system_users.id = user_progress.user_id', 'left', false)
-            ->countAllResults(false);
+        $builder = $this->enrollmentsBuilder($search ? (string) $search : null);
+        return (int) $builder->countAllResults();
     }
 }

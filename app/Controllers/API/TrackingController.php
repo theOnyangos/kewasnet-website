@@ -55,9 +55,41 @@ class TrackingController extends BaseController
         try {
             $input = $this->request->getJSON(true);
             
+            // Validate input
+            if (empty($input)) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Invalid request data',
+                    'error' => 'No data provided'
+                ], 400);
+            }
+            
             $pageUrl = $input['page_url'] ?? current_url();
             $pageTitle = $input['page_title'] ?? null;
             $pageCategory = $input['page_category'] ?? null;
+            
+            // Validate page URL
+            if (empty($pageUrl)) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Page URL is required',
+                    'error' => 'Missing page_url parameter'
+                ], 400);
+            }
+            
+            // Check consent status for better error messages
+            $hasConsent = $this->trackingService->hasAnalyticsConsent();
+            if (!$hasConsent) {
+                return $this->respond([
+                    'success' => false,
+                    'message' => 'Page view not tracked (analytics consent required)',
+                    'error' => 'consent_required',
+                    'debug' => [
+                        'cookieConsent' => $this->request->getCookie('cookieConsent'),
+                        'analyticsCookies' => $this->request->getCookie('analyticsCookies')
+                    ]
+                ], 403);
+            }
             
             $result = $this->trackingService->trackPageView($pageUrl, $pageTitle, $pageCategory);
             
@@ -65,17 +97,38 @@ class TrackingController extends BaseController
                 return $this->respond([
                     'success' => true,
                     'page_view_id' => $result,
-                    'message' => 'Page view tracked'
+                    'message' => 'Page view tracked successfully'
                 ]);
             } else {
+                // Get session status for debugging
+                $session = session();
+                $trackingSessionId = $session->get('tracking_session_id');
+                
                 return $this->respond([
                     'success' => false,
-                    'message' => 'Page view not tracked (consent required)'
-                ]);
+                    'message' => 'Page view tracking failed',
+                    'error' => 'tracking_failed',
+                    'debug' => [
+                        'has_consent' => $hasConsent,
+                        'session_initialized' => !empty($trackingSessionId),
+                        'tracking_session_id' => $trackingSessionId
+                    ]
+                ], 500);
             }
         } catch (\Exception $e) {
             log_message('error', 'Page tracking failed: ' . $e->getMessage());
-            return $this->fail('An error occurred while tracking page view');
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            
+            return $this->respond([
+                'success' => false,
+                'message' => 'An error occurred while tracking page view',
+                'error' => 'server_error',
+                'debug' => ENVIRONMENT === 'development' ? [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ] : null
+            ], 500);
         }
     }
 
@@ -155,6 +208,29 @@ class TrackingController extends BaseController
             log_message('error', 'Session end failed: ' . $e->getMessage());
             return $this->fail('An error occurred while ending session');
         }
+    }
+
+    /**
+     * Debug endpoint to check consent and session status
+     * Useful for troubleshooting tracking issues
+     */
+    public function debugStatus()
+    {
+        $cookies = [
+            'cookieConsent' => $this->request->getCookie('cookieConsent'),
+            'analyticsCookies' => $this->request->getCookie('analyticsCookies'),
+            'marketingCookies' => $this->request->getCookie('marketingCookies'),
+        ];
+        
+        $session = session();
+        $trackingSessionId = $session->get('tracking_session_id');
+        
+        return $this->respond([
+            'cookies' => $cookies,
+            'tracking_session_id' => $trackingSessionId,
+            'has_consent' => $this->trackingService->hasAnalyticsConsent(),
+            'session_initialized' => !empty($trackingSessionId)
+        ]);
     }
 
     /**
@@ -264,6 +340,66 @@ class TrackingController extends BaseController
                     'stats' => [],
                     'activities' => []
                 ]
+            ])->setStatusCode(500);
+        }
+    }
+
+    /**
+     * Get activities for server-side data table
+     */
+    public function activitiesDataTable()
+    {
+        // Check admin permission first
+        if (!$this->isAdmin()) {
+            return $this->response->setJSON([
+                'error' => 'Access denied'
+            ])->setStatusCode(401);
+        }
+        
+        try {
+            // Get DataTables parameters from POST data (DataTables sends POST)
+            $draw = intval($this->request->getPost('draw') ?? 1);
+            $start = intval($this->request->getPost('start') ?? 0);
+            $length = intval($this->request->getPost('length') ?? 10);
+            $searchValue = $this->request->getPost('search')['value'] ?? '';
+            
+            // Handle order parameter
+            $orderColumn = 0;
+            $orderDir = 'DESC';
+            $orderData = $this->request->getPost('order');
+            if (!empty($orderData) && isset($orderData[0])) {
+                $orderColumn = (int)($orderData[0]['column'] ?? 0);
+                $orderDir = strtoupper($orderData[0]['dir'] ?? 'DESC');
+            }
+            
+            // Validate order direction
+            if (!in_array($orderDir, ['ASC', 'DESC'])) {
+                $orderDir = 'DESC';
+            }
+            
+            $result = $this->trackingService->getActivitiesForDataTable(
+                $draw,
+                $start,
+                $length,
+                $searchValue,
+                $orderColumn,
+                $orderDir
+            );
+            
+            // Log for debugging
+            log_message('debug', 'Activities DataTable request - Draw: ' . $draw . ', Start: ' . $start . ', Length: ' . $length . ', Search: ' . $searchValue);
+            log_message('debug', 'Activities DataTable response - Total: ' . $result['recordsTotal'] . ', Filtered: ' . $result['recordsFiltered'] . ', Data count: ' . count($result['data']));
+            
+            return $this->response->setJSON($result)->setStatusCode(200);
+        } catch (\Exception $e) {
+            log_message('error', 'Activities data table fetch failed: ' . $e->getMessage());
+            log_message('error', 'Stack trace: ' . $e->getTraceAsString());
+            return $this->response->setJSON([
+                'draw' => (int)($this->request->getGet('draw') ?? 1),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => $e->getMessage()
             ])->setStatusCode(500);
         }
     }

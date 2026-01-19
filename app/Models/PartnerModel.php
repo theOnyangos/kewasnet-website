@@ -22,7 +22,7 @@ class PartnerModel extends Model
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
+    protected $useSoftDeletes = false;
 
     protected $useAutoIncrement = false;
 
@@ -79,7 +79,7 @@ class PartnerModel extends Model
      */
     public function countAllPartners($search = null)
     {
-        $builder = $this->where('deleted_at', null);
+        $builder = $this;
         
         // Apply search if provided (for filtered count)
         if ($search) {

@@ -120,6 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 showNotification('success', result.message || 'Thank you for subscribing to our newsletter!');
                 emailInput.value = ''; // Clear the form
                 
+                // Track newsletter subscription
+                if (window.kewasnetTracker) {
+                    window.kewasnetTracker.trackNewsletterSignup();
+                } else if (window.trackEvent) {
+                    window.trackEvent('newsletter', 'signup', 'Newsletter Subscription', null, 'Marketing');
+                }
+                
                 // Optional: Analytics tracking
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'newsletter_subscription', {

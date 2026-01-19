@@ -7,6 +7,22 @@
     $user = ClientAuth::user();
     
     session()->set([ 'redirect_url' => $currentUrl::currentUrl() ]);
+    
+    // Check if event is free
+    $isFreeEvent = false;
+    if ($event['event_type'] === 'free') {
+        $isFreeEvent = true;
+    } elseif (!empty($event['ticket_types']) && count($event['ticket_types']) > 0) {
+        // Check if all ticket types have zero price
+        $allFree = true;
+        foreach ($event['ticket_types'] as $ticketType) {
+            if (isset($ticketType['price']) && floatval($ticketType['price']) > 0) {
+                $allFree = false;
+                break;
+            }
+        }
+        $isFreeEvent = $allFree;
+    }
 ?>
 
 <?= $this->extend('frontendV2/website/layouts/main') ?>
@@ -103,6 +119,56 @@
                 <div class="lg:col-span-2">
                     <div class="bg-white border border-slate-200 rounded-xl p-4 md:p-8">
                         <h2 class="text-2xl font-bold text-secondary mb-6">Book Your Tickets</h2>
+                        
+                        <!-- Booking Instructions Note -->
+                        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-blue-900 mb-2">How to Book Tickets</h3>
+                                    <ul class="space-y-1.5 text-sm text-blue-800">
+                                        <li class="flex items-start gap-2">
+                                            <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                            <span>Use the <strong>+</strong> and <strong>-</strong> buttons to select the number of tickets you want for each ticket type</span>
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                            <span>You can select <strong>multiple tickets</strong> of the same type or different types</span>
+                                        </li>
+                                        <?php if (!empty($event['ticket_types']) && count($event['ticket_types']) > 0): ?>
+                                            <?php if ($event['event_type'] === 'free' || $isFreeEvent): ?>
+                                                <li class="flex items-start gap-2">
+                                                    <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                                    <span>This is a <strong>free event</strong> - select at least one ticket to continue with registration</span>
+                                                </li>
+                                            <?php else: ?>
+                                                <li class="flex items-start gap-2">
+                                                    <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                                    <span>Review the <strong>total amount</strong> before proceeding to payment</span>
+                                                </li>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <li class="flex items-start gap-2">
+                                            <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                            <span>Fill in your <strong>contact information</strong> and attendee details (if booking multiple tickets)</span>
+                                        </li>
+                                        <?php if ($event['event_type'] === 'paid'): ?>
+                                            <li class="flex items-start gap-2">
+                                                <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                                <span>Complete <strong>payment</strong> to finalize your booking</span>
+                                            </li>
+                                        <?php else: ?>
+                                            <li class="flex items-start gap-2">
+                                                <i data-lucide="check-circle" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                                                <span>Click <strong>Complete Registration</strong> to confirm your booking</span>
+                                            </li>
+                                        <?php endif; ?>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                         
                         <form id="bookingForm" method="POST">
                             <?= csrf_field() ?>
@@ -201,7 +267,9 @@
                             <div class="mb-8 p-4 bg-secondary/10 rounded-lg">   
                                 <div class="flex justify-between items-center">
                                     <span class="text-lg font-semibold text-slate-800">Total Amount:</span>
-                                    <span class="text-2xl font-bold text-primary" id="totalAmount">KES 0.00</span>
+                                    <span class="text-2xl font-bold text-primary" id="totalAmount">
+                                        <?= $isFreeEvent ? 'Free event' : 'KES 0.00' ?>
+                                    </span>
                                 </div>
                             </div>
 
@@ -253,7 +321,8 @@
                                 </a>
                                 <button type="submit" 
                                         id="submitBtn"
-                                        class="w-full sm:w-auto gradient-btn px-8 py-3 rounded-[50px] text-white flex items-center justify-center">
+                                        class="w-full sm:w-auto gradient-btn px-8 py-3 rounded-[50px] text-white flex items-center justify-center <?= ($isFreeEvent && !empty($event['ticket_types'])) ? 'opacity-50 cursor-not-allowed' : '' ?>"
+                                        <?= ($isFreeEvent && !empty($event['ticket_types'])) ? 'disabled' : '' ?>>
                                     <span id="submitText"><?= $event['event_type'] === 'paid' ? 'Proceed to Payment' : 'Complete Registration' ?></span>
                                     <i data-lucide="arrow-right" class="ml-2 icon z-10"></i>
                                 </button>
@@ -275,6 +344,10 @@ $(document).ready(function() {
     
     let totalAmount = 0;
     const ticketQuantities = {};
+    
+    // Check if event is free
+    const isFreeEvent = <?= $isFreeEvent ? 'true' : 'false' ?>;
+    const eventType = '<?= $event['event_type'] ?? 'paid' ?>';
     
     // Calculate total amount
     function calculateTotal() {
@@ -302,13 +375,35 @@ $(document).ready(function() {
             totalAmount += quantity * price;
         });
         
-        $('#totalAmount').text('KES ' + totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        // Display total amount or "Free event" if event is free and total is 0
+        if (isFreeEvent && totalAmount === 0) {
+            $('#totalAmount').text('Free event');
+        } else {
+            $('#totalAmount').text('KES ' + totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+        }
         
         // Show/hide attendee details if tickets are selected
         if (totalAmount > 0 || Object.values(ticketQuantities).some(q => q > 0)) {
             updateAttendeeFields();
         } else {
             $('#attendeeDetails').addClass('hidden');
+        }
+        
+        // Update submit button state for free events
+        updateSubmitButtonState();
+    }
+    
+    // Update submit button state based on ticket selection (for free events)
+    function updateSubmitButtonState() {
+        const submitBtn = $('#submitBtn');
+        const hasTicketsSelected = Object.values(ticketQuantities).some(q => q > 0);
+        
+        if (isFreeEvent || eventType === 'free') {
+            if (hasTicketsSelected) {
+                submitBtn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+            } else {
+                submitBtn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed');
+            }
         }
     }
     
@@ -467,10 +562,22 @@ $(document).ready(function() {
         const submitText = $('#submitText');
         const originalText = submitText.text();
         
-        // Validate that at least one ticket is selected (for paid events)
+        // Validate that at least one ticket is selected
+        const hasTicketsSelected = Object.values(ticketQuantities).some(q => q > 0);
+        
+        if (!hasTicketsSelected) {
+            if (isFreeEvent || eventType === 'free') {
+                showSweetAlertToast('Please select at least one ticket before continuing', 'warning');
+            } else {
+                showSweetAlertToast('Please select at least one ticket', 'error');
+            }
+            return;
+        }
+        
+        // For paid events, also check total amount
         <?php if ($event['event_type'] === 'paid'): ?>
         if (totalAmount <= 0) {
-            showToast('Please select at least one ticket', 'error');
+            showSweetAlertToast('Please select at least one ticket', 'error');
             return;
         }
         <?php endif; ?>
@@ -498,35 +605,45 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.status === 'success') {
+                    // Track event booking
+                    if (window.kewasnetTracker) {
+                        window.kewasnetTracker.trackEvent('event_booking', 'submit', 'Event Booking Form', totalAmount || 0, 'Events');
+                    } else if (window.trackEvent) {
+                        window.trackEvent('event_booking', 'submit', 'Event Booking Form', totalAmount || 0, 'Events');
+                    }
+                    
                     <?php if ($event['event_type'] === 'paid'): ?>
                         // Initiate payment
                         if (response.payment_data) {
                             initiatePayment(response.payment_data);
                         } else {
-                            showToast('Payment initialization failed', 'error');
+                            showSweetAlertToast('Payment initialization failed', 'error');
                             submitBtn.prop('disabled', false);
                             submitText.text(originalText);
                         }
                     <?php else: ?>
                         // Free event - redirect to success page
                         if (response.booking_id) {
-                            window.location.href = '<?= base_url('events/booking') ?>/' + response.booking_id + '/success';
+                            showSweetAlertToast('Registration completed successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '<?= base_url('events/booking') ?>/' + response.booking_id + '/success';
+                            }, 1500);
                         } else {
-                            showToast('Booking completed successfully', 'success');
+                            showSweetAlertToast('Booking completed successfully', 'success');
                             setTimeout(() => {
                                 window.location.href = '<?= base_url('events') ?>';
                             }, 2000);
                         }
                     <?php endif; ?>
                 } else {
-                    showToast(response.message || 'Booking failed', 'error');
+                    showSweetAlertToast(response.message || 'Booking failed', 'error');
                     submitBtn.prop('disabled', false);
                     submitText.text(originalText);
                 }
             },
             error: function(xhr) {
                 const response = xhr.responseJSON || {};
-                showToast(response.message || 'An error occurred. Please try again.', 'error');
+                showSweetAlertToast(response.message || 'An error occurred. Please try again.', 'error');
                 submitBtn.prop('disabled', false);
                 submitText.text(originalText);
             }
@@ -555,18 +672,21 @@ $(document).ready(function() {
                     },
                     success: function(verifyResponse) {
                         if (verifyResponse.status === 'success') {
-                            window.location.href = '<?= base_url('events/booking') ?>/' + paymentData.booking_id + '/success';
+                            showSweetAlertToast('Payment verified successfully!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '<?= base_url('events/booking') ?>/' + paymentData.booking_id + '/success';
+                            }, 1500);
                         } else {
-                            showToast(verifyResponse.message || 'Payment verification failed', 'error');
+                            showSweetAlertToast(verifyResponse.message || 'Payment verification failed', 'error');
                         }
                     },
                     error: function() {
-                        showToast('Payment verification failed', 'error');
+                        showSweetAlertToast('Payment verification failed', 'error');
                     }
                 });
             },
             onClose: function() {
-                showToast('Payment window closed', 'warning');
+                showSweetAlertToast('Payment window closed', 'warning');
                 $('#submitBtn').prop('disabled', false);
                 $('#submitText').text('<?= $event['event_type'] === 'paid' ? 'Proceed to Payment' : 'Complete Registration' ?>');
             }
@@ -575,31 +695,58 @@ $(document).ready(function() {
     }
     <?php endif; ?>
     
-    // Toast notification function
-    function showToast(message, type = 'success') {
-        $('.custom-toast').remove();
-        let bgColor, iconName;
-        switch(type) {
-            case 'success': bgColor = 'bg-green-500'; iconName = 'check-circle'; break;
-            case 'error': bgColor = 'bg-red-500'; iconName = 'alert-circle'; break;
-            case 'warning': bgColor = 'bg-yellow-500'; iconName = 'alert-triangle'; break;
-            default: bgColor = 'bg-blue-500'; iconName = 'info';
+    // SweetAlert Toast notification function
+    function showSweetAlertToast(message, type = 'success') {
+        if (typeof Swal === 'undefined') {
+            // Fallback to alert if SweetAlert is not loaded
+            alert(message);
+            return;
         }
-        const toast = $(`
-            <div class="custom-toast fixed top-4 right-4 px-4 py-3 rounded-lg shadow-lg text-white z-50 ${bgColor} max-w-sm">
-                <div class="flex items-center">
-                    <i data-lucide="${iconName}" class="w-5 h-5 mr-2 flex-shrink-0"></i>
-                    <span class="text-sm">${message}</span>
-                </div>
-            </div>
-        `);
-        $('body').append(toast);
-        lucide.createIcons();
-        toast.hide().fadeIn(300);
-        setTimeout(() => toast.fadeOut(300, () => toast.remove()), type === 'error' ? 5000 : 3000);
+        
+        const toastConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: type === 'error' ? 5000 : 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        };
+        
+        switch(type) {
+            case 'success':
+                Swal.fire({
+                    ...toastConfig,
+                    icon: 'success',
+                    title: message
+                });
+                break;
+            case 'error':
+                Swal.fire({
+                    ...toastConfig,
+                    icon: 'error',
+                    title: message
+                });
+                break;
+            case 'warning':
+                Swal.fire({
+                    ...toastConfig,
+                    icon: 'warning',
+                    title: message
+                });
+                break;
+            default:
+                Swal.fire({
+                    ...toastConfig,
+                    icon: 'info',
+                    title: message
+                });
+        }
     }
     
-    // Initial calculation
+    // Initial calculation and button state
     calculateTotal();
 });
 </script>

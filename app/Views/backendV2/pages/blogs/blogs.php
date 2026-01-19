@@ -20,12 +20,16 @@
             'pageDescription' => 'Manage blog posts, categories, and tags',
             'breadcrumbs' => [
                 ['label' => 'Blogs']
-            ]
+            ],
+            'bannerActions' => '<div class="flex items-center gap-3">
+                <button type="button" onclick="window.open(\'' . site_url('auth/activity-dashboard') . '\', \'_blank\')" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i>
+                    Analytics
+                </button>
+            </div>'
         ]) ?>
 
         <div class="px-6 pb-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/blogs/partials/header_section') ?>
 
         <!-- Quick Stats Cards -->
         <?= $this->include('backendV2/pages/blogs/partials/quick_stats_section') ?>
@@ -34,7 +38,7 @@
         <?= $this->include('backendV2/pages/blogs/partials/navigation_section') ?>
         
         <!-- Blog Posts Content -->
-        <div class="bg-white rounded-b-xl shadow-sm p-6">
+        <div class="bg-white rounded-b-xl shadow-sm p-6 pb-10">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-800">All Blog Posts</h1>
@@ -311,9 +315,23 @@
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#6b7280',
             confirmButtonText: 'Yes, Delete It',
-            cancelButtonText: 'Cancel'
+            cancelButtonText: 'Cancel',
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
+                // Show loading state
+                Swal.fire({
+                    title: 'Deleting...',
+                    text: 'Please wait while we delete the blog post',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 $.ajax({
                     url: `<?= site_url('auth/blogs') ?>/${id}`,
                     type: 'DELETE',
@@ -332,14 +350,16 @@
                                 title: 'Deleted!',
                                 text: response.message || 'Blog post deleted successfully',
                                 timer: 2000,
-                                showConfirmButton: false
+                                showConfirmButton: false,
+                                timerProgressBar: true
                             });
                             blogsTable.ajax.reload(null, false);
                         } else {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Error',
-                                text: response.message || 'Failed to delete blog post'
+                                text: response.message || 'Failed to delete blog post',
+                                confirmButtonColor: '#ef4444'
                             });
                         }
                     },
@@ -348,7 +368,8 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: response?.message || 'An error occurred while deleting blog post'
+                            text: response?.message || 'An error occurred while deleting blog post',
+                            confirmButtonColor: '#ef4444'
                         });
                     }
                 });

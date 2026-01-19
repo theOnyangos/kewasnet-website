@@ -14,28 +14,33 @@
 
 <!--  Section Content Block  -->
 <?= $this->section('content') ?>
-    <main class="flex-1 overflow-y-auto p-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/blogs/partials/header_section') ?>
+    <main class="flex-1 overflow-y-auto">
+        <?= view('backendV2/partials/page_banner', [
+            'pageTitle' => 'Newsletter Details',
+            'pageDescription' => 'View complete newsletter information and performance metrics',
+            'breadcrumbs' => [
+                ['label' => 'Blogs', 'url' => base_url('auth/blogs')],
+                ['label' => 'Newsletters', 'url' => base_url('auth/blogs/newsletters/sent')],
+                ['label' => 'Newsletter Details']
+            ],
+            'bannerActions' => '<div class="flex items-center gap-3">
+                <button type="button" onclick="window.open(\'' . site_url('auth/activity-dashboard') . '\', \'_blank\')" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 mr-2"></i>
+                    Analytics
+                </button>
+                <a href="' . site_url('auth/blogs/newsletters/sent') . '" class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white hover:bg-white/20 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+                    Back to Sent
+                </a>
+            </div>'
+        ]) ?>
 
+        <div class="px-6 pb-6">
         <!-- Navigation Tabs -->
         <?= $this->include('backendV2/pages/blogs/partials/navigation_section') ?>
         
         <!-- Newsletter Details Content -->
         <div class="bg-white rounded-b-xl shadow-sm p-6">
-            <!-- Header with Back Button -->
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-800">Newsletter Details</h1>
-                    <p class="mt-1 text-sm text-slate-500">View complete newsletter information and performance metrics</p>
-                </div>
-                <div class="flex space-x-3">
-                    <a href="<?= site_url('auth/blogs/newsletters/sent') ?>" class="flex items-center px-6 py-2 rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-300">
-                        <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
-                        <span>Back to Sent</span>
-                    </a>
-                </div>
-            </div>
 
             <!-- Newsletter Information -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -161,6 +166,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </main>
 <?= $this->endSection() ?>
 

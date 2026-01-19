@@ -26,8 +26,6 @@
         ]) ?>
 
         <div class="px-6 pb-6">
-        <!-- Header Section -->
-        <?= $this->include('backendV2/pages/forums/partials/header_section') ?>
 
         <!-- Quick Stats Cards -->
         <?= $this->include('backendV2/pages/forums/partials/quick_stats_section') ?>

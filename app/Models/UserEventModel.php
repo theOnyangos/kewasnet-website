@@ -14,18 +14,21 @@ class UserEventModel extends Model
     protected $returnType    = 'object';
     protected $useSoftDeletes = false;
     protected $allowedFields = [
-        'id', 'session_id', 'page_view_id', 'event_type', 'event_category', 'event_action',
-        'event_label', 'event_value', 'event_metadata', 'occurred_at'
+        'id', 'session_id', 'user_id', 'event_type', 'event_category', 'event_action',
+        'event_label', 'event_value', 'page_url', 'occurred_at'
     ];
 
     // Dates
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
+    // Important: BaseModel only checks for '' (empty string), not null.
+    // Setting null causes it to insert an empty column name, leading to SQL errors.
+    protected $updatedField  = ''; // Table doesn't have updated_at column
 
     // Validation
     protected $validationRules = [
         'session_id'   => 'required',
-        'event_type'   => 'required|in_list[click,form_submit,download,search,registration,login,logout,contact,newsletter,custom]',
+        'event_type'   => 'required|max_length[50]', // More flexible - allow any event type
         'event_action' => 'required|max_length[100]',
         'page_url'     => 'required|max_length[500]',
         'occurred_at'  => 'required|valid_date',
@@ -160,19 +163,89 @@ class UserEventModel extends Model
     }
 
     /**
+     * Get top events by action, type, and category
+     */
+    public function getTopEvents($limit = 10, $startDate = null, $endDate = null)
+    {
+        $builder = $this->select('event_action, event_type, event_category, event_label, COUNT(*) as event_count')
+                       ->groupBy('event_action, event_type, event_category, event_label')
+                       ->orderBy('event_count', 'DESC')
+                       ->limit($limit);
+        
+        if ($startDate && $endDate) {
+            $builder->where('occurred_at >=', $startDate)
+                   ->where('occurred_at <=', $endDate);
+        }
+
+        return $builder->get()->getResult();
+    }
+
+    /**
+     * Get events by category
+     */
+    public function getEventsByCategory($startDate = null, $endDate = null)
+    {
+        $builder = $this->select('event_category, COUNT(*) as count')
+                       ->where('event_category IS NOT NULL')
+                       ->where('event_category !=', '')
+                       ->groupBy('event_category')
+                       ->orderBy('count', 'DESC');
+        
+        if ($startDate && $endDate) {
+            $builder->where('occurred_at >=', $startDate)
+                   ->where('occurred_at <=', $endDate);
+        }
+
+        return $builder->get()->getResult();
+    }
+
+    /**
      * Track custom event
      */
-    public function trackEvent($sessionId, $eventType, $eventAction, $eventLabel = null, $eventValue = null, $eventCategory = null, $pageViewId = null)
+    public function trackEvent($sessionId, $eventType, $eventAction, $eventLabel = null, $eventValue = null, $eventCategory = null, $pageViewId = null, $pageUrl = null)
     {
-        return $this->insert([
+        // Get current page URL if not provided
+        if (empty($pageUrl)) {
+            $pageUrl = current_url();
+            if (empty($pageUrl) || $pageUrl === '/') {
+                $pageUrl = $_SERVER['REQUEST_URI'] ?? '/';
+            }
+        }
+        
+        // Clean the URL (remove query strings for consistency)
+        $parsedUrl = parse_url($pageUrl);
+        $pageUrl = $parsedUrl['path'] ?? '/';
+        
+        // Generate UUID for the event
+        try {
+            $eventId = Uuid::uuid4()->toString();
+        } catch (\Exception $e) {
+            log_message('error', 'UUID generation failed: ' . $e->getMessage());
+            return false;
+        }
+        
+        // Use query builder directly to avoid model timestamp/callback issues
+        $db = \Config\Database::connect();
+        $now = date('Y-m-d H:i:s');
+        
+        $data = [
+            'id' => $eventId,
             'session_id' => $sessionId,
-            'page_view_id' => $pageViewId,
             'event_type' => $eventType,
             'event_category' => $eventCategory,
             'event_action' => $eventAction,
             'event_label' => $eventLabel,
             'event_value' => $eventValue,
-            'occurred_at' => date('Y-m-d H:i:s')
-        ]);
+            'page_url' => $pageUrl,
+            'occurred_at' => $now,
+            'created_at' => $now
+        ];
+        
+        // Remove null values to avoid issues
+        $data = array_filter($data, function($value) {
+            return $value !== null;
+        });
+        
+        return $db->table('user_events')->insert($data);
     }
 }
