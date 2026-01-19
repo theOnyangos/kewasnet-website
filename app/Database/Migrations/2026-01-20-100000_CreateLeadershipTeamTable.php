@@ -8,6 +8,12 @@ class CreateLeadershipTeamTable extends Migration
 {
     public function up()
     {
+        // If the table already exists (e.g. created manually or by an earlier release),
+        // skip creation so deployments can run migrations safely.
+        if ($this->db->tableExists('leadership_team')) {
+            return;
+        }
+
         $this->forge->addField([
             'id' => [
                 'type' => 'VARCHAR',
@@ -71,6 +77,8 @@ class CreateLeadershipTeamTable extends Migration
 
     public function down()
     {
-        $this->forge->dropTable('leadership_team', true);
+        if ($this->db->tableExists('leadership_team')) {
+            $this->forge->dropTable('leadership_team', true);
+        }
     }
 }
