@@ -24,7 +24,7 @@
                         echo '<div style="display: flex; align-items: center; margin-bottom: 20px;border: 1px solid #c1c1c1;border-radius: 6px;padding: 10px;">';
                         
                         // Course image
-                        echo '<img src="'.base_url($course['image_url']).'" alt="'.$course['title'].'" width="100" height="auto" style="margin-right: 20px;border-radius: 6px;" />';
+                        echo '<img src="'.base_url($course['image_url']).'" alt="'.$course['title'].'" width="80" style="display:block; width:80px; max-width:80px; height:auto; margin-right: 16px; border-radius: 6px;" />';
 
                         // Course details
                         echo '<div>';

@@ -45,8 +45,10 @@
         table th {
             background-color: #f8f8f8;
         }
-        .event-details img {
-            width: 200px;
+        img.event-details {
+            width: 160px;
+            max-width: 100%;
+            height: auto;
             border-radius: 4px;
             margin: 20px 0;
         }
@@ -76,9 +78,8 @@
                     <img
                     src="https://dev.kewasnet.co.ke/kewasnet_logo.png"
                     alt="KEWASNET Logo"
-                    width="200"
-                    height="auto"
-                    style="display: block; margin: 0 auto"
+                    width="180"
+                    style="display: block; margin: 0 auto; max-width: 180px; width: 100%; height: auto;"
                     title="KEWASNET Logo"
                     />
                 </a>
@@ -111,7 +112,7 @@
                 <td>KERN-<?= esc($registration_number) ?></td>
             </tr>
         </table>
-        <img src="<?= esc($event_cover_image) ?>" alt="Event Cover Image" class="event-details" style="width: 200px;">
+        <img src="<?= esc($event_cover_image) ?>" alt="Event Cover Image" class="event-details" style="width: 160px; max-width: 100%; height: auto;">
 
         <?php if($is_paid): ?>
         <p>Please note that this is a paid event. Once your payment is received, you will be assigned a ticket number. This is your registration number: <b style="color: #27aae0">KERN-<?= $registration_number ?></b></p><br />

@@ -46,30 +46,34 @@
                       src="https://spintowinkenya.com/images/facebook.png"
                       alt="Facebook"
                       class="social"
+                      style="width: 24px; max-width: 24px; height: auto;"
                       title="Facebook"
                     />
                   </a>
                   <a href="<?= $social_links[0]['twitter'] ?>">
                     <img
-                      src="https://spintowinkenya.com/images/twitter.png"
+                      src="https://test.mtalii.tech/images/twitter.png"
                       alt="Twitter"
                       class="social"
+                      style="width: 24px; max-width: 24px; height: auto;"
                       title="Twitter"
                     />
                   </a>
                   <a href="<?= $social_links[0]['instagram'] ?>">
                     <img
-                      src="https://spintowinkenya.com/images/instagram.png"
+                      src="https://test.mtalii.tech/images/instagram.png"
                       alt="Instagram"
                       class="social"
+                      style="width: 24px; max-width: 24px; height: auto;"
                       title="Instagram"
                     />
                   </a>
                   <a href="<?= $social_links[0]['linkedin'] ?>">
                     <img
-                      src="https://spintowinkenya.com/images/linkedin.png"
+                      src="https://test.mtalii.tech/images/linkedin.png"
                       alt="LinkedIn"
                       class="social"
+                      style="width: 24px; max-width: 24px; height: auto;"
                       title="linkedin"
                     />
                   </a>

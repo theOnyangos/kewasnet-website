@@ -42,7 +42,9 @@
       }
 
       .social {
-        width: 38px;
+        width: 24px;
+        max-width: 24px;
+        height: auto;
       }
 
       .social-media {
@@ -165,9 +167,8 @@
                           <img
                             src="https://kewasnet.co.ke/kewasnet_logo.png"
                             alt="KEWASNET Logo"
-                            width="300"
-                            height="auto"
-                            style="display: block; margin: 0 auto"
+                            width="200"
+                            style="display: block; margin: 0 auto; max-width: 200px; width: 100%; height: auto;"
                             title="KEWASNET Logo"
                           />
                         </a>
