@@ -37,10 +37,10 @@ BACKUP_DIR="backups/$TIMESTAMP"
 # Deployment paths (update these based on your server structure)
 if [ "$ENVIRONMENT" = "production" ]; then
     DEPLOY_PATH="/var/www/html/kewasnet-website"
-    DOMAIN="test.mtalii.tech"  # Update with your actual domain
+    DOMAIN="kewasnet.co.ke"  # Update with your actual domain
 elif [ "$ENVIRONMENT" = "staging" ]; then
     DEPLOY_PATH="/var/www/html/kewasnet-website-staging"
-    DOMAIN="staging.mtalii.tech"  # Update with your actual staging domain
+    DOMAIN="staging.kewasnet.co.ke"  # Update with your actual staging domain
 else
     echo -e "${RED}Error: Invalid environment. Use 'production' or 'staging'${NC}"
     exit 1

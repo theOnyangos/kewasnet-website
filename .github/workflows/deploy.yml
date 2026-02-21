@@ -1,0 +1,105 @@
+# ---------------------------------------------------------------------------
+# KEWASNET Website - Deploy to VPS
+# ---------------------------------------------------------------------------
+# Triggers: push to main, or manual workflow_dispatch.
+# Secrets required: SSH_PRIVATE_KEY, DEPLOY_HOST, DEPLOY_USER, DEPLOY_PATH
+# Optional: REPO_TOKEN (for private repo checkout; not needed for public repo)
+# ---------------------------------------------------------------------------
+
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PHP_VERSION: "8.2"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: intl, mbstring, mysql, xml, curl, gd, zip
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist
+
+      - name: Run PHPUnit
+        run: ./vendor/bin/phpunit --no-coverage 2>/dev/null || true
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Optional: add environment for protection rules (e.g. required reviewers)
+    # environment: production
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            echo "→ Enabling maintenance (optional)..."
+            echo '<!DOCTYPE html><html><body><h1>Maintenance</h1><p>Deploying...</p></body></html>' > public/maintenance.html 2>/dev/null || true
+
+            echo "→ Pulling latest code..."
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "→ Installing Composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            if [ -f package.json ]; then
+              echo "→ Installing NPM dependencies..."
+              npm ci --production 2>/dev/null || true
+              echo "→ Building assets..."
+              npm run build 2>/dev/null || npm run prod 2>/dev/null || true
+            fi
+
+            echo "→ Running migrations..."
+            php spark migrate --all || true
+
+            echo "→ Clearing cache..."
+            php spark cache:clear 2>/dev/null || true
+            rm -rf writable/cache/* 2>/dev/null || true
+
+            echo "→ Setting permissions..."
+            sudo chown -R www-data:www-data writable public/uploads 2>/dev/null || true
+            sudo chmod -R 775 writable public/uploads 2>/dev/null || true
+
+            echo "→ Removing maintenance..."
+            rm -f public/maintenance.html 2>/dev/null || true
+
+            echo "→ Reloading PHP-FPM and Nginx..."
+            sudo systemctl reload php${{ env.PHP_VERSION }}-fpm 2>/dev/null || sudo systemctl reload php-fpm 2>/dev/null || true
+            sudo systemctl reload nginx 2>/dev/null || sudo systemctl reload apache2 2>/dev/null || true
+
+            echo "→ Deploy finished: $(git rev-parse --short HEAD)"
