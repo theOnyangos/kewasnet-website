@@ -74,7 +74,7 @@ su - deploy
 
 ```bash
 sudo nano /etc/ssh/sshd_config
-# Set: PasswordAuthentication no (after setting up keys)
+# Set: PasswordAuthentication no (after setting up keys) 
 # Set: PermitRootLogin prohibit-password
 sudo systemctl reload sshd
 ```
