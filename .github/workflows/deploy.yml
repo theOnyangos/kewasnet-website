@@ -57,6 +57,11 @@ jobs:
     # environment: production
 
     steps:
+      - name: Debug private key
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | head -5
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | wc -l
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
