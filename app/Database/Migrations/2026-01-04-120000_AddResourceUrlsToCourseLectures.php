@@ -8,6 +8,17 @@ class AddResourceUrlsToCourseLectures extends Migration
 {
     public function up()
     {
+        // Check if column exists before adding
+        if (!$this->db->fieldExists('resource_urls', 'course_lectures')) {
+            $this->forge->addColumn('course_lectures', [
+                'resource_urls' => [
+                    'type' => 'TEXT',
+                    'null' => true,
+                    'after' => 'some_column' // Adjust as needed
+                ]
+            ]);
+        }
+
         $fields = [
             'resource_urls' => [
                 'type' => 'TEXT',

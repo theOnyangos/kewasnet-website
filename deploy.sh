@@ -373,10 +373,10 @@ print_success "Environment set to: $ENVIRONMENT"
 
 print_header "Setting File Permissions"
 
-# Add user to www-data group
+# Ensure user is in www-data group
 sudo usermod -a -G www-data $USER 2>/dev/null || true
 
-# Create required directories
+# Create writable directory structure
 mkdir -p "$DEPLOY_PATH/writable/cache"
 mkdir -p "$DEPLOY_PATH/writable/logs"
 mkdir -p "$DEPLOY_PATH/writable/session"
@@ -384,15 +384,33 @@ mkdir -p "$DEPLOY_PATH/writable/debugbar"
 mkdir -p "$DEPLOY_PATH/writable/uploads"
 mkdir -p "$DEPLOY_PATH/public/uploads"
 
-# Set ownership
-sudo chown -R $USER:www-data "$DEPLOY_PATH"
+# Set ownership for ALL writable directories at once
+print_info "Setting ownership to $USER:www-data for entire writable directory..."
+sudo chown -R $USER:www-data "$DEPLOY_PATH/writable"
 
-# Set permissions (775 for directories, 664 for files)
+# Set ownership for public uploads
+sudo chown -R $USER:www-data "$DEPLOY_PATH/public/uploads" 2>/dev/null || true
+
+# Set directory permissions (775 = rwxrwxr-x)
+print_info "Setting directory permissions..."
 find "$DEPLOY_PATH/writable" -type d -exec chmod 775 {} \;
-find "$DEPLOY_PATH/writable" -type f -exec chmod 664 {} \;
 find "$DEPLOY_PATH/public/uploads" -type d -exec chmod 775 {} \; 2>/dev/null || true
 
+# Set file permissions (664 = rw-rw-r--)
+find "$DEPLOY_PATH/writable" -type f -exec chmod 664 {} \; 2>/dev/null || true
+
+# Make spark executable
 chmod +x "$DEPLOY_PATH/spark"
+
+# Verify cache directory specifically
+if [ -d "$DEPLOY_PATH/writable/cache" ]; then
+    CURRENT_PERMS=$(stat -c '%a' "$DEPLOY_PATH/writable/cache")
+    CURRENT_OWNER=$(stat -c '%U:%G' "$DEPLOY_PATH/writable/cache")
+    print_success "cache/ directory: $CURRENT_PERMS $CURRENT_OWNER"
+else
+    print_error "cache/ directory still missing!"
+    exit 1
+fi
 
 print_success "File permissions set correctly"
 
