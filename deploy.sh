@@ -3,13 +3,13 @@
 ###############################################################################
 # KEWASNET CodeIgniter 4 Application Deployment Script
 ###############################################################################
-# 
+#
 # Usage: ./deploy.sh [environment]
 # Example: ./deploy.sh production
 #          ./deploy.sh staging
 #
 # This script automates the deployment process for the KEWASNET application
-# 
+#
 # Requirements:
 #   - PHP 8.4 or higher
 #   - Composer
@@ -46,6 +46,14 @@ else
     exit 1
 fi
 
+# Get current user
+CURRENT_USER=$(whoami)
+WEB_SERVER_USER="www-data"
+
+# PHP version (adjust as needed)
+PHP_VERSION="8.4"
+PHP_BIN="php$PHP_VERSION"
+
 ###############################################################################
 # Helper Functions
 ###############################################################################
@@ -79,6 +87,134 @@ check_command() {
     fi
 }
 
+set_permissions() {
+    local target_path="${1:-$DEPLOY_PATH}"
+    local user="${2:-$CURRENT_USER}"
+    local group="${3:-$WEB_SERVER_USER}"
+    
+    print_info "Setting permissions for: $target_path"
+    
+    # Set ownership for entire application
+    print_info "Setting ownership: $user:$group"
+    sudo chown -R "$user:$group" "$target_path" 2>/dev/null || chown -R "$user:$group" "$target_path" 2>/dev/null || {
+        print_warning "Could not set ownership. Trying with current user..."
+        chown -R "$user:$user" "$target_path" 2>/dev/null || true
+    }
+    
+    # Set directory permissions (755 for directories)
+    print_info "Setting directory permissions (755)..."
+    find "$target_path" -type d -exec chmod 755 {} \; 2>/dev/null || true
+    
+    # Set file permissions (644 for files)
+    print_info "Setting file permissions (644)..."
+    find "$target_path" -type f -exec chmod 644 {} \; 2>/dev/null || true
+    
+    # Make executable files executable
+    if [ -f "$target_path/spark" ]; then
+        chmod +x "$target_path/spark"
+        print_success "Made spark executable"
+    fi
+    
+    if [ -f "$target_path/deploy.sh" ]; then
+        chmod +x "$target_path/deploy.sh"
+        print_success "Made deploy.sh executable"
+    fi
+    
+    # Special permissions for writable directory
+    if [ -d "$target_path/writable" ]; then
+        print_info "Setting special permissions for writable directory..."
+        sudo chown -R "$user:$group" "$target_path/writable" 2>/dev/null || chown -R "$user:$group" "$target_path/writable" 2>/dev/null || true
+        find "$target_path/writable" -type d -exec chmod 775 {} \; 2>/dev/null || true
+        find "$target_path/writable" -type f -exec chmod 664 {} \; 2>/dev/null || true
+        print_success "Writable directory permissions configured"
+    fi
+    
+    # Special permissions for public/uploads
+    if [ -d "$target_path/public/uploads" ]; then
+        print_info "Setting permissions for uploads directory..."
+        sudo chown -R "$user:$group" "$target_path/public/uploads" 2>/dev/null || chown -R "$user:$group" "$target_path/public/uploads" 2>/dev/null || true
+        find "$target_path/public/uploads" -type d -exec chmod 775 {} \; 2>/dev/null || true
+        find "$target_path/public/uploads" -type f -exec chmod 664 {} \; 2>/dev/null || true
+        print_success "Uploads directory permissions configured"
+    fi
+    
+    # Ensure web server can read all files
+    print_info "Ensuring web server can access files..."
+    sudo setfacl -R -m u:$WEB_SERVER_USER:rwx "$target_path/writable" 2>/dev/null || true
+    sudo setfacl -R -m u:$WEB_SERVER_USER:rwx "$target_path/public/uploads" 2>/dev/null || true
+    
+    # Add current user to web server group
+    sudo usermod -a -G $WEB_SERVER_USER $CURRENT_USER 2>/dev/null || true
+    
+    print_success "Permissions set successfully"
+}
+
+verify_permissions() {
+    local target_path="${1:-$DEPLOY_PATH}"
+    
+    print_info "Verifying permissions..."
+    
+    # Check writable directory
+    if [ -d "$target_path/writable" ]; then
+        if [ -w "$target_path/writable" ]; then
+            print_success "writable/ is writable"
+        else
+            print_warning "writable/ is not writable by current user"
+        fi
+        
+        # Test web server write access
+        if sudo -u $WEB_SERVER_USER test -w "$target_path/writable" 2>/dev/null; then
+            print_success "writable/ is writable by web server"
+        else
+            print_warning "writable/ may not be writable by web server"
+        fi
+    fi
+    
+    # Check cache directory specifically
+    if [ -d "$target_path/writable/cache" ]; then
+        CURRENT_PERMS=$(stat -c '%a' "$target_path/writable/cache" 2>/dev/null || echo "unknown")
+        CURRENT_OWNER=$(stat -c '%U:%G' "$target_path/writable/cache" 2>/dev/null || echo "unknown")
+        print_info "cache/ directory: $CURRENT_PERMS $CURRENT_OWNER"
+        
+        # Test if cache is writable by web server
+        if sudo -u $WEB_SERVER_USER test -w "$target_path/writable/cache" 2>/dev/null; then
+            print_success "Cache directory is writable"
+        else
+            print_warning "Cache directory may not be writable by web server"
+        fi
+    fi
+    
+    # Check .env file
+    if [ -f "$target_path/.env" ]; then
+        if [ -r "$target_path/.env" ]; then
+            print_success ".env file is readable"
+        else
+            print_warning ".env file is not readable"
+        fi
+    fi
+}
+
+create_directories() {
+    local target_path="${1:-$DEPLOY_PATH}"
+    
+    print_info "Creating required directories..."
+    
+    # Create writable subdirectories
+    mkdir -p "$target_path/writable/cache"
+    mkdir -p "$target_path/writable/logs"
+    mkdir -p "$target_path/writable/session"
+    mkdir -p "$target_path/writable/debugbar"
+    mkdir -p "$target_path/writable/uploads"
+    
+    # Create public uploads directory
+    mkdir -p "$target_path/public/uploads"
+    
+    # Create backups directory
+    mkdir -p "$target_path/backups"
+    
+    print_success "Directories created"
+}
+
 # Helper function to run commands with sudo fallback
 run_with_sudo() {
     local cmd="$1"
@@ -109,7 +245,7 @@ check_command "$PHP_BIN"
 
 print_success "All required commands are available"
 
-# Verify PHP 8.2 is being used
+# Verify PHP version is correct
 print_info "Verifying PHP $PHP_VERSION installation..."
 CURRENT_PHP=$($PHP_BIN -v | head -n1 | cut -d' ' -f2 | cut -d'.' -f1,2)
 if [ "$CURRENT_PHP" != "$PHP_VERSION" ]; then
@@ -148,36 +284,36 @@ print_success "All required PHP extensions are installed"
 
 if [ -d "$DEPLOY_PATH" ]; then
     print_header "Creating Backup"
-    
+
     sudo mkdir -p "$DEPLOY_PATH/$BACKUP_DIR" 2>/dev/null || mkdir -p "$DEPLOY_PATH/$BACKUP_DIR"
-    
+
     # Backup .env file
     if [ -f "$DEPLOY_PATH/.env" ]; then
         sudo cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/$BACKUP_DIR/.env.backup" 2>/dev/null || \
         cp "$DEPLOY_PATH/.env" "$DEPLOY_PATH/$BACKUP_DIR/.env.backup"
         print_success "Backed up .env file"
     fi
-    
+
     # Backup writable directory
     if [ -d "$DEPLOY_PATH/writable" ]; then
         sudo tar -czf "$DEPLOY_PATH/$BACKUP_DIR/writable_backup.tar.gz" -C "$DEPLOY_PATH" writable/ 2>/dev/null || \
         tar -czf "$DEPLOY_PATH/$BACKUP_DIR/writable_backup.tar.gz" -C "$DEPLOY_PATH" writable/
         print_success "Backed up writable directory"
     fi
-    
+
     # Backup uploads
     if [ -d "$DEPLOY_PATH/public/uploads" ]; then
         sudo tar -czf "$DEPLOY_PATH/$BACKUP_DIR/uploads_backup.tar.gz" -C "$DEPLOY_PATH/public" uploads/ 2>/dev/null || \
         tar -czf "$DEPLOY_PATH/$BACKUP_DIR/uploads_backup.tar.gz" -C "$DEPLOY_PATH/public" uploads/
         print_success "Backed up uploads directory"
     fi
-    
+
     # Backup database (if credentials are available)
     if [ -f "$DEPLOY_PATH/.env" ]; then
         DB_NAME=$(grep "^database.default.database" "$DEPLOY_PATH/.env" | cut -d '=' -f2 | tr -d ' "')
         DB_USER=$(grep "^database.default.username" "$DEPLOY_PATH/.env" | cut -d '=' -f2 | tr -d ' "')
         DB_PASS=$(grep "^database.default.password" "$DEPLOY_PATH/.env" | cut -d '=' -f2 | tr -d ' "')
-        
+
         if [ -n "$DB_NAME" ] && [ -n "$DB_USER" ]; then
             print_info "Backing up database: $DB_NAME"
             # Use MYSQL_PWD environment variable for password (more secure)
@@ -193,7 +329,7 @@ if [ -d "$DEPLOY_PATH" ]; then
             fi
         fi
     fi
-    
+
     print_success "Backup completed: $BACKUP_DIR"
 fi
 
@@ -258,7 +394,7 @@ EOF
 </html>
 EOF
     fi
-    
+
     # Redirect to maintenance page (optional - requires .htaccess modification)
     print_success "Maintenance mode enabled"
 else
@@ -299,7 +435,6 @@ if [ ! -d ".git" ]; then
 fi
 
 # Ensure proper git ownership
-CURRENT_USER=$(whoami)
 if [ -d ".git" ]; then
     GIT_OWNER=$(stat -c '%U' .git 2>/dev/null || echo "")
     if [ "$GIT_OWNER" != "$CURRENT_USER" ] && [ "$GIT_OWNER" != "" ]; then
@@ -331,7 +466,7 @@ if [ -f "package.json" ]; then
     print_info "Installing/updating NPM dependencies..."
     npm ci --production
     print_success "NPM dependencies installed"
-    
+
     # Build assets
     print_info "Building frontend assets..."
     npm run build 2>/dev/null || npm run prod 2>/dev/null || print_warning "No build script found"
@@ -368,52 +503,21 @@ sed -i "s/CI_ENVIRONMENT = .*/CI_ENVIRONMENT = $ENVIRONMENT/" .env
 print_success "Environment set to: $ENVIRONMENT"
 
 ###############################################################################
-# File Permissions
+# File Permissions (UPDATED - Comprehensive Permission Management)
 ###############################################################################
 
 print_header "Setting File Permissions"
 
-# Ensure user is in www-data group
-sudo usermod -a -G www-data $USER 2>/dev/null || true
+# Create required directories first
+create_directories
 
-# Create writable directory structure
-mkdir -p "$DEPLOY_PATH/writable/cache"
-mkdir -p "$DEPLOY_PATH/writable/logs"
-mkdir -p "$DEPLOY_PATH/writable/session"
-mkdir -p "$DEPLOY_PATH/writable/debugbar"
-mkdir -p "$DEPLOY_PATH/writable/uploads"
-mkdir -p "$DEPLOY_PATH/public/uploads"
+# Set comprehensive permissions
+set_permissions
 
-# Set ownership for ALL writable directories at once
-print_info "Setting ownership to $USER:www-data for entire writable directory..."
-sudo chown -R $USER:www-data "$DEPLOY_PATH/writable"
+# Verify permissions were set correctly
+verify_permissions
 
-# Set ownership for public uploads
-sudo chown -R $USER:www-data "$DEPLOY_PATH/public/uploads" 2>/dev/null || true
-
-# Set directory permissions (775 = rwxrwxr-x)
-print_info "Setting directory permissions..."
-find "$DEPLOY_PATH/writable" -type d -exec chmod 775 {} \;
-find "$DEPLOY_PATH/public/uploads" -type d -exec chmod 775 {} \; 2>/dev/null || true
-
-# Set file permissions (664 = rw-rw-r--)
-find "$DEPLOY_PATH/writable" -type f -exec chmod 664 {} \; 2>/dev/null || true
-
-# Make spark executable
-chmod +x "$DEPLOY_PATH/spark"
-
-# Verify cache directory specifically
-if [ -d "$DEPLOY_PATH/writable/cache" ]; then
-    CURRENT_PERMS=$(stat -c '%a' "$DEPLOY_PATH/writable/cache")
-    CURRENT_OWNER=$(stat -c '%U:%G' "$DEPLOY_PATH/writable/cache")
-    print_success "cache/ directory: $CURRENT_PERMS $CURRENT_OWNER"
-else
-    print_error "cache/ directory still missing!"
-    exit 1
-fi
-
-print_success "File permissions set correctly"
-
+print_success "File permissions configured successfully"
 
 ###############################################################################
 # Database Migrations
@@ -445,7 +549,7 @@ CRON_EXISTS=$(crontab -l 2>/dev/null | grep -F "php spark email:process" || true
 
 if [ -z "$CRON_EXISTS" ]; then
     print_info "Setting up email queue cron job..."
-    
+
     # Add cron job for email queue processing
     (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab - 2>/dev/null && {
         print_success "Email queue cron job added (runs every minute)"
@@ -516,42 +620,22 @@ print_success "Application optimized"
 
 print_header "Restarting Services"
 
-# Restart PHP-FPM (PHP 8.4)
+# Restart PHP-FPM
 print_info "Restarting PHP-FPM..."
-# Try PHP 8.4 first, then fallback to auto-detected version
-PHP_MAJOR_MINOR=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
 sudo systemctl restart php8.4-fpm 2>/dev/null || \
-sudo systemctl restart php${PHP_MAJOR_MINOR}-fpm 2>/dev/null || \
-sudo systemctl restart php8.3-fpm 2>/dev/null || \
-sudo systemctl restart php8.2-fpm 2>/dev/null || \
+sudo systemctl restart php${PHP_VERSION}-fpm 2>/dev/null || \
 sudo systemctl restart php-fpm 2>/dev/null || \
-systemctl restart php8.4-fpm 2>/dev/null || \
-systemctl restart php${PHP_MAJOR_MINOR}-fpm 2>/dev/null || \
-systemctl restart php8.3-fpm 2>/dev/null || \
-systemctl restart php8.2-fpm 2>/dev/null || \
-systemctl restart php-fpm 2>/dev/null || \
 print_warning "Could not restart PHP-FPM. Try: sudo systemctl restart php8.4-fpm"
 
 # Reload Nginx/Apache
 print_info "Reloading web server..."
 sudo systemctl reload nginx 2>/dev/null || \
 sudo systemctl reload apache2 2>/dev/null || \
-systemctl reload nginx 2>/dev/null || \
-systemctl reload apache2 2>/dev/null || \
 print_warning "Could not reload web server. Try: sudo systemctl reload nginx"
-
-# Restart queue workers (if using queues)
-# systemctl restart kewasnet-worker 2>/dev/null || print_info "No queue workers to restart"
 
 # Process any pending emails in queue immediately
 print_info "Processing pending emails in queue..."
 php spark email:process || print_info "No emails to process"
-
-# Restart WebSocket server (if using Ratchet)
-print_info "Restarting WebSocket server..."
-sudo systemctl restart kewasnet-websocket 2>/dev/null || \
-systemctl restart kewasnet-websocket 2>/dev/null || \
-print_info "WebSocket service not configured"
 
 print_success "Services restarted"
 
@@ -587,6 +671,10 @@ cd "$DEPLOY_PATH/backups" 2>/dev/null && ls -t | tail -n +6 | xargs sudo rm -rf 
 cd "$DEPLOY_PATH/backups" 2>/dev/null && ls -t | tail -n +6 | xargs rm -rf 2>/dev/null || true
 print_success "Old backups cleaned"
 
+# Final permission verification
+print_header "Final Permission Verification"
+verify_permissions
+
 ###############################################################################
 # Deployment Summary
 ###############################################################################
@@ -606,15 +694,16 @@ echo -e "${BLUE}Backup Location:${NC}  $DEPLOY_PATH/$BACKUP_DIR"
 echo -e "${BLUE}Timestamp:${NC}        $TIMESTAMP"
 echo -e "${BLUE}Git Commit:${NC}       $(git rev-parse --short HEAD)"
 echo -e "${BLUE}PHP Version:${NC}      $PHP_VERSION"
+echo -e "${BLUE}User/Group:${NC}       $CURRENT_USER:$WEB_SERVER_USER"
 
 echo -e "\n${YELLOW}Important Post-Deployment Checks:${NC}"
 echo -e "  1. Visit https://$DOMAIN and verify the site is working"
 echo -e "  2. Check application logs: tail -f $DEPLOY_PATH/writable/logs/log-$(date +%Y-%m-%d).log"
 echo -e "  3. Monitor error logs: tail -f /var/log/nginx/error.log"
 echo -e "  4. Test critical functionality (login, forms, payments, etc.)"
-echo -e "  5. Check WebSocket connection if using real-time features"
-echo -e "  6. Verify email queue cron: crontab -l | grep 'email:process'"
-echo -e "  7. Monitor email queue: php spark email:process"
+echo -e "  5. Verify permissions: ls -la $DEPLOY_PATH/writable/"
+echo -e "  6. Check email queue: php spark email:process"
+echo -e "  7. Verify cache is writable: sudo -u www-data touch $DEPLOY_PATH/writable/cache/test.txt"
 
 echo -e "\n${GREEN}Deployment completed at $(date)${NC}\n"
 
@@ -622,5 +711,3 @@ echo -e "\n${GREEN}Deployment completed at $(date)${NC}\n"
 # curl -X POST -H 'Content-type: application/json' \
 #   --data "{\"text\":\"✓ KEWASNET deployed to $ENVIRONMENT at $(date)\"}" \
 #   YOUR_SLACK_WEBHOOK_URL
-
-exit 0

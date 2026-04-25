@@ -90,8 +90,9 @@ class PartnerSeeder extends Seeder
             ],
         ];
 
-        // Create a new partners model object
-        $model = new Model();
-        $model->insertBatch($partners);
+        // Idempotent insert: skip rows that already exist.
+        $this->db->table('partners')
+            ->ignore(true)
+            ->insertBatch($partners);
     }
 }

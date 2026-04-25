@@ -213,9 +213,11 @@ class ForumSeeder extends Seeder
             ],
         ];
 
-        // Insert the forums
+        // Insert forums idempotently to allow safe re-seeding.
         foreach ($forums as $forum) {
-            $db->table('forums')->insert($forum);
+            $db->table('forums')
+                ->ignore(true)
+                ->insert($forum);
         }
 
         echo "✅ Successfully created 10 forum categories!\n";

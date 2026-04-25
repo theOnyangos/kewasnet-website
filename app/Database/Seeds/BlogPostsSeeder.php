@@ -62,7 +62,9 @@ class BlogPostsSeeder extends Seeder
         ];
 
         // Insert posts
-        $this->db->table('blog_posts')->insertBatch($posts);
+        $this->db->table('blog_posts')
+            ->ignore(true)
+            ->insertBatch($posts);
 
         // Insert post tags (assuming you have a blog_post_tags table)
         $postTags = [
@@ -79,6 +81,8 @@ class BlogPostsSeeder extends Seeder
             ],
         ];
 
-        $this->db->table('blog_post_tags')->insertBatch($postTags);
+        $this->db->table('blog_post_tags')
+            ->ignore(true)
+            ->insertBatch($postTags);
     }
 }

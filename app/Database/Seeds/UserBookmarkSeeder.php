@@ -32,9 +32,16 @@ class UserBookmarkSeeder extends Seeder
             return;
         }
         
+        $resourceCount = count($resources);
+        if ($resourceCount === 0) {
+            return;
+        }
+
         // Create random bookmarks
         foreach ($users as $user) {
-            $bookmarkCount = rand(2, 5);
+            $maxBookmarks = min(5, $resourceCount);
+            $minBookmarks = min(2, $maxBookmarks);
+            $bookmarkCount = rand($minBookmarks, $maxBookmarks);
             $randomResources = array_rand((array) $resources, $bookmarkCount);
             
             if (!is_array($randomResources)) {

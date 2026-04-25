@@ -207,9 +207,9 @@ class UserSeeder extends Seeder
             ]
         ];
 
-        // Using Query Builder
-        $users = model('App\Models\UserModel', false);
-
-        $users->insertBatch($data);
+        // Make seeding idempotent: skip rows that already exist (same primary/unique keys).
+        $this->db->table('system_users')
+            ->ignore(true)
+            ->insertBatch($data);
     }
 }

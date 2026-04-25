@@ -120,6 +120,13 @@ class PillarSeeder extends Seeder
         ];
 
         foreach ($pillars as $pillar) {
+            $existing = $model->where('slug', $pillar['slug'])->first();
+
+            if ($existing) {
+                $model->update($existing['id'], $pillar);
+                continue;
+            }
+
             $model->insert($pillar);
         }
     }

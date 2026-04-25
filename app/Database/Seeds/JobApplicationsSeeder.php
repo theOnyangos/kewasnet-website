@@ -9,6 +9,18 @@ class JobApplicationsSeeder extends Seeder
 {
     public function run()
     {
+        $db = \Config\Database::connect();
+
+        if (! $db->tableExists('job_opportunities')) {
+            echo "⚠️ Skipping JobApplicationsSeeder: table `job_opportunities` does not exist.\n";
+            return;
+        }
+
+        if (! $db->tableExists('job_applications')) {
+            echo "⚠️ Skipping JobApplicationsSeeder: table `job_applications` does not exist.\n";
+            return;
+        }
+
         // Get existing job opportunities
         $opportunityModel = new \App\Models\JobOpportunityModel();
         $opportunities = $opportunityModel->findAll();

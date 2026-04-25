@@ -8,21 +8,23 @@ class AddOrderIndexToCourseSections extends Migration
 {
     public function up()
     {
-        $fields = [
-            'order_index' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'default' => 1,
-                'comment' => 'Order of section within course',
-                'after' => 'description'
-            ]
-        ];
-
-        $this->forge->addColumn('course_sections', $fields);
+        if (! $this->db->fieldExists('order_index', 'course_sections')) {
+            $this->forge->addColumn('course_sections', [
+                'order_index' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'default' => 1,
+                    'comment' => 'Order of section within course',
+                    'after' => 'description',
+                ],
+            ]);
+        }
     }
 
     public function down()
     {
-        $this->forge->dropColumn('course_sections', 'order_index');
+        if ($this->db->fieldExists('order_index', 'course_sections')) {
+            $this->forge->dropColumn('course_sections', 'order_index');
+        }
     }
 }

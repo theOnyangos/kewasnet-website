@@ -18,7 +18,8 @@ class DiscussionSeeder extends Seeder
         }
 
         // Get some users for discussion creators
-        $users = $this->db->table('users')->limit(5)->get()->getResult();
+        $userTable = $this->db->tableExists('system_users') ? 'system_users' : 'users';
+        $users = $this->db->table($userTable)->limit(5)->get()->getResult();
         
         if (empty($users)) {
             echo "❌ No users found. Please ensure users exist in the database.\n";
@@ -295,7 +296,9 @@ class DiscussionSeeder extends Seeder
 
         // Insert all discussions
         foreach ($discussions as $discussion) {
-            $this->db->table('discussions')->insert($discussion);
+            $this->db->table('discussions')
+                ->ignore(true)
+                ->insert($discussion);
         }
 
         // Update forum discussion counts

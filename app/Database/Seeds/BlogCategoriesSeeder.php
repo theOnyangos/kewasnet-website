@@ -66,6 +66,8 @@ class BlogCategoriesSeeder extends Seeder
             ]
         ];
 
-        $this->db->table('blog_categories')->insertBatch($data);
+        $this->db->table('blog_categories')
+            ->ignore(true)
+            ->insertBatch($data);
     }
 }

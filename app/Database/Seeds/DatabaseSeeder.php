@@ -24,9 +24,8 @@ class DatabaseSeeder extends Seeder
         $this->call(PartnerSeeder::class);
         $this->call(SocialLinkSeeder::class);
         $this->call(EventSeeder::class);
-        $this->call(EventOrganizerSeeder::class);
-        $this->call(EventRegistrationSeeder::class);
-        $this->call(EventTicketsSeeder::class);
+        // Legacy event seeders target old schema (event_organizers/event_registrations/old event_tickets).
+        // They are intentionally skipped after the event-module migration refresh.
         $this->call(TaskIconSeeder::class);
         $this->call(BlogCategoriesSeeder::class);
         $this->call(BlogTagsSeeder::class);

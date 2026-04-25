@@ -76,6 +76,8 @@ class BlogTagsSeeder extends Seeder
             ]
         ];
 
-        $this->db->table('blog_tags')->insertBatch($data);
+        $this->db->table('blog_tags')
+            ->ignore(true)
+            ->insertBatch($data);
     }
 }

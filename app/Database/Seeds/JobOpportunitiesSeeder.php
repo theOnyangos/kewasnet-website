@@ -10,6 +10,11 @@ class JobOpportunitiesSeeder extends Seeder
     public function run()
     {
         $db = \Config\Database::connect();
+
+        if (! $db->tableExists('job_opportunities')) {
+            echo "⚠️ Skipping JobOpportunitiesSeeder: table `job_opportunities` does not exist.\n";
+            return;
+        }
         
         // Delete existing data instead of truncate to avoid FK issues
         $db->table('job_opportunities')->emptyTable();

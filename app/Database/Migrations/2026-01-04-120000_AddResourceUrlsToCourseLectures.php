@@ -8,45 +8,55 @@ class AddResourceUrlsToCourseLectures extends Migration
 {
     public function up()
     {
-        // Check if column exists before adding
-        if (!$this->db->fieldExists('resource_urls', 'course_lectures')) {
+        // Make migration idempotent: only add each field when missing.
+        if (! $this->db->fieldExists('resource_urls', 'course_lectures')) {
             $this->forge->addColumn('course_lectures', [
                 'resource_urls' => [
                     'type' => 'TEXT',
                     'null' => true,
-                    'after' => 'some_column' // Adjust as needed
-                ]
+                    'comment' => 'JSON array of resource URLs',
+                    'after' => 'video_url',
+                ],
             ]);
         }
 
-        $fields = [
-            'resource_urls' => [
-                'type' => 'TEXT',
-                'null' => true,
-                'comment' => 'JSON array of resource URLs',
-                'after' => 'video_url'
-            ],
-            'order_index' => [
-                'type' => 'INT',
-                'constraint' => 11,
-                'default' => 1,
-                'comment' => 'Order of lecture within section',
-                'after' => 'duration'
-            ],
-            'is_free_preview' => [
-                'type' => 'TINYINT',
-                'constraint' => 1,
-                'default' => 0,
-                'comment' => 'Allow non-enrolled users to view',
-                'after' => 'is_preview'
-            ]
-        ];
+        if (! $this->db->fieldExists('order_index', 'course_lectures')) {
+            $this->forge->addColumn('course_lectures', [
+                'order_index' => [
+                    'type' => 'INT',
+                    'constraint' => 11,
+                    'default' => 1,
+                    'comment' => 'Order of lecture within section',
+                    'after' => 'duration',
+                ],
+            ]);
+        }
 
-        $this->forge->addColumn('course_lectures', $fields);
+        if (! $this->db->fieldExists('is_free_preview', 'course_lectures')) {
+            $this->forge->addColumn('course_lectures', [
+                'is_free_preview' => [
+                    'type' => 'TINYINT',
+                    'constraint' => 1,
+                    'default' => 0,
+                    'comment' => 'Allow non-enrolled users to view',
+                    'after' => 'is_preview',
+                ],
+            ]);
+        }
     }
 
     public function down()
     {
-        $this->forge->dropColumn('course_lectures', ['resource_urls', 'order_index', 'is_free_preview']);
+        if ($this->db->fieldExists('resource_urls', 'course_lectures')) {
+            $this->forge->dropColumn('course_lectures', 'resource_urls');
+        }
+
+        if ($this->db->fieldExists('order_index', 'course_lectures')) {
+            $this->forge->dropColumn('course_lectures', 'order_index');
+        }
+
+        if ($this->db->fieldExists('is_free_preview', 'course_lectures')) {
+            $this->forge->dropColumn('course_lectures', 'is_free_preview');
+        }
     }
 }
